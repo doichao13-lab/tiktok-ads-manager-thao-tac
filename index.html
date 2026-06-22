@@ -1,0 +1,1344 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tối ưu quảng cáo TikTok - Hưng</title>
+  <style>
+    :root {
+      --bg:     #F0F2F5;
+      --bg2:    #FFFFFF;
+      --bg3:    #F5F6F8;
+      --bg4:    #ECEEF1;
+      --border: #E0E3E8;
+      --text:   #111827;
+      --text2:  #6B7280;
+      --text3:  #9CA3AF;
+      --red:    #FE2C55;
+      --cyan:   #0EA5A0;
+      --green:  #16A34A;
+      --yellow: #D97706;
+      --danger: #DC2626;
+      --blue:   #2563EB;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg); color: var(--text); font-size: 14px; min-height: 100vh;
+    }
+
+    /* ── SCROLLBAR ── */
+    ::-webkit-scrollbar { width: 5px; height: 5px; }
+    ::-webkit-scrollbar-track { background: var(--bg); }
+    ::-webkit-scrollbar-thumb { background: #C9CDD4; border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: #9CA3AF; }
+
+    /* ── HEADER ── */
+    .header {
+      height: 56px; background: var(--bg2);
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; padding: 0 20px; gap: 12px;
+      position: sticky; top: 0; z-index: 1000;
+    }
+    .logo { display: flex; align-items: center; gap: 10px; flex: 1; }
+    .logo-icon {
+      width: 36px; height: 36px; border-radius: 10px; flex-shrink: 0;
+      background: #000; border: 1.5px solid #222;
+      display: flex; align-items: center; justify-content: center;
+      overflow: hidden; position: relative;
+    }
+    .logo-icon svg { width: 22px; height: 22px; }
+    .logo-title { font-size: 16px; font-weight: 700; white-space: nowrap; }
+    .logo-title span { color: var(--red); }
+    .header-actions { display: flex; gap: 8px; }
+
+    /* ── BUTTONS ── */
+    .btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 7px 14px; border: 1px solid var(--border); border-radius: 8px;
+      background: var(--bg3); color: var(--text); cursor: pointer; font-size: 13px;
+      transition: background .15s, border-color .15s; white-space: nowrap;
+    }
+    .btn:hover { background: var(--bg4); border-color: #444; }
+    .btn-primary { background: var(--red); border-color: var(--red); }
+    .btn-primary:hover { background: #e0193f; border-color: #e0193f; }
+    .btn-sm { padding: 5px 10px; font-size: 12px; border-radius: 6px; }
+    .btn-ghost { background: transparent; border-color: transparent; }
+    .btn-ghost:hover { background: var(--bg3); border-color: var(--border); }
+
+    /* ── TOOLBAR ── */
+    .toolbar {
+      background: var(--bg2); border-bottom: 1px solid var(--border);
+      padding: 10px 20px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+    }
+    .select-wrap { position: relative; }
+    select {
+      appearance: none; background: var(--bg3); border: 1px solid var(--border);
+      color: var(--text); padding: 7px 30px 7px 12px; border-radius: 8px;
+      font-size: 13px; cursor: pointer; min-width: 170px;
+    }
+    select:focus { outline: none; border-color: var(--red); }
+    .select-wrap::after {
+      content: '▾'; position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
+      font-size: 12px; color: var(--text2); pointer-events: none;
+    }
+    .view-toggle {
+      display: flex; background: var(--bg3); border: 1px solid var(--border);
+      border-radius: 8px; overflow: hidden; margin-left: auto;
+    }
+    .view-toggle button {
+      padding: 7px 14px; background: none; border: none; color: var(--text2);
+      cursor: pointer; font-size: 13px; transition: all .15s;
+    }
+    .view-toggle button.active { background: var(--red); color: #fff; }
+
+    /* ── FILTER BAR ── */
+    .filter-bar {
+      background: var(--bg2); border-bottom: 1px solid var(--border);
+      padding: 8px 20px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+    }
+    .filter-label { color: var(--text2); font-size: 12px; white-space: nowrap; flex-shrink: 0; }
+    .chips { display: flex; gap: 6px; flex-wrap: wrap; }
+    .chip {
+      padding: 4px 12px; border-radius: 20px; border: 1px solid var(--border);
+      background: var(--bg3); color: var(--text2); font-size: 12px;
+      cursor: pointer; transition: all .15s; user-select: none; white-space: nowrap;
+    }
+    .chip.active { background: rgba(254,44,85,.15); border-color: var(--red); color: var(--red); }
+    .chip:hover:not(.active):not(.disabled) { border-color: #555; color: var(--text); }
+    .chip.disabled { opacity: .4; cursor: not-allowed; }
+
+    /* ── MAIN ── */
+    .main { padding: 16px 20px; }
+
+    /* ── SETUP SCREEN ── */
+    .setup {
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      min-height: calc(100vh - 200px); gap: 16px; text-align: center; padding: 40px;
+    }
+    .setup-icon { font-size: 72px; line-height: 1; }
+    .setup h2 { font-size: 26px; font-weight: 700; }
+    .setup p { color: var(--text2); max-width: 400px; line-height: 1.7; }
+
+    /* ── SUMMARY CARDS ── */
+    .summary { display: grid; grid-template-columns: repeat(4,1fr); gap: 12px; margin-bottom: 16px; }
+    .stat-card {
+      background: var(--bg2); border: 1px solid var(--border);
+      border-radius: 12px; padding: 14px 16px;
+      box-shadow: 0 1px 3px rgba(0,0,0,.06);
+    }
+    .stat-label { font-size: 11px; color: var(--text2); margin-bottom: 6px; }
+    .stat-value { font-size: 22px; font-weight: 700; }
+    .stat-sub { font-size: 11px; color: var(--text3); margin-top: 3px; }
+
+    /* ── TABLE ── */
+    .table-wrap {
+      overflow-x: auto; border-radius: 12px;
+      border: 1px solid var(--border); background: var(--bg2);
+      box-shadow: 0 1px 4px rgba(0,0,0,.07);
+    }
+    table { width: 100%; border-collapse: collapse; min-width: 860px; }
+    thead th {
+      background: var(--bg3); padding: 10px 14px;
+      text-align: left; font-size: 11px; font-weight: 600;
+      color: var(--text2); white-space: nowrap;
+      border-bottom: 1px solid var(--border);
+      position: sticky; top: 56px; z-index: 2;
+    }
+    thead th:first-child {
+      position: sticky; left: 0; z-index: 3; min-width: 260px;
+      background: var(--bg3);
+    }
+    tbody td {
+      padding: 9px 14px; white-space: nowrap; font-size: 13px;
+      border-bottom: 1px solid var(--border); vertical-align: middle;
+    }
+    tbody tr:last-child td { border-bottom: none; }
+    tbody td:first-child {
+      position: sticky; left: 0; background: var(--bg2); z-index: 1;
+    }
+    tbody tr:hover td { background: var(--bg3); }
+    tbody tr:hover td:first-child { background: var(--bg3); }
+
+    /* Campaign row */
+    .campaign-row { cursor: pointer; }
+    .adgroup-row td { background: #FAFBFC !important; }
+    .adgroup-row:hover td { background: #F0F2F5 !important; }
+    .adgroup-row td:first-child { background: #FAFBFC !important; }
+    .adgroup-row:hover td:first-child { background: #F0F2F5 !important; }
+
+    .name-cell { display: flex; align-items: center; gap: 8px; }
+    .expand-btn {
+      width: 20px; height: 20px; flex-shrink: 0;
+      border: 1px solid #D1D5DB; border-radius: 5px;
+      background: var(--bg3); color: var(--text2); font-size: 9px;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; transition: transform .2s, background .15s;
+    }
+    .expand-btn:hover { background: var(--bg4); }
+    .expand-btn.open { transform: rotate(90deg); }
+
+    .name-info .name-main {
+      font-size: 13px; font-weight: 500; max-width: 210px;
+      overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    }
+    .name-info .name-sub { font-size: 11px; color: var(--text3); margin-top: 2px; }
+
+    /* Adgroup indent */
+    .adgroup-indent { display: flex; align-items: center; gap: 8px; padding-left: 28px; }
+    .adgroup-bar { width: 2px; height: 22px; background: #D1D5DB; border-radius: 1px; flex-shrink: 0; }
+
+    /* ── TOGGLE ── */
+    .toggle { position: relative; width: 38px; height: 21px; flex-shrink: 0; }
+    .toggle input { opacity: 0; width: 0; height: 0; position: absolute; }
+    .toggle-track {
+      position: absolute; inset: 0; background: #D1D5DB;
+      border: 1px solid #C9CDD4; border-radius: 21px;
+      cursor: pointer; transition: .2s;
+    }
+    .toggle-track::before {
+      content: ''; position: absolute; width: 15px; height: 15px;
+      left: 2px; top: 2px; background: #fff; border-radius: 50%;
+      transition: .2s; box-shadow: 0 1px 3px rgba(0,0,0,.2);
+    }
+    .toggle input:checked + .toggle-track { background: rgba(22,163,74,.2); border-color: var(--green); }
+    .toggle input:checked + .toggle-track::before { transform: translateX(17px); background: var(--green); }
+
+    /* ── METRIC & BUDGET CELLS ── */
+    .budget-row { display: flex; align-items: center; gap: 5px; }
+    .budget-mode { font-size: 10px; color: var(--text3); }
+    .edit-btn {
+      width: 22px; height: 22px; border: 1px solid var(--border); border-radius: 5px;
+      background: var(--bg3); color: var(--text2); cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 12px; opacity: 0; transition: opacity .15s;
+    }
+    tr:hover .edit-btn { opacity: 1; }
+    .edit-btn:hover { background: var(--bg4); color: var(--text); }
+    .metric-num { font-weight: 500; }
+    .spend-val { color: var(--red); font-weight: 600; }
+
+    /* ── MOBILE CARD VIEW ── */
+    .cards { display: grid; gap: 12px; }
+    .c-card { background: var(--bg2); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,.06); }
+    .c-card-head {
+      padding: 14px 16px; display: flex; align-items: flex-start; gap: 10px; cursor: pointer;
+    }
+    .c-card-info { flex: 1; min-width: 0; }
+    .c-card-name { font-size: 14px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .c-card-meta { font-size: 11px; color: var(--text2); margin-top: 3px; }
+    .c-card-metrics {
+      padding: 12px 16px; border-top: 1px solid var(--border);
+      display: grid; grid-template-columns: repeat(3,1fr); gap: 10px;
+    }
+    .c-card-metric { text-align: center; }
+    .c-card-metric-label { font-size: 10px; color: var(--text2); margin-bottom: 4px; }
+    .c-card-metric-val { font-size: 18px; font-weight: 700; }
+    .c-card-budget {
+      padding: 10px 16px; border-top: 1px solid var(--border);
+      display: flex; gap: 8px; font-size: 12px; color: var(--text2);
+    }
+    .c-card-budget span { color: var(--text); font-weight: 600; }
+    .c-adgroups { border-top: 1px solid var(--border); }
+    .c-ag-item {
+      padding: 10px 16px; border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; gap: 10px;
+    }
+    .c-ag-item:last-child { border-bottom: none; }
+    .c-ag-info { flex: 1; min-width: 0; }
+    .c-ag-name { font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .c-ag-sub { font-size: 11px; color: var(--text3); margin-top: 2px; }
+
+    /* ── MODALS ── */
+    .overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,.75); z-index: 2000;
+      display: none; align-items: center; justify-content: center; padding: 20px;
+    }
+    .overlay.open { display: flex; }
+    .modal {
+      background: var(--bg2); border: 1px solid var(--border); border-radius: 16px;
+      padding: 24px; width: 100%; max-height: 90vh; overflow-y: auto;
+      box-shadow: 0 20px 60px rgba(0,0,0,.15);
+    }
+    .modal-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+    .modal-title { font-size: 18px; font-weight: 700; }
+    .modal-close {
+      width: 30px; height: 30px; border: none; background: var(--bg3);
+      color: var(--text); border-radius: 8px; cursor: pointer;
+      display: flex; align-items: center; justify-content: center; font-size: 16px;
+    }
+    .modal-close:hover { background: var(--bg4); }
+    .modal-info {
+      background: #F5F6F8; border: 1px solid #E0E3E8; border-radius: 8px; padding: 12px;
+      margin-bottom: 16px; font-size: 13px; color: var(--text2); line-height: 1.6;
+    }
+    .modal-info strong { color: var(--text); }
+    .form-group { margin-bottom: 16px; }
+    .form-label { display: block; font-size: 12px; color: var(--text2); margin-bottom: 6px; }
+    input[type=text], input[type=number], input[type=password], textarea {
+      width: 100%; background: var(--bg3); border: 1px solid var(--border);
+      color: var(--text); padding: 10px 12px; border-radius: 8px; font-size: 14px;
+    }
+    input:focus, textarea:focus { outline: none; border-color: var(--red); }
+    textarea { resize: vertical; min-height: 80px; font-family: monospace; }
+    .form-hint { font-size: 11px; color: var(--text3); margin-top: 4px; line-height: 1.5; }
+    .form-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; }
+    .section-title {
+      font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .5px;
+      color: var(--text3); margin-bottom: 12px; padding-bottom: 6px; border-bottom: 1px solid var(--border);
+    }
+    .setting-section { margin-bottom: 22px; }
+
+    /* ── LOADING ── */
+    .spinner {
+      width: 18px; height: 18px; border: 2px solid #E0E3E8;
+      border-top-color: var(--red); border-radius: 50%;
+      animation: spin .6s linear infinite; flex-shrink: 0;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .loading-row td {
+      text-align: center; padding: 50px;
+      color: var(--text2); font-size: 13px;
+    }
+    .loading-inline { display: flex; align-items: center; gap: 10px; }
+
+    /* ── TOAST ── */
+    .toasts {
+      position: fixed; bottom: 20px; right: 20px; z-index: 3000;
+      display: flex; flex-direction: column; gap: 8px;
+    }
+    .toast {
+      padding: 11px 16px; border-radius: 10px; font-size: 13px;
+      display: flex; align-items: center; gap: 10px; max-width: 320px;
+      animation: slideIn .3s ease;
+    }
+    @keyframes slideIn { from { transform: translateX(110%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+    .toast.success { background: #F0FDF4; border: 1px solid #86EFAC; color: #166534; }
+    .toast.error   { background: #FEF2F2; border: 1px solid #FCA5A5; color: #991B1B; }
+    .toast.info    { background: #EFF6FF; border: 1px solid #93C5FD; color: #1E40AF; }
+    .toast.warn    { background: #FFFBEB; border: 1px solid #FCD34D; color: #92400E; }
+
+    /* ── DEMO BADGE ── */
+    .demo-badge {
+      display: inline-flex; align-items: center; gap: 5px;
+      padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 600;
+      background: #FFFBEB; border: 1px solid #FCD34D; color: #92400E;
+    }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 768px) {
+      .logo-title { font-size: 13px; }
+      .summary { grid-template-columns: repeat(2,1fr); }
+      select { min-width: 130px; }
+    }
+    @media (max-width: 480px) {
+      .logo-title .sub { display: none; }
+      .header-actions .btn:not(.btn-primary) { display: none; }
+    }
+
+    /* ── OAUTH INFO BOX ── */
+    .info-box {
+      background: #EFF6FF; border: 1px solid #BFDBFE;
+      border-radius: 8px; padding: 12px; font-size: 12px; color: #1D4ED8;
+      line-height: 1.6; margin-bottom: 14px;
+    }
+    .info-box a { color: #1D4ED8; }
+
+    /* ── CONNECTING LINE ── */
+    .row-separator { height: 1px; background: var(--border); opacity: .5; }
+  </style>
+</head>
+<body>
+
+<!-- ===================== HEADER ===================== -->
+<header class="header">
+  <div class="logo">
+    <div class="logo-icon">
+      <svg viewBox="0 0 24 24" fill="none">
+        <path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-2.88 2.5 2.89 2.89 0 01-2.89-2.89 2.89 2.89 0 012.89-2.89c.28 0 .54.04.79.1V9.01a6.28 6.28 0 00-.79-.05 6.34 6.34 0 00-6.34 6.34 6.34 6.34 0 006.34 6.34 6.34 6.34 0 006.33-6.34V8.85a8.18 8.18 0 004.78 1.52V6.9a4.85 4.85 0 01-1.01-.21z" fill="#FE2C55"/>
+        <path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-2.88 2.5 2.89 2.89 0 01-2.89-2.89 2.89 2.89 0 012.89-2.89c.28 0 .54.04.79.1V9.01a6.28 6.28 0 00-.79-.05 6.34 6.34 0 00-6.34 6.34 6.34 6.34 0 006.34 6.34 6.34 6.34 0 006.33-6.34V8.85a8.18 8.18 0 004.78 1.52V6.9a4.85 4.85 0 01-1.01-.21z" fill="#25F4EE" opacity=".35"/>
+      </svg>
+    </div>
+    <div class="logo-title">Tối ưu quảng cáo <span>TikTok</span> <span class="sub">- Hưng</span></div>
+    <div id="demoBadge" class="demo-badge" style="display:none;">⚡ Demo</div>
+  </div>
+  <div class="header-actions">
+    <button class="btn" onclick="refreshData()" id="refreshBtn">↻ Làm mới</button>
+    <button class="btn btn-primary" onclick="openSettings()">⚙ Cài đặt</button>
+  </div>
+</header>
+
+<!-- ===================== TOOLBAR ===================== -->
+<div class="toolbar">
+  <div class="select-wrap">
+    <select id="accountSel" onchange="onAccountChange(this.value)">
+      <option value="">— Chọn tài khoản QC —</option>
+    </select>
+  </div>
+  <div class="select-wrap">
+    <select id="dateSel" onchange="onDateChange(this.value)">
+      <option value="today">Hôm nay</option>
+      <option value="yesterday">Hôm qua</option>
+      <option value="7" selected>7 ngày qua</option>
+      <option value="14">14 ngày qua</option>
+      <option value="30">30 ngày qua</option>
+      <option value="this_month">Tháng này</option>
+      <option value="last_month">Tháng trước</option>
+    </select>
+  </div>
+  <div class="select-wrap">
+    <select id="statusSel" onchange="onStatusFilter(this.value)">
+      <option value="">Tất cả trạng thái</option>
+      <option value="ENABLE">Đang chạy</option>
+      <option value="DISABLE">Đã tắt</option>
+    </select>
+  </div>
+  <div class="view-toggle">
+    <button id="btnDesk" class="active" onclick="setView('desktop')">🖥 Desktop</button>
+    <button id="btnMobi" onclick="setView('mobile')">📱 Mobile</button>
+  </div>
+</div>
+
+<!-- ===================== FILTER BAR ===================== -->
+<div class="filter-bar">
+  <span class="filter-label">Cột hiển thị (tối đa 3):</span>
+  <div class="chips" id="chips"></div>
+</div>
+
+<!-- ===================== MAIN ===================== -->
+<div class="main">
+
+  <!-- Setup screen -->
+  <div class="setup" id="setupScreen">
+    <div class="setup-icon">📊</div>
+    <h2>Chào mừng, Hưng!</h2>
+    <p>Kết nối TikTok Ads API để quản lý tất cả tài khoản quảng cáo của bạn tại một nơi.<br>Hoặc thử ngay với dữ liệu mẫu.</p>
+    <div style="display:flex; gap:10px; flex-wrap:wrap; justify-content:center;">
+      <button class="btn btn-primary" onclick="openSettings()">⚙ Cài đặt kết nối API</button>
+      <button class="btn" onclick="enableDemo()">⚡ Dùng dữ liệu mẫu</button>
+    </div>
+  </div>
+
+  <!-- Dashboard -->
+  <div id="dashboard" style="display:none;">
+
+    <!-- Summary -->
+    <div class="summary">
+      <div class="stat-card">
+        <div class="stat-label">Tổng chi tiêu</div>
+        <div class="stat-value" id="s-spend">—</div>
+        <div class="stat-sub" id="s-spend-sub"></div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Chiến dịch đang chạy</div>
+        <div class="stat-value" id="s-cmp">—</div>
+        <div class="stat-sub" id="s-cmp-sub"></div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Nhóm QC đang chạy</div>
+        <div class="stat-value" id="s-ag">—</div>
+        <div class="stat-sub" id="s-ag-sub"></div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Tổng ngân sách</div>
+        <div class="stat-value" id="s-budget">—</div>
+        <div class="stat-sub" id="s-budget-sub"></div>
+      </div>
+    </div>
+
+    <!-- Desktop table -->
+    <div id="viewDesktop">
+      <div class="table-wrap">
+        <table>
+          <thead><tr id="tHead"></tr></thead>
+          <tbody id="tBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Mobile cards -->
+    <div id="viewMobile" style="display:none;">
+      <div class="cards" id="cardGrid"></div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ===================== SETTINGS MODAL ===================== -->
+<div class="overlay" id="settingsOverlay">
+  <div class="modal" style="max-width:520px;">
+    <div class="modal-head">
+      <div class="modal-title">⚙ Cài đặt kết nối TikTok</div>
+      <button class="modal-close" onclick="closeSettings()">✕</button>
+    </div>
+
+    <div class="info-box">
+      📖 Hướng dẫn: Tạo app tại <strong>TikTok for Business → Apps</strong>, sau đó lấy <strong>Access Token</strong> với các quyền: <em>campaign.read, campaign.write, adgroup.read, adgroup.write, report.read, advertiser.read</em>.
+      <br>Lưu ý: Nếu gặp lỗi CORS, điền proxy bên dưới.
+    </div>
+
+    <div class="setting-section">
+      <div class="section-title">Xác thực API</div>
+      <div class="form-group">
+        <label class="form-label">Access Token *</label>
+        <input type="password" id="iToken" placeholder="Dán Access Token của bạn vào đây..." />
+        <div class="form-hint">Lấy từ: TikTok for Business → Tài khoản → Apps → Your App → Access Token</div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">CORS Proxy URL <em style="font-weight:normal; color:var(--text3);">(tùy chọn)</em></label>
+        <input type="text" id="iProxy" placeholder="https://corsproxy.io/?url=" />
+        <div class="form-hint">Nếu gặp lỗi CORS khi chạy trên GitHub Pages, điền: <code style="color:var(--cyan);">https://corsproxy.io/?url=</code></div>
+      </div>
+    </div>
+
+    <div class="setting-section">
+      <div class="section-title">Tài khoản quảng cáo</div>
+      <div class="form-group">
+        <label class="form-label">Advertiser IDs <em style="font-weight:normal; color:var(--text3);">(mỗi ID một dòng)</em></label>
+        <textarea id="iAdvIds" rows="4" placeholder="123456789012345&#10;678901234567890&#10;..."></textarea>
+        <div class="form-hint">Nhập ID các tài khoản quảng cáo muốn quản lý. Để trống để tự động lấy tất cả.</div>
+      </div>
+    </div>
+
+    <div class="setting-section">
+      <div class="section-title">Dữ liệu mẫu</div>
+      <div style="display:flex; align-items:center; gap:12px;">
+        <label class="toggle">
+          <input type="checkbox" id="iDemo" />
+          <span class="toggle-track"></span>
+        </label>
+        <span style="font-size:13px;">Bật Demo Mode (không cần API, dùng dữ liệu ảo)</span>
+      </div>
+    </div>
+
+    <div class="form-actions">
+      <button class="btn" onclick="closeSettings()">Hủy</button>
+      <button class="btn btn-primary" onclick="saveSettings()">💾 Lưu & Kết nối</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== BUDGET MODAL ===================== -->
+<div class="overlay" id="budgetOverlay">
+  <div class="modal" style="max-width:380px;">
+    <div class="modal-head">
+      <div class="modal-title">💰 Chỉnh ngân sách</div>
+      <button class="modal-close" onclick="closeBudget()">✕</button>
+    </div>
+    <div class="modal-info" id="budgetInfo"></div>
+    <div class="form-group">
+      <label class="form-label">Ngân sách mới (VND)</label>
+      <input type="number" id="budgetVal" placeholder="Nhập ngân sách..." min="0" step="10000" />
+    </div>
+    <div class="form-actions">
+      <button class="btn" onclick="closeBudget()">Hủy</button>
+      <button class="btn btn-primary" onclick="saveBudget()">Cập nhật</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== BID MODAL ===================== -->
+<div class="overlay" id="bidOverlay">
+  <div class="modal" style="max-width:380px;">
+    <div class="modal-head">
+      <div class="modal-title">🎯 Chỉnh Bid thầu</div>
+      <button class="modal-close" onclick="closeBid()">✕</button>
+    </div>
+    <div class="modal-info" id="bidInfo"></div>
+    <div class="form-group">
+      <label class="form-label">Bid thầu mới (VND)</label>
+      <input type="number" id="bidVal" placeholder="Nhập bid thầu..." min="0" step="500" />
+    </div>
+    <div class="form-actions">
+      <button class="btn" onclick="closeBid()">Hủy</button>
+      <button class="btn btn-primary" onclick="saveBid()">Cập nhật</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== TOASTS ===================== -->
+<div class="toasts" id="toasts"></div>
+
+<!-- ===================== SCRIPT ===================== -->
+<script>
+/* ═══════════════════════════ COLUMN DEFINITIONS ═══════════════════════════ */
+const COLS = {
+  reach:        { label: 'Reach',       metric: 'reach',                  icon: '👁' },
+  video_2s:     { label: 'View 2s',     metric: 'video_play_2s',          icon: '▶' },
+  video_6s:     { label: 'View 6s',     metric: 'video_watched_6s',       icon: '▶▶' },
+  lead_form:    { label: 'Lead Form',   metric: 'total_lead',             icon: '📋' },
+  conversion:   { label: 'Conversion',  metric: 'total_complete_payment', icon: '✅' },
+  click_to_web: { label: 'Click Web',   metric: 'clicks',                 icon: '🖱' },
+  follow:       { label: 'Follow',      metric: 'follows',                icon: '➕' },
+};
+
+const OBJ_MAP = {
+  REACH: 'Reach', VIDEO_VIEWS: 'Video Views', LEAD_GENERATION: 'Lead Form',
+  CONVERSIONS: 'Conversion', APP_PROMOTION: 'App Install',
+  TRAFFIC: 'Click to Web', COMMUNITY_INTERACTION: 'Follow',
+  PRODUCT_SALES: 'Product Sales', CATALOG_SALES: 'Catalog',
+};
+
+/* ═══════════════════════════ STATE ═══════════════════════════ */
+const S = {
+  config:    JSON.parse(localStorage.getItem('tt_cfg') || '{}'),
+  demo:      localStorage.getItem('tt_demo') === '1',
+  accounts:  [],
+  accountId: localStorage.getItem('tt_acc') || '',
+  campaigns: [],
+  adgroups:  {},    // { campaignId: [...] }
+  metrics:   {},    // { id: {...} }
+  expanded:  new Set(),
+  columns:   JSON.parse(localStorage.getItem('tt_cols') || '["reach","conversion","click_to_web"]'),
+  view:      localStorage.getItem('tt_view') || 'desktop',
+  dateRange: '7',
+  statusFilter: '',
+  budgetEdit: null,
+  bidEdit: null,
+};
+
+/* ═══════════════════════════ API ═══════════════════════════ */
+const BASE = 'https://business-api.tiktok.com/open_api/v1.3';
+
+function buildURL(path, params = {}) {
+  const proxy = S.config.proxy || '';
+  const u = new URL(BASE + path);
+  for (const [k, v] of Object.entries(params)) {
+    if (v === undefined || v === null || v === '') continue;
+    u.searchParams.set(k, Array.isArray(v) || typeof v === 'object' ? JSON.stringify(v) : v);
+  }
+  return proxy ? proxy + encodeURIComponent(u.toString()) : u.toString();
+}
+
+async function apiGet(path, params = {}) {
+  const r = await fetch(buildURL(path, params), {
+    headers: { 'Access-Token': S.config.token, 'Content-Type': 'application/json' }
+  });
+  const d = await r.json();
+  if (d.code !== 0) throw new Error(d.message || `API error ${d.code}`);
+  return d.data;
+}
+
+async function apiPost(path, body = {}) {
+  const proxy = S.config.proxy || '';
+  const url = proxy ? proxy + encodeURIComponent(BASE + path) : BASE + path;
+  const r = await fetch(url, {
+    method: 'POST',
+    headers: { 'Access-Token': S.config.token, 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+  const d = await r.json();
+  if (d.code !== 0) throw new Error(d.message || `API error ${d.code}`);
+  return d.data;
+}
+
+/* ═══════════════════════════ DATE RANGE ═══════════════════════════ */
+function getRange(v) {
+  const fmt = d => d.toISOString().slice(0,10);
+  const t = new Date();
+  if (v === 'today')      return { start: fmt(t), end: fmt(t) };
+  if (v === 'yesterday')  { const y = new Date(t); y.setDate(y.getDate()-1); return { start:fmt(y), end:fmt(y) }; }
+  if (v === 'this_month') { return { start: fmt(new Date(t.getFullYear(), t.getMonth(), 1)), end: fmt(t) }; }
+  if (v === 'last_month') {
+    return {
+      start: fmt(new Date(t.getFullYear(), t.getMonth()-1, 1)),
+      end:   fmt(new Date(t.getFullYear(), t.getMonth(), 0)),
+    };
+  }
+  const d = parseInt(v) || 7;
+  const s = new Date(t); s.setDate(s.getDate() - d + 1);
+  return { start: fmt(s), end: fmt(t) };
+}
+
+/* ═══════════════════════════ MOCK DATA ═══════════════════════════ */
+function mockAccounts() {
+  return [
+    { advertiser_id: '7001111111111', advertiser_name: 'Công ty ABC – TikTok Ads', currency: 'VND', balance: 12500000 },
+    { advertiser_id: '7002222222222', advertiser_name: 'Brand XYZ Marketing',       currency: 'VND', balance: 8700000 },
+    { advertiser_id: '7003333333333', advertiser_name: 'Shop Online 123',           currency: 'VND', balance: 3100000 },
+  ];
+}
+
+function mockCampaigns() {
+  return [
+    { campaign_id:'c01', campaign_name:'Chiến dịch Hè 2025 – Thương hiệu',      operation_status:'ENABLE',  budget:5000000,  budget_mode:'BUDGET_MODE_TOTAL', objective_type:'REACH' },
+    { campaign_id:'c02', campaign_name:'Lead Gen – Khóa học Online Q2',          operation_status:'ENABLE',  budget:3000000,  budget_mode:'BUDGET_MODE_DAILY', objective_type:'LEAD_GENERATION' },
+    { campaign_id:'c03', campaign_name:'Video Views – Brand Awareness',           operation_status:'DISABLE', budget:10000000, budget_mode:'BUDGET_MODE_TOTAL', objective_type:'VIDEO_VIEWS' },
+    { campaign_id:'c04', campaign_name:'Chuyển đổi – Mua hàng App',              operation_status:'ENABLE',  budget:8000000,  budget_mode:'BUDGET_MODE_DAILY', objective_type:'CONVERSIONS' },
+    { campaign_id:'c05', campaign_name:'Traffic – Flash Sale Website',            operation_status:'ENABLE',  budget:2000000,  budget_mode:'BUDGET_MODE_DAILY', objective_type:'TRAFFIC' },
+    { campaign_id:'c06', campaign_name:'Follow – Tăng người theo dõi',           operation_status:'DISABLE', budget:1500000,  budget_mode:'BUDGET_MODE_DAILY', objective_type:'COMMUNITY_INTERACTION' },
+  ];
+}
+
+function mockAdGroups(cid) {
+  const data = {
+    c01: [
+      { adgroup_id:'ag01', adgroup_name:'Nữ 18-24 Hà Nội – Creative A', campaign_id:'c01', operation_status:'ENABLE',  budget:2000000, budget_mode:'BUDGET_MODE_TOTAL', bid_price:5000,  bid_type:'BID_TYPE_NO_BID' },
+      { adgroup_id:'ag02', adgroup_name:'Nam 25-34 HCM – Creative B',    campaign_id:'c01', operation_status:'ENABLE',  budget:3000000, budget_mode:'BUDGET_MODE_TOTAL', bid_price:4500,  bid_type:'BID_TYPE_NO_BID' },
+    ],
+    c02: [
+      { adgroup_id:'ag03', adgroup_name:'Lead – Học sinh THPT',         campaign_id:'c02', operation_status:'ENABLE',  budget:1000000, budget_mode:'BUDGET_MODE_DAILY', bid_price:15000, bid_type:'BID_TYPE_CUSTOM_BID' },
+      { adgroup_id:'ag04', adgroup_name:'Lead – Sinh viên Đại học',     campaign_id:'c02', operation_status:'DISABLE', budget:2000000, budget_mode:'BUDGET_MODE_DAILY', bid_price:12000, bid_type:'BID_TYPE_CUSTOM_BID' },
+    ],
+    c03: [
+      { adgroup_id:'ag05', adgroup_name:'Video – Toàn quốc Rộng',       campaign_id:'c03', operation_status:'DISABLE', budget:10000000, budget_mode:'BUDGET_MODE_TOTAL', bid_price:200,  bid_type:'BID_TYPE_NO_BID' },
+    ],
+    c04: [
+      { adgroup_id:'ag06', adgroup_name:'Convert – Retargeting',        campaign_id:'c04', operation_status:'ENABLE',  budget:4000000, budget_mode:'BUDGET_MODE_DAILY', bid_price:25000, bid_type:'BID_TYPE_CUSTOM_BID' },
+      { adgroup_id:'ag07', adgroup_name:'Convert – Lookalike 2%',       campaign_id:'c04', operation_status:'ENABLE',  budget:4000000, budget_mode:'BUDGET_MODE_DAILY', bid_price:30000, bid_type:'BID_TYPE_CUSTOM_BID' },
+    ],
+    c05: [
+      { adgroup_id:'ag08', adgroup_name:'Traffic – Interest Targeting', campaign_id:'c05', operation_status:'ENABLE',  budget:2000000, budget_mode:'BUDGET_MODE_DAILY', bid_price:800,   bid_type:'BID_TYPE_CUSTOM_BID' },
+    ],
+    c06: [
+      { adgroup_id:'ag09', adgroup_name:'Follow – Hashtag Challenge',   campaign_id:'c06', operation_status:'DISABLE', budget:1500000, budget_mode:'BUDGET_MODE_DAILY', bid_price:3000,  bid_type:'BID_TYPE_CUSTOM_BID' },
+    ],
+  };
+  return data[cid] || [];
+}
+
+function mockMetrics(ids) {
+  const r = {};
+  ids.forEach(id => {
+    r[id] = {
+      spend:                 +(Math.random()*2500000 + 300000).toFixed(0),
+      reach:                 Math.floor(Math.random()*45000 + 3000),
+      video_play_2s:         Math.floor(Math.random()*28000 + 1500),
+      video_watched_6s:      Math.floor(Math.random()*12000 + 800),
+      total_lead:            Math.floor(Math.random()*120 + 5),
+      total_complete_payment:Math.floor(Math.random()*60 + 2),
+      clicks:                Math.floor(Math.random()*2500 + 150),
+      follows:               Math.floor(Math.random()*600 + 30),
+      impressions:           Math.floor(Math.random()*120000 + 8000),
+    };
+  });
+  return r;
+}
+
+/* ═══════════════════════════ FETCH WRAPPERS ═══════════════════════════ */
+async function fetchAccounts() {
+  if (S.demo) return mockAccounts();
+  const ids = S.config.advIds || [];
+  if (ids.length) {
+    const d = await apiGet('/advertiser/info/', { advertiser_ids: ids });
+    return d.list || [];
+  }
+  const d = await apiGet('/oauth2/advertiser/get/', {
+    app_id: S.config.appId, secret: S.config.secret,
+  });
+  return d.list || [];
+}
+
+async function fetchCampaigns(aid) {
+  if (S.demo) return mockCampaigns();
+  const params = { advertiser_id: aid, page_size: 200,
+    fields: ['campaign_id','campaign_name','operation_status','budget','budget_mode','objective_type'] };
+  if (S.statusFilter) params.filtering = { primary_status: S.statusFilter };
+  const d = await apiGet('/campaign/get/', params);
+  return d.list || [];
+}
+
+async function fetchAdGroups(aid, cid) {
+  if (S.demo) return mockAdGroups(cid);
+  const d = await apiGet('/adgroup/get/', {
+    advertiser_id: aid, campaign_id: cid, page_size: 200,
+    fields: ['adgroup_id','adgroup_name','campaign_id','operation_status','budget','budget_mode','bid_price','bid_type'],
+  });
+  return d.list || [];
+}
+
+async function fetchMetrics(aid, level, ids) {
+  if (S.demo) return mockMetrics(ids);
+  const { start, end } = getRange(S.dateRange);
+  const dim = level === 'campaign' ? 'campaign_id' : 'adgroup_id';
+  const d = await apiGet('/report/integrated/get/', {
+    advertiser_id: aid,
+    report_type: 'BASIC',
+    data_level: level === 'campaign' ? 'AUCTION_CAMPAIGN' : 'AUCTION_ADGROUP',
+    dimensions: [dim],
+    metrics: ['spend','reach','video_play_2s','video_watched_6s','total_lead','total_complete_payment','clicks','follows','impressions'],
+    start_date: start, end_date: end, page_size: 1000,
+  });
+  const r = {};
+  (d.list || []).forEach(item => { r[item.dimensions[dim]] = item.metrics; });
+  return r;
+}
+
+/* ═══════════════════════════ LOAD DATA ═══════════════════════════ */
+async function loadAccounts() {
+  try {
+    S.accounts = await fetchAccounts();
+    renderAccountSel();
+    if (S.accountId && S.accounts.find(a => a.advertiser_id === S.accountId)) {
+      loadCampaigns(S.accountId);
+    } else if (S.accounts.length === 1) {
+      S.accountId = S.accounts[0].advertiser_id;
+      document.getElementById('accountSel').value = S.accountId;
+      localStorage.setItem('tt_acc', S.accountId);
+      loadCampaigns(S.accountId);
+    }
+  } catch(e) { toast('error', 'Lỗi lấy tài khoản: ' + e.message); }
+}
+
+async function loadCampaigns(aid) {
+  if (!aid) return;
+  showDashboard();
+  setLoading(true);
+  try {
+    S.campaigns = await fetchCampaigns(aid);
+    if (S.campaigns.length) {
+      const ids = S.campaigns.map(c => c.campaign_id);
+      Object.assign(S.metrics, await fetchMetrics(aid, 'campaign', ids));
+    }
+    render();
+    updateSummary();
+  } catch(e) { toast('error', 'Lỗi tải chiến dịch: ' + e.message); }
+  setLoading(false);
+}
+
+async function loadAdGroups(cid) {
+  if (S.adgroups[cid]) { renderAGRows(cid); return; }
+  try {
+    const ags = await fetchAdGroups(S.accountId, cid);
+    S.adgroups[cid] = ags;
+    if (ags.length) {
+      const ids = ags.map(a => a.adgroup_id);
+      Object.assign(S.metrics, await fetchMetrics(S.accountId, 'adgroup', ids));
+    }
+    renderAGRows(cid);
+    updateCards();
+    updateSummary();
+  } catch(e) { toast('error', 'Lỗi tải nhóm QC: ' + e.message); }
+}
+
+/* ═══════════════════════════ RENDER – TABLE ═══════════════════════════ */
+function colDefs() { return S.columns.map(id => COLS[id]); }
+
+function renderHead() {
+  const cols = colDefs();
+  document.getElementById('tHead').innerHTML = `
+    <th>Chiến dịch / Nhóm quảng cáo</th>
+    <th>Bật / Tắt</th>
+    <th>Ngân sách</th>
+    <th>Chi tiêu</th>
+    ${cols.map(c => `<th>${c.icon} ${c.label}</th>`).join('')}
+    <th>Thao tác</th>
+  `;
+}
+
+function render() {
+  renderHead();
+  const tb = document.getElementById('tBody');
+  tb.innerHTML = '';
+  let list = S.campaigns;
+  if (S.statusFilter) list = list.filter(c => c.operation_status === S.statusFilter);
+  if (!list.length) {
+    tb.innerHTML = `<tr><td colspan="20" style="text-align:center;padding:50px;color:var(--text2);">Không có chiến dịch nào</td></tr>`;
+    return;
+  }
+  list.forEach(c => {
+    tb.appendChild(makeCampaignRow(c));
+    if (S.expanded.has(c.campaign_id)) {
+      (S.adgroups[c.campaign_id] || []).forEach(ag => tb.appendChild(makeAGRow(ag)));
+    }
+  });
+}
+
+function makeCampaignRow(c) {
+  const tr = document.createElement('tr');
+  tr.className = 'campaign-row';
+  tr.dataset.cid = c.campaign_id;
+  const active  = c.operation_status === 'ENABLE';
+  const open    = S.expanded.has(c.campaign_id);
+  const m       = S.metrics[c.campaign_id] || {};
+  const bmode   = c.budget_mode === 'BUDGET_MODE_DAILY' ? '/ng' : '';
+  const cols    = colDefs();
+  tr.innerHTML = `
+    <td>
+      <div class="name-cell">
+        <button class="expand-btn ${open?'open':''}" onclick="toggleExpand('${c.campaign_id}',event)">▶</button>
+        <div class="name-info">
+          <div class="name-main" title="${esc(c.campaign_name)}">${esc(c.campaign_name)}</div>
+          <div class="name-sub">${OBJ_MAP[c.objective_type]||c.objective_type||'—'}</div>
+        </div>
+      </div>
+    </td>
+    <td onclick="event.stopPropagation()">
+      <label class="toggle">
+        <input type="checkbox" ${active?'checked':''} onchange="toggleCampaign('${c.campaign_id}',this.checked)">
+        <span class="toggle-track"></span>
+      </label>
+    </td>
+    <td>
+      <div class="budget-row">
+        <span>${fmtCur(c.budget)}</span><span class="budget-mode">${bmode}</span>
+        <button class="edit-btn" onclick="openBudget('campaign','${c.campaign_id}','${esc(c.campaign_name)}',${c.budget})" title="Sửa ngân sách">✎</button>
+      </div>
+    </td>
+    <td><span class="spend-val">${fmtCur(m.spend||0)}</span></td>
+    ${cols.map(cl=>`<td class="metric-num">${fmtN(m[cl.metric])}</td>`).join('')}
+    <td>
+      <button class="btn btn-sm btn-ghost" onclick="toggleExpand('${c.campaign_id}',event)">
+        ${open?'▲':'▼'} Nhóm QC
+      </button>
+    </td>
+  `;
+  return tr;
+}
+
+function makeAGRow(ag) {
+  const tr = document.createElement('tr');
+  tr.className = 'adgroup-row';
+  tr.dataset.agid = ag.adgroup_id;
+  tr.dataset.cpar = ag.campaign_id;
+  const active = ag.operation_status === 'ENABLE';
+  const m      = S.metrics[ag.adgroup_id] || {};
+  const bmode  = ag.budget_mode === 'BUDGET_MODE_DAILY' ? '/ng' : '';
+  const bidLabel = ag.bid_type === 'BID_TYPE_CUSTOM_BID' ? fmtCur(ag.bid_price) : 'Auto';
+  const cols   = colDefs();
+  tr.innerHTML = `
+    <td>
+      <div class="adgroup-indent">
+        <div class="adgroup-bar"></div>
+        <div class="name-info">
+          <div class="name-main" title="${esc(ag.adgroup_name)}" style="font-weight:400;">${esc(ag.adgroup_name)}</div>
+          <div class="name-sub">Bid: ${bidLabel}</div>
+        </div>
+      </div>
+    </td>
+    <td onclick="event.stopPropagation()">
+      <label class="toggle">
+        <input type="checkbox" ${active?'checked':''} onchange="toggleAG('${ag.adgroup_id}','${ag.campaign_id}',this.checked)">
+        <span class="toggle-track"></span>
+      </label>
+    </td>
+    <td>
+      <div class="budget-row">
+        <span>${fmtCur(ag.budget)}</span><span class="budget-mode">${bmode}</span>
+        <button class="edit-btn" onclick="openBudget('adgroup','${ag.adgroup_id}','${esc(ag.adgroup_name)}',${ag.budget})" title="Sửa ngân sách">✎</button>
+      </div>
+    </td>
+    <td><span class="spend-val">${fmtCur(m.spend||0)}</span></td>
+    ${cols.map(cl=>`<td class="metric-num">${fmtN(m[cl.metric])}</td>`).join('')}
+    <td>
+      <button class="btn btn-sm btn-ghost" onclick="openBid('${ag.adgroup_id}','${esc(ag.adgroup_name)}',${ag.bid_price||0})">
+        🎯 Bid
+      </button>
+    </td>
+  `;
+  return tr;
+}
+
+function renderAGRows(cid) {
+  const tb   = document.getElementById('tBody');
+  const camp = S.campaigns.find(c => c.campaign_id === cid);
+  // remove old rows
+  tb.querySelectorAll(`[data-cpar="${cid}"]`).forEach(r => r.remove());
+  if (!S.expanded.has(cid)) return;
+  const anchor = tb.querySelector(`[data-cid="${cid}"]`);
+  if (!anchor) return;
+  let after = anchor;
+  (S.adgroups[cid] || []).forEach(ag => {
+    const row = makeAGRow(ag);
+    after.insertAdjacentElement('afterend', row);
+    after = row;
+  });
+  // update expand button
+  const btn = anchor.querySelector('.expand-btn');
+  if (btn) btn.classList.add('open');
+}
+
+function setLoading(on) {
+  if (on) {
+    renderHead();
+    document.getElementById('tBody').innerHTML = `
+      <tr class="loading-row"><td colspan="20">
+        <div class="loading-inline" style="justify-content:center;">
+          <div class="spinner"></div> Đang tải dữ liệu...
+        </div>
+      </td></tr>`;
+    document.getElementById('cardGrid').innerHTML = `
+      <div style="text-align:center;padding:50px;color:var(--text2);">
+        <div class="spinner" style="margin:auto;margin-bottom:10px;"></div> Đang tải...
+      </div>`;
+  }
+}
+
+/* ═══════════════════════════ RENDER – CARDS ═══════════════════════════ */
+function updateCards() {
+  const grid = document.getElementById('cardGrid');
+  grid.innerHTML = '';
+  let list = S.campaigns;
+  if (S.statusFilter) list = list.filter(c => c.operation_status === S.statusFilter);
+  list.forEach(c => grid.appendChild(makeCard(c)));
+}
+
+function makeCard(c) {
+  const div   = document.createElement('div');
+  div.className = 'c-card';
+  const active = c.operation_status === 'ENABLE';
+  const m      = S.metrics[c.campaign_id] || {};
+  const cols   = colDefs();
+  const open   = S.expanded.has(c.campaign_id);
+  div.innerHTML = `
+    <div class="c-card-head" onclick="toggleExpandCard('${c.campaign_id}')">
+      <div class="c-card-info">
+        <div class="c-card-name">${esc(c.campaign_name)}</div>
+        <div class="c-card-meta">${OBJ_MAP[c.objective_type]||c.objective_type||'—'} • Chi: ${fmtCur(m.spend||0)}</div>
+      </div>
+      <label class="toggle" onclick="event.stopPropagation()">
+        <input type="checkbox" ${active?'checked':''} onchange="toggleCampaign('${c.campaign_id}',this.checked)">
+        <span class="toggle-track"></span>
+      </label>
+    </div>
+    ${cols.length ? `
+    <div class="c-card-metrics">
+      ${cols.map(cl=>`
+        <div class="c-card-metric">
+          <div class="c-card-metric-label">${cl.label}</div>
+          <div class="c-card-metric-val">${fmtN(m[cl.metric])}</div>
+        </div>`).join('')}
+    </div>` : ''}
+    <div class="c-card-budget">
+      Ngân sách: <span>${fmtCur(c.budget)}</span>
+      <button class="btn btn-sm" style="margin-left:auto;" onclick="openBudget('campaign','${c.campaign_id}','${esc(c.campaign_name)}',${c.budget})">✎</button>
+    </div>
+    <div class="c-adgroups" id="cag-${c.campaign_id}">
+      ${open ? renderAGCards(c.campaign_id) : ''}
+    </div>
+  `;
+  return div;
+}
+
+function renderAGCards(cid) {
+  const ags = S.adgroups[cid];
+  if (!ags) return '<div style="padding:12px 16px;color:var(--text2);font-size:13px;"><div class="spinner" style="display:inline-block;vertical-align:middle;margin-right:6px;"></div>Đang tải...</div>';
+  if (!ags.length) return '<div style="padding:12px 16px;color:var(--text3);font-size:13px;">Không có nhóm QC</div>';
+  return ags.map(ag => {
+    const active = ag.operation_status === 'ENABLE';
+    return `<div class="c-ag-item">
+      <div class="c-ag-info">
+        <div class="c-ag-name">${esc(ag.adgroup_name)}</div>
+        <div class="c-ag-sub">Ngân sách: ${fmtCur(ag.budget)} • Bid: ${ag.bid_type==='BID_TYPE_CUSTOM_BID'?fmtCur(ag.bid_price):'Auto'}</div>
+      </div>
+      <button class="btn btn-sm btn-ghost" onclick="openBid('${ag.adgroup_id}','${esc(ag.adgroup_name)}',${ag.bid_price||0})">🎯</button>
+      <label class="toggle" onclick="event.stopPropagation()">
+        <input type="checkbox" ${active?'checked':''} onchange="toggleAG('${ag.adgroup_id}','${ag.campaign_id}',this.checked)">
+        <span class="toggle-track"></span>
+      </label>
+    </div>`;
+  }).join('');
+}
+
+/* ═══════════════════════════ EXPAND / COLLAPSE ═══════════════════════════ */
+function toggleExpand(cid, e) {
+  if (e) e.stopPropagation();
+  if (S.expanded.has(cid)) {
+    S.expanded.delete(cid);
+    document.getElementById('tBody').querySelectorAll(`[data-cpar="${cid}"]`).forEach(r=>r.remove());
+    const btn = document.querySelector(`[data-cid="${cid}"] .expand-btn`);
+    if (btn) btn.classList.remove('open');
+  } else {
+    S.expanded.add(cid);
+    if (!S.adgroups[cid]) loadAdGroups(cid);
+    else renderAGRows(cid);
+  }
+}
+
+async function toggleExpandCard(cid) {
+  const box = document.getElementById('cag-' + cid);
+  if (!box) return;
+  if (S.expanded.has(cid)) {
+    S.expanded.delete(cid);
+    box.innerHTML = '';
+  } else {
+    S.expanded.add(cid);
+    box.innerHTML = '<div style="padding:12px 16px;color:var(--text2);font-size:13px;"><div class="spinner" style="display:inline-block;vertical-align:middle;margin-right:6px;"></div>Đang tải...</div>';
+    if (!S.adgroups[cid]) await loadAdGroups(cid);
+    box.innerHTML = renderAGCards(cid);
+  }
+}
+
+/* ═══════════════════════════ TOGGLES ═══════════════════════════ */
+async function toggleCampaign(cid, on) {
+  try {
+    if (!S.demo) {
+      await apiPost('/campaign/status/update/', {
+        advertiser_id: S.accountId, campaign_ids: [cid],
+        operation_status: on ? 'ENABLE' : 'DISABLE',
+      });
+    }
+    const c = S.campaigns.find(x => x.campaign_id === cid);
+    if (c) c.operation_status = on ? 'ENABLE' : 'DISABLE';
+    toast('success', `Chiến dịch đã ${on ? 'bật ✓' : 'tắt ✓'}`);
+    updateSummary();
+  } catch(e) { toast('error', 'Lỗi: ' + e.message); }
+}
+
+async function toggleAG(agid, cid, on) {
+  try {
+    if (!S.demo) {
+      await apiPost('/adgroup/status/update/', {
+        advertiser_id: S.accountId, adgroup_ids: [agid],
+        operation_status: on ? 'ENABLE' : 'DISABLE',
+      });
+    }
+    const ags = S.adgroups[cid] || [];
+    const ag  = ags.find(a => a.adgroup_id === agid);
+    if (ag) ag.operation_status = on ? 'ENABLE' : 'DISABLE';
+    toast('success', `Nhóm QC đã ${on ? 'bật ✓' : 'tắt ✓'}`);
+    updateSummary();
+  } catch(e) { toast('error', 'Lỗi: ' + e.message); }
+}
+
+/* ═══════════════════════════ SUMMARY ═══════════════════════════ */
+function updateSummary() {
+  const cs = S.campaigns;
+  const activeCmp = cs.filter(c => c.operation_status === 'ENABLE').length;
+  let totalSpend = 0, totalBudget = 0, activeAG = 0;
+  cs.forEach(c => {
+    totalSpend  += parseFloat(S.metrics[c.campaign_id]?.spend || 0);
+    totalBudget += parseFloat(c.budget || 0);
+  });
+  Object.values(S.adgroups).forEach(ags => ags.forEach(ag => { if (ag.operation_status==='ENABLE') activeAG++; }));
+
+  document.getElementById('s-spend').textContent  = fmtCur(totalSpend);
+  document.getElementById('s-cmp').textContent    = activeCmp;
+  document.getElementById('s-cmp-sub').textContent= `/ ${cs.length} chiến dịch`;
+  document.getElementById('s-ag').textContent     = activeAG;
+  document.getElementById('s-ag-sub').textContent = activeAG ? '' : 'Chưa tải nhóm QC';
+  document.getElementById('s-budget').textContent = fmtCur(totalBudget);
+  document.getElementById('s-budget-sub').textContent = `Còn lại: ${fmtCur(Math.max(0, totalBudget - totalSpend))}`;
+}
+
+/* ═══════════════════════════ COLUMNS ═══════════════════════════ */
+function renderChips() {
+  const el = document.getElementById('chips');
+  el.innerHTML = '';
+  Object.values(COLS).forEach(c => {
+    const active   = S.columns.includes(c === COLS[c.id] ? c.id : Object.keys(COLS).find(k=>COLS[k]===c));
+    // rebuild key lookup
+    const id = Object.keys(COLS).find(k => COLS[k] === c);
+    const isActive  = S.columns.includes(id);
+    const isDisabled= !isActive && S.columns.length >= 3;
+    const chip = document.createElement('div');
+    chip.className = `chip ${isActive?'active':''} ${isDisabled?'disabled':''}`;
+    chip.textContent = `${c.icon} ${c.label}`;
+    chip.onclick = () => {
+      if (isDisabled) { toast('warn', 'Tối đa 3 cột'); return; }
+      const idx = S.columns.indexOf(id);
+      if (idx >= 0) S.columns.splice(idx, 1);
+      else { if (S.columns.length >= 3) { toast('warn','Tối đa 3 cột'); return; } S.columns.push(id); }
+      localStorage.setItem('tt_cols', JSON.stringify(S.columns));
+      renderChips();
+      if (S.campaigns.length) { render(); updateCards(); }
+    };
+    el.appendChild(chip);
+  });
+}
+
+/* ═══════════════════════════ ACCOUNT / DATE SELECTS ═══════════════════════════ */
+function renderAccountSel() {
+  const sel = document.getElementById('accountSel');
+  sel.innerHTML = '<option value="">— Chọn tài khoản QC —</option>';
+  S.accounts.forEach(a => {
+    const o = document.createElement('option');
+    o.value = a.advertiser_id;
+    o.textContent = a.advertiser_name || a.advertiser_id;
+    sel.appendChild(o);
+  });
+  if (S.accountId) sel.value = S.accountId;
+}
+
+function onAccountChange(v) {
+  S.accountId = v;
+  localStorage.setItem('tt_acc', v);
+  S.campaigns = []; S.adgroups = {}; S.metrics = {}; S.expanded.clear();
+  if (v) loadCampaigns(v);
+}
+
+function onDateChange(v) {
+  S.dateRange = v;
+  S.metrics = {};
+  if (S.accountId) loadCampaigns(S.accountId);
+}
+
+function onStatusFilter(v) {
+  S.statusFilter = v;
+  render(); updateCards();
+}
+
+/* ═══════════════════════════ VIEW MODE ═══════════════════════════ */
+function setView(mode) {
+  S.view = mode;
+  localStorage.setItem('tt_view', mode);
+  document.getElementById('btnDesk').classList.toggle('active', mode === 'desktop');
+  document.getElementById('btnMobi').classList.toggle('active', mode === 'mobile');
+  document.getElementById('viewDesktop').style.display = mode === 'desktop' ? '' : 'none';
+  document.getElementById('viewMobile').style.display  = mode === 'mobile'  ? '' : 'none';
+  if (mode === 'mobile' && S.campaigns.length) updateCards();
+}
+
+/* ═══════════════════════════ BUDGET MODAL ═══════════════════════════ */
+function openBudget(type, id, name, cur) {
+  S.budgetEdit = { type, id, name, cur };
+  document.getElementById('budgetInfo').innerHTML = `<strong>${name}</strong><br>Ngân sách hiện tại: <strong>${fmtCurFull(cur)}</strong>`;
+  document.getElementById('budgetVal').value = cur;
+  document.getElementById('budgetOverlay').classList.add('open');
+}
+function closeBudget() { document.getElementById('budgetOverlay').classList.remove('open'); S.budgetEdit = null; }
+
+async function saveBudget() {
+  const { type, id, name } = S.budgetEdit;
+  const val = parseFloat(document.getElementById('budgetVal').value);
+  if (!val || val <= 0) { toast('error','Vui lòng nhập ngân sách hợp lệ'); return; }
+  try {
+    if (!S.demo) {
+      if (type === 'campaign') {
+        await apiPost('/campaign/update/', { advertiser_id: S.accountId, campaign_id: id, budget: val });
+      } else {
+        await apiPost('/adgroup/update/', { advertiser_id: S.accountId, adgroup_id: id, budget: val });
+      }
+    }
+    if (type === 'campaign') {
+      const c = S.campaigns.find(x => x.campaign_id === id);
+      if (c) c.budget = val;
+    } else {
+      Object.values(S.adgroups).forEach(ags => {
+        const ag = ags.find(a => a.adgroup_id === id);
+        if (ag) ag.budget = val;
+      });
+    }
+    toast('success', 'Đã cập nhật ngân sách ✓');
+    closeBudget(); render(); updateCards(); updateSummary();
+  } catch(e) { toast('error', 'Lỗi: ' + e.message); }
+}
+
+/* ═══════════════════════════ BID MODAL ═══════════════════════════ */
+function openBid(agid, name, cur) {
+  S.bidEdit = { agid, name, cur };
+  document.getElementById('bidInfo').innerHTML = `<strong>${name}</strong><br>Bid thầu hiện tại: <strong>${fmtCurFull(cur)}</strong>`;
+  document.getElementById('bidVal').value = cur;
+  document.getElementById('bidOverlay').classList.add('open');
+}
+function closeBid() { document.getElementById('bidOverlay').classList.remove('open'); S.bidEdit = null; }
+
+async function saveBid() {
+  const { agid } = S.bidEdit;
+  const val = parseFloat(document.getElementById('bidVal').value);
+  if (!val || val <= 0) { toast('error','Vui lòng nhập bid hợp lệ'); return; }
+  try {
+    if (!S.demo) {
+      await apiPost('/adgroup/update/', { advertiser_id: S.accountId, adgroup_id: agid, bid_price: val });
+    }
+    Object.values(S.adgroups).forEach(ags => {
+      const ag = ags.find(a => a.adgroup_id === agid);
+      if (ag) { ag.bid_price = val; ag.bid_type = 'BID_TYPE_CUSTOM_BID'; }
+    });
+    toast('success', 'Đã cập nhật bid thầu ✓');
+    closeBid(); render(); updateCards();
+  } catch(e) { toast('error', 'Lỗi: ' + e.message); }
+}
+
+/* ═══════════════════════════ SETTINGS ═══════════════════════════ */
+function openSettings() {
+  document.getElementById('iToken').value    = S.config.token || '';
+  document.getElementById('iProxy').value    = S.config.proxy || '';
+  document.getElementById('iAdvIds').value   = (S.config.advIds || []).join('\n');
+  document.getElementById('iDemo').checked   = S.demo;
+  document.getElementById('settingsOverlay').classList.add('open');
+}
+function closeSettings() { document.getElementById('settingsOverlay').classList.remove('open'); }
+
+async function saveSettings() {
+  const token  = document.getElementById('iToken').value.trim();
+  const proxy  = document.getElementById('iProxy').value.trim();
+  const ids    = document.getElementById('iAdvIds').value.trim().split('\n').map(s=>s.trim()).filter(Boolean);
+  const demo   = document.getElementById('iDemo').checked;
+
+  S.config = { token, proxy, advIds: ids };
+  S.demo   = demo;
+  localStorage.setItem('tt_cfg',  JSON.stringify(S.config));
+  localStorage.setItem('tt_demo', demo ? '1' : '0');
+  closeSettings();
+
+  document.getElementById('demoBadge').style.display = demo ? '' : 'none';
+
+  if (demo || token) {
+    showDashboard();
+    S.campaigns = []; S.adgroups = {}; S.metrics = {}; S.expanded.clear();
+    await loadAccounts();
+    if (!demo) toast('success', 'Đã kết nối TikTok API ✓');
+  }
+}
+
+function enableDemo() {
+  S.demo = true;
+  localStorage.setItem('tt_demo', '1');
+  document.getElementById('demoBadge').style.display = '';
+  showDashboard();
+  loadAccounts();
+}
+
+/* ═══════════════════════════ REFRESH ═══════════════════════════ */
+async function refreshData() {
+  if (!S.accountId) { toast('warn','Vui lòng chọn tài khoản'); return; }
+  S.metrics = {}; S.adgroups = {}; S.expanded.clear();
+  await loadCampaigns(S.accountId);
+  toast('success', 'Đã làm mới dữ liệu ✓');
+}
+
+/* ═══════════════════════════ HELPERS ═══════════════════════════ */
+function showDashboard() {
+  document.getElementById('setupScreen').style.display = 'none';
+  document.getElementById('dashboard').style.display   = '';
+}
+
+function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+function fmtCur(v) {
+  const n = parseFloat(v) || 0;
+  if (n >= 1e9) return (n/1e9).toFixed(1) + 'B';
+  if (n >= 1e6) return (n/1e6).toFixed(1) + 'M';
+  if (n >= 1e3) return (n/1e3).toFixed(0) + 'K';
+  return n.toLocaleString('vi-VN');
+}
+
+function fmtCurFull(v) {
+  return parseFloat(v||0).toLocaleString('vi-VN') + ' đ';
+}
+
+function fmtN(v) {
+  if (v === undefined || v === null || v === '') return '—';
+  const n = parseFloat(v) || 0;
+  if (n >= 1e6) return (n/1e6).toFixed(1) + 'M';
+  if (n >= 1e3) return (n/1e3).toFixed(0) + 'K';
+  return n.toLocaleString('vi-VN');
+}
+
+/* ═══════════════════════════ TOAST ═══════════════════════════ */
+function toast(type, msg) {
+  const icons = { success:'✓', error:'✕', info:'ℹ', warn:'⚠' };
+  const el = Object.assign(document.createElement('div'), { className:`toast ${type}`, innerHTML:`<span>${icons[type]||''}</span><span>${msg}</span>` });
+  document.getElementById('toasts').appendChild(el);
+  setTimeout(() => { el.style.cssText='opacity:0;transform:translateX(110%);transition:all .3s;'; setTimeout(()=>el.remove(),350); }, 3200);
+}
+
+/* ═══════════════════════════ OVERLAY CLOSE ═══════════════════════════ */
+document.querySelectorAll('.overlay').forEach(o => o.addEventListener('click', e => { if(e.target===o) o.classList.remove('open'); }));
+document.addEventListener('keydown', e => { if(e.key==='Escape') document.querySelectorAll('.overlay.open').forEach(o=>o.classList.remove('open')); });
+
+/* ═══════════════════════════ INIT ═══════════════════════════ */
+function init() {
+  renderChips();
+  setView(S.view);
+  renderHead();
+  document.getElementById('demoBadge').style.display = S.demo ? '' : 'none';
+  if (S.demo) { showDashboard(); loadAccounts(); }
+  else if (S.config.token) { showDashboard(); loadAccounts(); }
+}
+
+document.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>
