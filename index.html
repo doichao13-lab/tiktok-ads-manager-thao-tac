@@ -427,6 +427,7 @@
   </div>
   <div class="header-actions">
     <button class="btn" onclick="refreshData()" id="refreshBtn">↻ Làm mới</button>
+    <button class="btn" onclick="openCloudSync()" id="shareBtn" style="display:none;" title="Cloud Sync — dùng trên mọi thiết bị">☁️ Cloud Sync</button>
     <button class="btn btn-primary" onclick="openSettings()">⚙ Cài đặt</button>
   </div>
 </header>
@@ -627,6 +628,7 @@
       <div class="stab active" id="stab1" onclick="switchTab(1)">🔑 Dùng App ID + Secret</div>
       <div class="stab"        id="stab2" onclick="switchTab(2)">📋 Tôi đã có Access Token</div>
       <div class="stab"        id="stab3" onclick="switchTab(3)">⚡ Demo Mode</div>
+      <div class="stab"        id="stab4" onclick="switchTab(4)">☁️ Cloud Sync</div>
     </div>
 
     <!-- ════ TAB 1: OAuth flow ════ -->
@@ -823,6 +825,71 @@ while ($listener.IsListening) {
       </div>
     </div>
 
+    <!-- ════ TAB 4: Cloud Sync ════ -->
+    <div class="stab-panel" id="spanel4">
+      <div style="background:#EFF6FF;border:1px solid #BFDBFE;border-radius:8px;padding:11px 14px;font-size:12px;color:#1E40AF;margin-bottom:18px;line-height:1.6;">
+        ☁️ <strong>Cloud Sync</strong> — Lưu cài đặt lên Cloudflare, truy cập từ mọi thiết bị bằng PIN. Chia sẻ link với đồng nghiệp để họ xem cùng tài khoản quảng cáo.
+      </div>
+
+      <!-- SAVE SECTION -->
+      <div style="margin-bottom:20px;padding-bottom:20px;border-bottom:1px solid var(--border);">
+        <div style="font-size:12px;font-weight:600;color:var(--text2);margin-bottom:10px;text-transform:uppercase;letter-spacing:.5px;">Lưu lên cloud</div>
+        <div class="form-group">
+          <label class="form-label">PIN (ví dụ: hung2025, teamabc)</label>
+          <input type="text" id="iCloudPin" class="form-input" placeholder="Đặt PIN dễ nhớ, tối thiểu 4 ký tự..." autocomplete="off" style="letter-spacing:1px;" />
+          <div class="form-hint">PIN dùng để tải cài đặt trên thiết bị khác. Giữ bí mật nếu không muốn người ngoài truy cập dữ liệu.</div>
+        </div>
+        <button class="btn btn-primary" onclick="saveToCloud()">☁️ Lưu lên cloud</button>
+        <div id="cloudSaveStatus" style="margin-top:10px;font-size:13px;min-height:20px;"></div>
+      </div>
+
+      <!-- SHARE URL SECTION -->
+      <div id="cloudShareSection" style="display:none;margin-bottom:20px;padding-bottom:20px;border-bottom:1px solid var(--border);">
+        <div style="font-size:12px;font-weight:600;color:var(--text2);margin-bottom:10px;text-transform:uppercase;letter-spacing:.5px;">Link chia sẻ</div>
+        <div class="form-group">
+          <textarea id="cloudShareUrl" rows="2" readonly style="font-size:12px;font-family:monospace;word-break:break-all;resize:none;padding:8px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;width:100%;box-sizing:border-box;"></textarea>
+          <div class="form-hint">Gửi link này cho đồng nghiệp — họ mở link là xem được dữ liệu ngay, không cần cài đặt gì thêm.</div>
+        </div>
+        <button class="btn btn-primary" onclick="copyCloudUrl()">📋 Copy link</button>
+      </div>
+
+      <!-- LOAD SECTION -->
+      <div>
+        <div style="font-size:12px;font-weight:600;color:var(--text2);margin-bottom:10px;text-transform:uppercase;letter-spacing:.5px;">Tải từ cloud (nhập PIN người khác chia sẻ)</div>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <input type="text" id="iCloudPinLoad" class="form-input" placeholder="Nhập PIN..." autocomplete="off" style="flex:1;letter-spacing:1px;" onkeydown="if(event.key==='Enter')loadFromCloud()" />
+          <button class="btn btn-primary" onclick="loadFromCloud()" style="white-space:nowrap;">📥 Tải</button>
+        </div>
+        <div id="cloudLoadStatus" style="margin-top:10px;font-size:13px;min-height:20px;"></div>
+      </div>
+
+      <div style="margin-top:20px;padding:10px 14px;background:#FEF9C3;border:1px solid #FDE047;border-radius:8px;font-size:11px;color:#713F12;line-height:1.7;">
+        <strong>Lưu ý:</strong> Tính năng này cần Worker Cloudflare có KV Storage. Xem hướng dẫn cài đặt trong tài liệu.
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ===================== SHARE CONFIG MODAL ===================== -->
+<div class="overlay" id="shareOverlay">
+  <div class="modal" style="max-width:480px;">
+    <div class="modal-head">
+      <div class="modal-title">📱 Dùng trên thiết bị khác</div>
+      <button class="modal-close" onclick="closeShare()">✕</button>
+    </div>
+    <div style="background:#FFF3CD;border:1px solid #FCD34D;border-radius:8px;padding:11px 14px;font-size:12px;color:#92400E;margin-bottom:16px;line-height:1.6;">
+      ⚠️ <strong>Link này chứa Access Token của bạn.</strong> Chỉ chia sẻ với thiết bị của chính bạn, không gửi cho người khác.
+    </div>
+    <div class="form-group">
+      <label class="form-label">Link cài đặt (mở trên điện thoại/máy tính khác)</label>
+      <textarea id="shareUrl" rows="4" style="font-size:11px;font-family:monospace;word-break:break-all;" readonly></textarea>
+      <div class="form-hint">Copy link này → mở trên thiết bị khác → cài đặt sẽ tự động được nạp.</div>
+    </div>
+    <div class="form-actions">
+      <button class="btn" onclick="closeShare()">Đóng</button>
+      <button class="btn btn-primary" onclick="copyShareUrl()">📋 Copy link</button>
+    </div>
   </div>
 </div>
 
@@ -1822,7 +1889,7 @@ let _activeTab    = 1;
 /* ─ TAB SWITCHING ─ */
 function switchTab(n) {
   _activeTab = n;
-  [1,2,3].forEach(i => {
+  [1,2,3,4].forEach(i => {
     document.getElementById('stab'+(i)).classList.toggle('active', i===n);
     document.getElementById('spanel'+i).classList.toggle('active', i===n);
   });
@@ -2086,6 +2153,16 @@ function openSettings() {
   switchTab(S.config.token ? 2 : 1);
   renderRedirectPresets();
   onAppIdInput(); // rebuild auth URL if app id is filled
+  // pre-fill cloud PIN if previously saved
+  const savedPin = localStorage.getItem('tt_cloud_pin');
+  if (savedPin) {
+    const pinEl = document.getElementById('iCloudPin');
+    if (pinEl && !pinEl.value) pinEl.value = savedPin;
+    const shareEl = document.getElementById('cloudShareUrl');
+    const shareSection = document.getElementById('cloudShareSection');
+    if (shareEl) shareEl.value = location.origin + location.pathname + '?pin=' + encodeURIComponent(savedPin);
+    if (shareSection) shareSection.style.display = '';
+  }
   document.getElementById('settingsOverlay').classList.add('open');
 }
 
@@ -2169,11 +2246,154 @@ async function refreshData() {
   toast('success', 'Đã làm mới dữ liệu ✓');
 }
 
+/* ═══════════════════════════ SHARE CONFIG ═══════════════════════════ */
+function openShareConfig() {
+  const cfg = S.config;
+  if (!cfg.token) { toast('warn', 'Chưa có cài đặt để chia sẻ'); return; }
+  const payload = { token: cfg.token, proxy: cfg.proxy || '', advIds: cfg.advIds || [] };
+  const encoded = btoa(unescape(encodeURIComponent(JSON.stringify(payload))));
+  const url = location.origin + location.pathname + '#cfg=' + encoded;
+  document.getElementById('shareUrl').value = url;
+  document.getElementById('shareOverlay').classList.add('open');
+}
+
+function closeShare() { document.getElementById('shareOverlay').classList.remove('open'); }
+
+function copyShareUrl() {
+  const el = document.getElementById('shareUrl');
+  navigator.clipboard.writeText(el.value)
+    .then(() => { toast('success', 'Đã copy link! Mở trên điện thoại để tự động cài đặt ✓'); closeShare(); })
+    .catch(() => { el.select(); document.execCommand('copy'); toast('success', 'Đã copy!'); closeShare(); });
+}
+
+// Auto-import config from URL hash (#cfg=...)
+(function autoImportConfig() {
+  const hash = location.hash;
+  if (!hash.startsWith('#cfg=')) return;
+  try {
+    const encoded = hash.slice(5);
+    const payload = JSON.parse(decodeURIComponent(escape(atob(encoded))));
+    if (!payload.token) return;
+    const cfg = { token: payload.token, proxy: payload.proxy || '', advIds: payload.advIds || [] };
+    localStorage.setItem('tt_cfg', JSON.stringify(cfg));
+    localStorage.setItem('tt_demo', '0');
+    history.replaceState({}, '', location.pathname);
+    setTimeout(() => toast('success', '✅ Đã tự động nạp cài đặt từ link! Đang kết nối...'), 600);
+  } catch(e) { /* invalid hash, ignore */ }
+})();
+
+// Auto-load config from URL param ?pin=...
+(function autoLoadFromPin() {
+  const params = new URLSearchParams(location.search);
+  const pin = params.get('pin');
+  if (!pin) return;
+  history.replaceState({}, '', location.pathname); // Clean URL
+  setTimeout(async () => {
+    toast('info', `Đang tải cài đặt với PIN "${pin}"...`);
+    try {
+      const workerBase = (S.config.proxy || 'https://tiktok-proxy.doichao13.workers.dev').replace(/\/+$/, '');
+      const res = await fetch(`${workerBase}/config/load?pin=${encodeURIComponent(pin.toLowerCase())}`);
+      const data = await res.json();
+      if (data.ok && data.config) {
+        S.config = data.config;
+        S.demo = false;
+        localStorage.setItem('tt_cfg', JSON.stringify(S.config));
+        localStorage.setItem('tt_demo', '0');
+        showDashboard();
+        S.campaigns = []; S.adgroups = {}; S.metrics = {}; S.expanded.clear();
+        S.agCount = null; S.level = 'campaign'; S.selectedCampaignId = null;
+        S.selectedCampaignIds = new Set();
+        switchLevel('campaign');
+        loadAccounts();
+        toast('success', '✅ Đã nạp cài đặt từ cloud!');
+      } else {
+        toast('error', '❌ ' + (data.error || 'Không tìm thấy PIN: ' + pin));
+      }
+    } catch(e) {
+      toast('error', '❌ Lỗi tải từ cloud: ' + e.message);
+    }
+  }, 600);
+})();
+
+/* ═══════════════════════════ CLOUD SYNC ═══════════════════════════ */
+function openCloudSync() {
+  openSettings();
+  setTimeout(() => switchTab(4), 50);
+}
+
+async function saveToCloud() {
+  const pin = (document.getElementById('iCloudPin').value || '').trim().toLowerCase();
+  const statusEl = document.getElementById('cloudSaveStatus');
+  if (!pin || pin.length < 4) { toast('warn', 'PIN cần ít nhất 4 ký tự'); return; }
+  if (!S.config.token) { toast('warn', 'Chưa có cài đặt để lưu — kết nối API trước'); return; }
+  statusEl.innerHTML = '<span style="color:var(--text2);">⏳ Đang lưu...</span>';
+  try {
+    const workerBase = (S.config.proxy || 'https://tiktok-proxy.doichao13.workers.dev').replace(/\/+$/, '');
+    const res = await fetch(`${workerBase}/config/save`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ pin, config: S.config }),
+    });
+    const data = await res.json();
+    if (data.ok) {
+      statusEl.innerHTML = '<span style="color:#16A34A;">✅ Đã lưu thành công!</span>';
+      const shareUrl = location.origin + location.pathname + '?pin=' + encodeURIComponent(pin);
+      document.getElementById('cloudShareUrl').value = shareUrl;
+      document.getElementById('cloudShareSection').style.display = '';
+      localStorage.setItem('tt_cloud_pin', pin);
+    } else {
+      statusEl.innerHTML = '<span style="color:#DC2626;">❌ ' + (data.error || 'Lỗi không xác định') + '</span>';
+    }
+  } catch(e) {
+    statusEl.innerHTML = '<span style="color:#DC2626;">❌ ' + e.message + '</span>';
+  }
+}
+
+async function loadFromCloud() {
+  const pin = (document.getElementById('iCloudPinLoad').value || '').trim().toLowerCase();
+  const statusEl = document.getElementById('cloudLoadStatus');
+  if (!pin) { toast('warn', 'Vui lòng nhập PIN'); return; }
+  statusEl.innerHTML = '<span style="color:var(--text2);">⏳ Đang tải...</span>';
+  try {
+    const workerBase = (S.config.proxy || 'https://tiktok-proxy.doichao13.workers.dev').replace(/\/+$/, '');
+    const res = await fetch(`${workerBase}/config/load?pin=${encodeURIComponent(pin)}`);
+    const data = await res.json();
+    if (data.ok && data.config) {
+      S.config = data.config;
+      S.demo = false;
+      localStorage.setItem('tt_cfg', JSON.stringify(S.config));
+      localStorage.setItem('tt_demo', '0');
+      statusEl.innerHTML = '<span style="color:#16A34A;">✅ Đã tải! Đang kết nối...</span>';
+      setTimeout(() => {
+        closeSettings();
+        showDashboard();
+        S.campaigns = []; S.adgroups = {}; S.metrics = {}; S.expanded.clear();
+        S.agCount = null; S.level = 'campaign'; S.selectedCampaignId = null;
+        S.selectedCampaignIds = new Set();
+        switchLevel('campaign');
+        loadAccounts();
+        toast('success', '✅ Đã nạp cài đặt từ cloud!');
+      }, 800);
+    } else {
+      statusEl.innerHTML = '<span style="color:#DC2626;">❌ ' + (data.error || 'Không tìm thấy cài đặt') + '</span>';
+    }
+  } catch(e) {
+    statusEl.innerHTML = '<span style="color:#DC2626;">❌ ' + e.message + '</span>';
+  }
+}
+
+function copyCloudUrl() {
+  const url = document.getElementById('cloudShareUrl').value;
+  if (!url) return;
+  navigator.clipboard.writeText(url).then(() => toast('success', '✅ Đã copy link chia sẻ!'));
+}
+
 /* ═══════════════════════════ HELPERS ═══════════════════════════ */
 function showDashboard() {
   document.getElementById('setupScreen').style.display = 'none';
   document.getElementById('dashboard').style.display   = '';
   document.getElementById('levelBar').style.display    = '';
+  if (!S.demo && S.config.token) document.getElementById('shareBtn').style.display = '';
 }
 
 function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
