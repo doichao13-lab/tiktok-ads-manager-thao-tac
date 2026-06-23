@@ -70,7 +70,19 @@
     .toolbar {
       background: var(--bg2); border-bottom: 1px solid var(--border);
       padding: 10px 20px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+      position: sticky; top: 56px; z-index: 900;
     }
+    .name-filter-wrap { position: relative; flex: 1; min-width: 160px; max-width: 280px; }
+    .name-filter-wrap::before {
+      content: '🔍'; position: absolute; left: 9px; top: 50%; transform: translateY(-50%);
+      font-size: 11px; pointer-events: none; z-index: 1;
+    }
+    .name-filter-wrap input[type=text] {
+      width: 100%; padding: 7px 10px 7px 28px; font-size: 13px;
+      background: var(--bg3); border: 1px solid var(--border); color: var(--text);
+      border-radius: 8px;
+    }
+    .name-filter-wrap input[type=text]:focus { outline: none; border-color: var(--red); }
     .select-wrap { position: relative; }
     select {
       appearance: none; background: var(--bg3); border: 1px solid var(--border);
@@ -96,6 +108,7 @@
     .filter-bar {
       background: var(--bg2); border-bottom: 1px solid var(--border);
       padding: 8px 20px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+      position: sticky; top: 108px; z-index: 800;
     }
     .filter-label { color: var(--text2); font-size: 12px; white-space: nowrap; flex-shrink: 0; }
     .chips { display: flex; gap: 6px; flex-wrap: wrap; }
@@ -143,7 +156,7 @@
       text-align: left; font-size: 11px; font-weight: 600;
       color: var(--text2); white-space: nowrap;
       border-bottom: 1px solid var(--border);
-      position: sticky; top: 56px; z-index: 2;
+      position: sticky; top: 194px; z-index: 2;
     }
     thead th:first-child {
       position: sticky; left: 0; z-index: 3; min-width: 260px;
@@ -346,6 +359,31 @@
 
     /* ── CONNECTING LINE ── */
     .row-separator { height: 1px; background: var(--border); opacity: .5; }
+
+    /* ── LEVEL BAR ── */
+    .level-bar {
+      background: var(--bg2); border-bottom: 1px solid var(--border);
+      padding: 0 20px; display: flex; align-items: center;
+      position: sticky; top: 150px; z-index: 700;
+    }
+    .level-tab {
+      padding: 10px 18px; font-size: 13px; font-weight: 500; color: var(--text2);
+      cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px;
+      white-space: nowrap; transition: color .15s;
+    }
+    .level-tab.active { color: var(--red); border-bottom-color: var(--red); }
+    .level-tab:hover:not(.active) { color: var(--text); }
+
+    /* ── AG LEVEL HEADER ── */
+    .ag-level-head {
+      display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 14px;
+      background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; padding: 10px 14px;
+    }
+    .ag-level-head .ag-cmp-label {
+      font-size: 12px; color: var(--text2); white-space: nowrap;
+    }
+    .ag-level-head .select-wrap { flex: 1; min-width: 200px; max-width: 400px; }
+    .ag-level-head .select-wrap select { width: 100%; }
   </style>
 </head>
 <body>
@@ -393,6 +431,9 @@
       <option value="DISABLE">Đã tắt</option>
     </select>
   </div>
+  <div class="name-filter-wrap" id="nameFilterWrap">
+    <input type="text" id="nameFilterInput" placeholder="Tìm tên chiến dịch..." oninput="onNameFilter(this.value)" />
+  </div>
   <div class="view-toggle">
     <button id="btnDesk" class="active" onclick="setView('desktop')">🖥 Desktop</button>
     <button id="btnMobi" onclick="setView('mobile')">📱 Mobile</button>
@@ -403,6 +444,12 @@
 <div class="filter-bar">
   <span class="filter-label">Cột hiển thị (tối đa 3):</span>
   <div class="chips" id="chips"></div>
+</div>
+
+<!-- ===================== LEVEL BAR ===================== -->
+<div class="level-bar" id="levelBar" style="display:none;">
+  <div class="level-tab active" id="ltabCampaign" onclick="switchLevel('campaign')">📊 Chiến dịch</div>
+  <div class="level-tab" id="ltabAdgroup" onclick="switchLevel('adgroup')">👥 Nhóm QC</div>
 </div>
 
 <!-- ===================== MAIN ===================== -->
@@ -443,6 +490,15 @@
         <div class="stat-label">Tổng ngân sách</div>
         <div class="stat-value" id="s-budget">—</div>
         <div class="stat-sub" id="s-budget-sub"></div>
+      </div>
+    </div>
+
+    <!-- AdGroup level header (shown when in Nhóm QC tab) -->
+    <div class="ag-level-head" id="agLevelHead" style="display:none;">
+      <button class="btn btn-sm" onclick="switchLevel('campaign')">← Chiến dịch</button>
+      <span class="ag-cmp-label">Chiến dịch:</span>
+      <div class="select-wrap">
+        <select id="agCmpSel" onchange="onAGCmpChange(this.value)"></select>
       </div>
     </div>
 
@@ -820,6 +876,10 @@ const S = {
   view:      localStorage.getItem('tt_view') || 'desktop',
   dateRange: '7',
   statusFilter: '',
+  nameFilter: '',
+  level: 'campaign',        // 'campaign' | 'adgroup'
+  selectedCampaignId: null, // for adgroup level view
+  agCount: null,            // { total, active } from quick fetch
   budgetEdit: null,
   bidEdit: null,
 };
@@ -995,10 +1055,18 @@ function mockMetrics(ids) {
 async function fetchAccounts() {
   if (S.demo) return mockAccounts();
   const ids = S.config.advIds || [];
-  if (ids.length) {
-    return ids.map(id => ({ advertiser_id: id, advertiser_name: id }));
-  }
-  return [];
+  if (!ids.length) return [];
+  try {
+    const d = await apiGet('/advertiser/info/', { advertiser_ids: ids });
+    const list = d.list || [];
+    if (list.length) return list.map(a => ({
+      advertiser_id: String(a.advertiser_id),
+      advertiser_name: a.advertiser_name || a.advertiser_id,
+      currency: a.currency,
+      balance: a.balance,
+    }));
+  } catch(e) { /* fallback to IDs */ }
+  return ids.map(id => ({ advertiser_id: id, advertiser_name: id }));
 }
 
 async function fetchCampaigns(aid) {
@@ -1067,22 +1135,43 @@ async function loadCampaigns(aid) {
   updateSummary();
   setLoading(false);
 
+  // Load campaign metrics + background adgroup count in parallel
+  const tasks = [];
   if (S.campaigns.length) {
-    try {
-      const ids = S.campaigns.map(c => c.campaign_id);
-      Object.assign(S.metrics, await fetchMetrics(aid, 'campaign', ids));
-      render();
-      updateSummary();
-    } catch(e) { toast('warn', 'Không tải được số liệu: ' + e.message); }
+    tasks.push(
+      fetchMetrics(aid, 'campaign', S.campaigns.map(c => c.campaign_id))
+        .then(m => { Object.assign(S.metrics, m); render(); updateSummary(); })
+        .catch(e => toast('warn', 'Không tải được số liệu: ' + e.message))
+    );
+    if (!S.demo) {
+      tasks.push(loadAdGroupCount(aid));
+    }
   }
+  await Promise.all(tasks);
+}
+
+async function loadAdGroupCount(aid) {
+  try {
+    const d = await apiGet('/adgroup/get/', {
+      advertiser_id: aid, page_size: 1000,
+      fields: ['adgroup_id', 'campaign_id', 'operation_status'],
+    });
+    const list = d.list || [];
+    S.agCount = { total: list.length, active: list.filter(a => a.operation_status === 'ENABLE').length };
+    updateSummary();
+  } catch(e) { /* non-critical */ }
 }
 
 async function loadAdGroups(cid) {
-  if (S.adgroups[cid]) { renderAGRows(cid); return; }
+  if (S.adgroups[cid]) {
+    if (S.level === 'adgroup' && S.selectedCampaignId === cid) render();
+    updateCards();
+    return;
+  }
   try {
     const ags = await fetchAdGroups(S.accountId, cid);
     S.adgroups[cid] = ags;
-    renderAGRows(cid);
+    if (S.level === 'adgroup' && S.selectedCampaignId === cid) render();
     updateCards();
     if (ags.length) {
       try {
@@ -1090,7 +1179,7 @@ async function loadAdGroups(cid) {
         Object.assign(S.metrics, await fetchMetrics(S.accountId, 'adgroup', ids));
       } catch(e) { toast('warn', 'Không tải được số liệu nhóm QC: ' + e.message); }
     }
-    renderAGRows(cid);
+    if (S.level === 'adgroup' && S.selectedCampaignId === cid) render();
     updateCards();
     updateSummary();
   } catch(e) { toast('error', 'Lỗi tải nhóm QC: ' + e.message); }
@@ -1101,8 +1190,9 @@ function colDefs() { return S.columns.map(id => COLS[id]); }
 
 function renderHead() {
   const cols = colDefs();
+  const firstCol = S.level === 'adgroup' ? 'Nhóm quảng cáo' : 'Chiến dịch';
   document.getElementById('tHead').innerHTML = `
-    <th>Chiến dịch / Nhóm quảng cáo</th>
+    <th>${firstCol}</th>
     <th>Bật / Tắt</th>
     <th>Ngân sách</th>
     <th>Chi tiêu</th>
@@ -1112,21 +1202,54 @@ function renderHead() {
 }
 
 function render() {
+  if (S.level === 'adgroup') renderAdGroupLevel();
+  else renderCampaignLevel();
+}
+
+function renderCampaignLevel() {
   renderHead();
   const tb = document.getElementById('tBody');
   tb.innerHTML = '';
   let list = S.campaigns;
   if (S.statusFilter) list = list.filter(c => c.operation_status === S.statusFilter);
+  if (S.nameFilter) {
+    const q = S.nameFilter.toLowerCase();
+    list = list.filter(c => c.campaign_name.toLowerCase().includes(q));
+  }
   if (!list.length) {
     tb.innerHTML = `<tr><td colspan="20" style="text-align:center;padding:50px;color:var(--text2);">Không có chiến dịch nào</td></tr>`;
     return;
   }
-  list.forEach(c => {
-    tb.appendChild(makeCampaignRow(c));
-    if (S.expanded.has(c.campaign_id)) {
-      (S.adgroups[c.campaign_id] || []).forEach(ag => tb.appendChild(makeAGRow(ag)));
-    }
-  });
+  list.forEach(c => tb.appendChild(makeCampaignRow(c)));
+}
+
+function renderAdGroupLevel() {
+  renderHead();
+  // Update campaign selector in ag-level-head
+  const sel = document.getElementById('agCmpSel');
+  if (sel) {
+    sel.innerHTML = S.campaigns.map(c =>
+      `<option value="${c.campaign_id}" ${c.campaign_id === S.selectedCampaignId ? 'selected' : ''}>${esc(c.campaign_name)}</option>`
+    ).join('');
+  }
+  const tb = document.getElementById('tBody');
+  tb.innerHTML = '';
+  if (!S.selectedCampaignId) {
+    tb.innerHTML = `<tr><td colspan="20" style="text-align:center;padding:50px;color:var(--text2);">Chọn chiến dịch để xem nhóm quảng cáo</td></tr>`;
+    return;
+  }
+  const ags = S.adgroups[S.selectedCampaignId];
+  if (!ags) {
+    tb.innerHTML = `<tr><td colspan="20" style="text-align:center;padding:50px;color:var(--text2);"><div class="spinner" style="margin:auto;margin-bottom:8px;"></div>Đang tải nhóm QC...</td></tr>`;
+    return;
+  }
+  let list = ags;
+  if (S.statusFilter) list = list.filter(ag => ag.operation_status === S.statusFilter);
+  if (!list.length) {
+    tb.innerHTML = `<tr><td colspan="20" style="text-align:center;padding:50px;color:var(--text2);">Không có nhóm quảng cáo nào</td></tr>`;
+    return;
+  }
+  list.forEach(ag => tb.appendChild(makeAGRow(ag)));
 }
 
 function makeCampaignRow(c) {
@@ -1134,14 +1257,12 @@ function makeCampaignRow(c) {
   tr.className = 'campaign-row';
   tr.dataset.cid = c.campaign_id;
   const active  = c.operation_status === 'ENABLE';
-  const open    = S.expanded.has(c.campaign_id);
   const m       = S.metrics[c.campaign_id] || {};
   const bmode   = c.budget_mode === 'BUDGET_MODE_DAILY' ? '/ng' : '';
   const cols    = colDefs();
   tr.innerHTML = `
     <td>
       <div class="name-cell">
-        <button class="expand-btn ${open?'open':''}" onclick="toggleExpand('${c.campaign_id}',event)">▶</button>
         <div class="name-info">
           <div class="name-main" title="${esc(c.campaign_name)}">${esc(c.campaign_name)}</div>
           <div class="name-sub">${OBJ_MAP[c.objective_type]||c.objective_type||'—'}</div>
@@ -1163,8 +1284,8 @@ function makeCampaignRow(c) {
     <td><span class="spend-val">${fmtCur(m.spend||0)}</span></td>
     ${cols.map(cl=>`<td class="metric-num">${fmtN(m[cl.metric])}</td>`).join('')}
     <td>
-      <button class="btn btn-sm btn-ghost" onclick="toggleExpand('${c.campaign_id}',event)">
-        ${open?'▲':'▼'} Nhóm QC
+      <button class="btn btn-sm btn-ghost" onclick="switchLevel('adgroup','${c.campaign_id}')">
+        👥 Nhóm QC
       </button>
     </td>
   `;
@@ -1255,6 +1376,7 @@ function updateCards() {
   grid.innerHTML = '';
   let list = S.campaigns;
   if (S.statusFilter) list = list.filter(c => c.operation_status === S.statusFilter);
+  if (S.nameFilter) { const q = S.nameFilter.toLowerCase(); list = list.filter(c => c.campaign_name.toLowerCase().includes(q)); }
   list.forEach(c => grid.appendChild(makeCard(c)));
 }
 
@@ -1380,18 +1502,32 @@ async function toggleAG(agid, cid, on) {
 function updateSummary() {
   const cs = S.campaigns;
   const activeCmp = cs.filter(c => c.operation_status === 'ENABLE').length;
-  let totalSpend = 0, totalBudget = 0, activeAG = 0;
+  let totalSpend = 0, totalBudget = 0;
   cs.forEach(c => {
     totalSpend  += parseFloat(S.metrics[c.campaign_id]?.spend || 0);
     totalBudget += parseFloat(c.budget || 0);
   });
-  Object.values(S.adgroups).forEach(ags => ags.forEach(ag => { if (ag.operation_status==='ENABLE') activeAG++; }));
+
+  // Use agCount from quick background fetch if available, else count loaded adgroups
+  let activeAG = 0, agSub = '';
+  if (S.agCount) {
+    activeAG = S.agCount.active;
+    agSub = `/ ${S.agCount.total} nhóm QC`;
+  } else {
+    let loaded = 0;
+    Object.values(S.adgroups).forEach(ags => ags.forEach(ag => { loaded++; if (ag.operation_status==='ENABLE') activeAG++; }));
+    agSub = loaded ? `/ ${loaded} đã tải` : 'Đang tải...';
+  }
+  if (S.demo) {
+    activeAG = Object.values(S.adgroups).reduce((n, ags) => n + ags.filter(a => a.operation_status === 'ENABLE').length, 0);
+    agSub = '';
+  }
 
   document.getElementById('s-spend').textContent  = fmtCur(totalSpend);
   document.getElementById('s-cmp').textContent    = activeCmp;
   document.getElementById('s-cmp-sub').textContent= `/ ${cs.length} chiến dịch`;
   document.getElementById('s-ag').textContent     = activeAG;
-  document.getElementById('s-ag-sub').textContent = activeAG ? '' : 'Chưa tải nhóm QC';
+  document.getElementById('s-ag-sub').textContent = agSub;
   document.getElementById('s-budget').textContent = fmtCur(totalBudget);
   document.getElementById('s-budget-sub').textContent = `Còn lại: ${fmtCur(Math.max(0, totalBudget - totalSpend))}`;
 }
@@ -1439,6 +1575,9 @@ function onAccountChange(v) {
   S.accountId = v;
   localStorage.setItem('tt_acc', v);
   S.campaigns = []; S.adgroups = {}; S.metrics = {}; S.expanded.clear();
+  S.agCount = null; S.level = 'campaign'; S.selectedCampaignId = null; S.nameFilter = '';
+  document.getElementById('nameFilterInput').value = '';
+  switchLevel('campaign');
   if (v) loadCampaigns(v);
 }
 
@@ -1451,6 +1590,34 @@ function onDateChange(v) {
 function onStatusFilter(v) {
   S.statusFilter = v;
   render(); updateCards();
+}
+
+function onNameFilter(v) {
+  S.nameFilter = v;
+  render();
+}
+
+function switchLevel(level, campaignId) {
+  S.level = level;
+  if (campaignId !== undefined) S.selectedCampaignId = campaignId;
+  const lt1 = document.getElementById('ltabCampaign');
+  const lt2 = document.getElementById('ltabAdgroup');
+  if (lt1) lt1.classList.toggle('active', level === 'campaign');
+  if (lt2) lt2.classList.toggle('active', level === 'adgroup');
+  const agHead = document.getElementById('agLevelHead');
+  if (agHead) agHead.style.display = level === 'adgroup' ? '' : 'none';
+  const nfw = document.getElementById('nameFilterWrap');
+  if (nfw) nfw.style.display = level === 'campaign' ? '' : 'none';
+  if (S.campaigns.length) render();
+  if (level === 'adgroup' && S.selectedCampaignId && !S.adgroups[S.selectedCampaignId]) {
+    loadAdGroups(S.selectedCampaignId);
+  }
+}
+
+function onAGCmpChange(cid) {
+  S.selectedCampaignId = cid;
+  render();
+  if (cid && !S.adgroups[cid]) loadAdGroups(cid);
 }
 
 /* ═══════════════════════════ VIEW MODE ═══════════════════════════ */
@@ -1819,6 +1986,8 @@ async function saveSettings() {
   document.getElementById('demoBadge').style.display = 'none';
   showDashboard();
   S.campaigns = []; S.adgroups = {}; S.metrics = {}; S.expanded.clear();
+  S.agCount = null; S.level = 'campaign'; S.selectedCampaignId = null;
+  switchLevel('campaign');
   await loadAccounts();
   toast('success', 'Đã kết nối TikTok API ✓');
 }
@@ -1836,6 +2005,8 @@ async function saveManual() {
   document.getElementById('demoBadge').style.display = 'none';
   showDashboard();
   S.campaigns = []; S.adgroups = {}; S.metrics = {}; S.expanded.clear();
+  S.agCount = null; S.level = 'campaign'; S.selectedCampaignId = null;
+  switchLevel('campaign');
   await loadAccounts();
   toast('success', 'Đã kết nối TikTok API ✓');
 }
@@ -1869,7 +2040,7 @@ function enableDemo() {
 /* ═══════════════════════════ REFRESH ═══════════════════════════ */
 async function refreshData() {
   if (!S.accountId) { toast('warn','Vui lòng chọn tài khoản'); return; }
-  S.metrics = {}; S.adgroups = {}; S.expanded.clear();
+  S.metrics = {}; S.adgroups = {}; S.expanded.clear(); S.agCount = null;
   await loadCampaigns(S.accountId);
   toast('success', 'Đã làm mới dữ liệu ✓');
 }
@@ -1878,6 +2049,7 @@ async function refreshData() {
 function showDashboard() {
   document.getElementById('setupScreen').style.display = 'none';
   document.getElementById('dashboard').style.display   = '';
+  document.getElementById('levelBar').style.display    = '';
 }
 
 function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
