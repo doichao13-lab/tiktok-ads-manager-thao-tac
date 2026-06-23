@@ -465,56 +465,283 @@
 </div>
 
 <!-- ===================== SETTINGS MODAL ===================== -->
+<style>
+  /* TABS */
+  .stab-bar { display:flex; border-bottom:2px solid var(--border); margin-bottom:18px; }
+  .stab {
+    padding:8px 16px; font-size:13px; font-weight:500; color:var(--text2);
+    cursor:pointer; border-bottom:2px solid transparent; margin-bottom:-2px; transition:.15s;
+  }
+  .stab.active { color:var(--red); border-bottom-color:var(--red); }
+  .stab-panel { display:none; } .stab-panel.active { display:block; }
+
+  /* FLOW STEPS */
+  .flow { display:flex; flex-direction:column; gap:0; }
+  .flow-step { display:flex; gap:14px; }
+  .flow-left { display:flex; flex-direction:column; align-items:center; }
+  .flow-num {
+    width:28px; height:28px; border-radius:50%; background:var(--red); color:#fff;
+    font-size:12px; font-weight:700; display:flex; align-items:center; justify-content:center;
+    flex-shrink:0;
+  }
+  .flow-num.done { background:var(--green); }
+  .flow-line { width:2px; flex:1; background:var(--border); margin:4px auto; min-height:12px; }
+  .flow-body { flex:1; padding-bottom:16px; }
+  .flow-title { font-size:13px; font-weight:600; margin-bottom:4px; line-height:1.4; }
+  .flow-desc  { font-size:12px; color:var(--text2); line-height:1.5; }
+  .flow-step:last-child .flow-line { display:none; }
+
+  /* STATUS BADGES */
+  .status-box {
+    display:none; padding:10px 14px; border-radius:8px; font-size:13px;
+    margin-top:12px; align-items:center; gap:10px;
+  }
+  .status-box.show { display:flex; }
+  .status-box.ok   { background:#F0FDF4; border:1px solid #86EFAC; color:#166534; }
+  .status-box.fail { background:#FEF2F2; border:1px solid #FCA5A5; color:#991B1B; }
+  .status-box.wait { background:#F5F6F8; border:1px solid var(--border); color:var(--text2); }
+
+  /* SECRET WRAP */
+  .secret-wrap { position:relative; }
+  .secret-wrap input { padding-right:44px; font-family:monospace; font-size:13px; }
+  .secret-eye {
+    position:absolute; right:12px; top:50%; transform:translateY(-50%);
+    background:none; border:none; cursor:pointer; color:var(--text2); font-size:16px; line-height:1;
+  }
+  .secret-eye:hover { color:var(--text); }
+
+  /* ID TAGS */
+  .id-tags { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:8px; min-height:28px; }
+  .id-tag {
+    display:inline-flex; align-items:center; gap:5px;
+    background:#EFF6FF; border:1px solid #BFDBFE; color:#1D4ED8;
+    padding:3px 10px; border-radius:20px; font-size:12px; font-family:monospace;
+  }
+  .id-tag button { background:none; border:none; color:#93C5FD; cursor:pointer; font-size:14px; padding:0; line-height:1; }
+  .id-tag button:hover { color:var(--danger); }
+
+  /* AUTH URL COPY BOX */
+  .url-box {
+    background:var(--bg3); border:1px solid var(--border); border-radius:8px;
+    padding:10px 12px; font-size:11px; font-family:monospace; color:var(--text2);
+    word-break:break-all; line-height:1.5; margin-top:6px;
+  }
+
+  .wiz-footer { display:flex; justify-content:space-between; align-items:center; margin-top:20px; padding-top:16px; border-top:1px solid var(--border); }
+  .wiz-footer-right { display:flex; gap:8px; }
+
+  .perm-pills { display:flex; flex-wrap:wrap; gap:5px; margin-top:6px; }
+  .perm-pill  { padding:2px 8px; border-radius:4px; font-size:11px; font-family:monospace; background:#EFF6FF; border:1px solid #BFDBFE; color:#1E40AF; }
+</style>
+
 <div class="overlay" id="settingsOverlay">
-  <div class="modal" style="max-width:520px;">
+  <div class="modal" style="max-width:560px;">
     <div class="modal-head">
-      <div class="modal-title">⚙ Cài đặt kết nối TikTok</div>
+      <div class="modal-title">🔌 Kết nối TikTok Ads API</div>
       <button class="modal-close" onclick="closeSettings()">✕</button>
     </div>
 
-    <div class="info-box">
-      📖 Hướng dẫn: Tạo app tại <strong>TikTok for Business → Apps</strong>, sau đó lấy <strong>Access Token</strong> với các quyền: <em>campaign.read, campaign.write, adgroup.read, adgroup.write, report.read, advertiser.read</em>.
-      <br>Lưu ý: Nếu gặp lỗi CORS, điền proxy bên dưới.
+    <!-- TAB BAR -->
+    <div class="stab-bar">
+      <div class="stab active" id="stab1" onclick="switchTab(1)">🔑 Dùng App ID + Secret</div>
+      <div class="stab"        id="stab2" onclick="switchTab(2)">📋 Tôi đã có Access Token</div>
+      <div class="stab"        id="stab3" onclick="switchTab(3)">⚡ Demo Mode</div>
     </div>
 
-    <div class="setting-section">
-      <div class="section-title">Xác thực API</div>
-      <div class="form-group">
-        <label class="form-label">Access Token *</label>
-        <input type="password" id="iToken" placeholder="Dán Access Token của bạn vào đây..." />
-        <div class="form-hint">Lấy từ: TikTok for Business → Tài khoản → Apps → Your App → Access Token</div>
+    <!-- ════ TAB 1: OAuth flow ════ -->
+    <div class="stab-panel active" id="spanel1">
+
+      <div style="background:#EFF6FF;border:1px solid #BFDBFE;border-radius:8px;padding:10px 14px;font-size:12px;color:#1E40AF;margin-bottom:16px;line-height:1.6;">
+        💡 <strong>Cách này dành cho bạn</strong> — bạn đã có App ID và Secret trên TikTok Business Portal. Tool sẽ tự tạo link đăng nhập → bạn ủy quyền → tool tự lấy token.
+      </div>
+
+      <!-- BƯỚC 1 -->
+      <div class="flow">
+        <div class="flow-step">
+          <div class="flow-left"><div class="flow-num" id="fn1">1</div><div class="flow-line"></div></div>
+          <div class="flow-body">
+            <div class="flow-title">Nhập App ID và Secret</div>
+            <div class="flow-desc" style="margin-bottom:10px;">Copy từ trang App trong TikTok Business Portal</div>
+            <div class="form-group" style="margin-bottom:8px;">
+              <label class="form-label">App ID</label>
+              <input type="text" id="iAppId" placeholder="VD: 7501509429645279233" style="font-family:monospace;font-size:13px;" oninput="onAppIdInput()" />
+            </div>
+            <div class="form-group" style="margin-bottom:0;">
+              <label class="form-label">Secret</label>
+              <div class="secret-wrap">
+                <input type="password" id="iSecret" placeholder="Chuỗi bắt đầu bằng cbf..." style="font-family:monospace;font-size:13px;" oninput="onAppIdInput()" />
+                <button class="secret-eye" onclick="toggleSecretVis()">👁</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- BƯỚC 2 -->
+        <div class="flow-step">
+          <div class="flow-left"><div class="flow-num" id="fn2">2</div><div class="flow-line"></div></div>
+          <div class="flow-body">
+            <div class="flow-title">Chọn Redirect URI đã đăng ký trong App</div>
+            <div class="flow-desc" style="margin-bottom:10px;">
+              TikTok chỉ chấp nhận redirect URI đã được đăng ký trong App của bạn.<br>
+              Nhìn vào trang App → mục <strong>"Advertiser redirect URLs"</strong> → chọn 1 trong các URL đó:
+            </div>
+            <!-- Quick select buttons -->
+            <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px;" id="redirectPresets"></div>
+            <div class="form-group" style="margin-bottom:8px;">
+              <label class="form-label">Redirect URI <em style="font-weight:normal;color:var(--text3);">(copy từ portal)</em></label>
+              <input type="text" id="iRedirectUri"
+                placeholder="VD: https://seongon.com/"
+                style="font-family:monospace;font-size:12px;"
+                oninput="onAppIdInput()" />
+              <div class="form-hint">Dán chính xác 1 trong các URL ở mục "Advertiser redirect URLs" trong App của bạn.</div>
+            </div>
+            <div id="authUrlBox" class="url-box" style="display:none;margin-bottom:10px;"></div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;">
+              <button class="btn btn-primary" id="btnOpenAuth" onclick="openAuthUrl()" disabled>🔗 Mở trang ủy quyền TikTok</button>
+              <button class="btn" onclick="copyAuthUrl()" id="btnCopyUrl" style="display:none;">📋 Copy link</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- BƯỚC 3 -->
+        <div class="flow-step">
+          <div class="flow-left"><div class="flow-num" id="fn3">3</div><div class="flow-line"></div></div>
+          <div class="flow-body">
+            <div class="flow-title">Copy <code style="background:#F0F2F5;padding:1px 6px;border-radius:4px;font-size:12px;">auth_code</code> từ URL sau khi redirect</div>
+            <div class="flow-desc">
+              Sau khi nhấn <strong>Authorize</strong>, TikTok redirect sang trang đã đăng ký (VD: seongon.com). URL trên thanh địa chỉ sẽ có dạng:<br>
+              <code style="font-size:11px;background:#FFF3CD;padding:3px 8px;border-radius:4px;display:inline-block;margin-top:6px;word-break:break-all;border:1px solid #FCD34D;">
+                https://seongon.com/?<strong style="color:#B45309;">auth_code=AbCdEf123XyZ</strong>&amp;state=hung_tiktok_tool
+              </code><br>
+              <span style="margin-top:6px;display:inline-block;">👆 Copy đúng phần sau <strong>auth_code=</strong> (không lấy <code>&amp;state=...</code>)</span>
+            </div>
+            <div style="display:flex;gap:8px;margin-top:10px;">
+              <input type="text" id="iAuthCode" placeholder="Dán auth_code vào đây..." style="flex:1;font-family:monospace;font-size:13px;" oninput="this.value=this.value.split(/[&?]/)[0].trim()" />
+              <button class="btn btn-primary" onclick="exchangeToken()" id="btnExchange">🔄 Đổi lấy Token</button>
+            </div>
+            <div class="status-box" id="exchangeStatus"></div>
+          </div>
+        </div>
+
+        <!-- BƯỚC 4 -->
+        <div class="flow-step">
+          <div class="flow-left"><div class="flow-num" id="fn4">4</div></div>
+          <div class="flow-body">
+            <div class="flow-title">Token đã sẵn sàng — Lưu và kết nối</div>
+            <div class="flow-desc">Token sẽ tự động điền sau khi đổi thành công. Nhấn <strong>"Lưu & Kết nối"</strong> bên dưới.</div>
+            <div class="form-group" style="margin-top:8px;">
+              <label class="form-label">Access Token (tự động điền)</label>
+              <div class="secret-wrap">
+                <input type="password" id="iToken" placeholder="Sẽ tự điền sau bước 3..." style="font-family:monospace;font-size:12px;background:#F5F6F8;" readonly />
+                <button class="secret-eye" onclick="toggleTokenVis()" id="tokenEyeBtn">👁</button>
+              </div>
+            </div>
+            <div class="form-group" style="margin-bottom:0;">
+              <label class="form-label">CORS Proxy</label>
+              <div style="display:flex;gap:6px;margin-bottom:6px;flex-wrap:wrap;">
+                <button class="btn btn-sm" onclick="setProxy('http://localhost:9090/')">🖥 localhost:9090 (khuyên dùng)</button>
+                <button class="btn btn-sm" onclick="setProxy('https://corsproxy.io/?url=')">🌐 corsproxy.io</button>
+              </div>
+              <input type="text" id="iProxy" placeholder="http://localhost:9090/" />
+              <div class="form-hint">Dùng <strong>localhost:9090</strong> — chạy PowerShell proxy bên dưới, đáng tin cậy nhất.</div>
+              <details style="margin-top:8px;">
+                <summary style="cursor:pointer;font-size:12px;color:var(--blue);font-weight:600;">▶ Script PowerShell chạy proxy cục bộ (click để xem)</summary>
+                <div style="margin-top:8px;background:#1E1E1E;border-radius:8px;padding:12px;font-family:monospace;font-size:10.5px;color:#9CDCFE;line-height:1.7;word-break:break-all;white-space:pre-wrap;" id="psProxyScript">Add-Type -AssemblyName System.Web
+$listener = New-Object System.Net.HttpListener
+$listener.Prefixes.Add('http://localhost:9090/')
+$listener.Start()
+Write-Host "Proxy TikTok dang chay: http://localhost:9090/" -ForegroundColor Green
+Write-Host "Giu PowerShell nay mo trong khi dung tool."
+while ($listener.IsListening) {
+  $ctx = $listener.GetContext()
+  $req = $ctx.Request; $res = $ctx.Response
+  $res.Headers.Add('Access-Control-Allow-Origin','*')
+  $res.Headers.Add('Access-Control-Allow-Headers','*')
+  $res.Headers.Add('Access-Control-Allow-Methods','GET,POST,OPTIONS')
+  if ($req.HttpMethod -eq 'OPTIONS') { $res.StatusCode=200; $res.Close(); continue }
+  try {
+    $targetUrl = [System.Web.HttpUtility]::UrlDecode($req.QueryString['url'])
+    $token = $req.Headers['Access-Token']
+    $hdrs = @{'Access-Token'=$token}
+    if ($req.HttpMethod -eq 'POST') {
+      $body = (New-Object System.IO.StreamReader($req.InputStream,[System.Text.Encoding]::UTF8)).ReadToEnd()
+      $wr = Invoke-WebRequest -Uri $targetUrl -Method POST -Headers $hdrs -Body $body -ContentType 'application/json' -UseBasicParsing
+    } else { $wr = Invoke-WebRequest -Uri $targetUrl -Method GET -Headers $hdrs -UseBasicParsing }
+    $json = $wr.Content
+  } catch { $json = "{`"code`":-1,`"message`":`"$($_.Exception.Message)`",`"data`":null}" }
+  $bytes = [System.Text.Encoding]::UTF8.GetBytes($json)
+  $res.ContentType = 'application/json; charset=utf-8'
+  $res.ContentLength64 = $bytes.Length
+  $res.OutputStream.Write($bytes,0,$bytes.Length)
+  $res.Close()
+}</div>
+                <button class="btn btn-sm" style="margin-top:6px;" onclick="navigator.clipboard.writeText(document.getElementById('psProxyScript').textContent.trim()).then(()=>toast('success','Đã copy script ✓'))">📋 Copy script</button>
+              </details>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="wiz-footer">
+        <button class="btn" onclick="closeSettings()">Hủy</button>
+        <button class="btn btn-primary" onclick="saveSettings()">💾 Lưu & Kết nối</button>
+      </div>
+    </div>
+
+    <!-- ════ TAB 2: Manual Token ════ -->
+    <div class="stab-panel" id="spanel2">
+      <div style="background:#FFFBEB;border:1px solid #FCD34D;border-radius:8px;padding:10px 14px;font-size:12px;color:#92400E;margin-bottom:16px;">
+        ⚠ Dùng tab này nếu bạn đã có sẵn Access Token (không phải Secret). Nếu chưa có token, hãy dùng tab <strong>"App ID + Secret"</strong>.
       </div>
       <div class="form-group">
-        <label class="form-label">CORS Proxy URL <em style="font-weight:normal; color:var(--text3);">(tùy chọn)</em></label>
-        <input type="text" id="iProxy" placeholder="https://corsproxy.io/?url=" />
-        <div class="form-hint">Nếu gặp lỗi CORS khi chạy trên GitHub Pages, điền: <code style="color:var(--cyan);">https://corsproxy.io/?url=</code></div>
+        <label class="form-label" style="font-weight:600;">Access Token *</label>
+        <div class="secret-wrap">
+          <input type="password" id="iTokenManual" placeholder="Dán Access Token vào đây..." style="font-family:monospace;font-size:13px;" />
+          <button class="secret-eye" onclick="toggleManualTokenVis()">👁</button>
+        </div>
+        <div class="form-hint">Lấy từ: TikTok Business Portal → My Apps → App của bạn → tab Auth → Access Token</div>
       </div>
-    </div>
-
-    <div class="setting-section">
-      <div class="section-title">Tài khoản quảng cáo</div>
       <div class="form-group">
-        <label class="form-label">Advertiser IDs <em style="font-weight:normal; color:var(--text3);">(mỗi ID một dòng)</em></label>
-        <textarea id="iAdvIds" rows="4" placeholder="123456789012345&#10;678901234567890&#10;..."></textarea>
-        <div class="form-hint">Nhập ID các tài khoản quảng cáo muốn quản lý. Để trống để tự động lấy tất cả.</div>
+        <label class="form-label">CORS Proxy <em style="font-weight:normal;color:var(--text3);">(tùy chọn)</em></label>
+        <input type="text" id="iProxyManual" placeholder="https://corsproxy.io/?url=" />
+      </div>
+      <div style="display:flex;gap:8px;align-items:center;margin-bottom:4px;">
+        <button class="btn" onclick="testManualToken()">⚡ Test kết nối</button>
+        <div class="status-box" id="manualTestStatus" style="margin-top:0;"></div>
+      </div>
+
+      <!-- Advertiser IDs trong tab manual -->
+      <div class="form-group" style="margin-top:16px;">
+        <label class="form-label" style="font-weight:600;">Advertiser IDs</label>
+        <div class="id-tags" id="idTagsManual"><span style="color:var(--text3);font-size:12px;">Chưa có — để trống sẽ lấy tất cả</span></div>
+        <div style="display:flex;gap:8px;">
+          <input type="text" id="iAdvManual" placeholder="Nhập ID rồi bấm Enter..." style="flex:1;" onkeydown="if(event.key==='Enter')addAdvIdManual()" />
+          <button class="btn" onclick="addAdvIdManual()">+ Thêm</button>
+        </div>
+      </div>
+
+      <div class="wiz-footer">
+        <button class="btn" onclick="closeSettings()">Hủy</button>
+        <button class="btn btn-primary" onclick="saveManual()">💾 Lưu & Kết nối</button>
       </div>
     </div>
 
-    <div class="setting-section">
-      <div class="section-title">Dữ liệu mẫu</div>
-      <div style="display:flex; align-items:center; gap:12px;">
-        <label class="toggle">
-          <input type="checkbox" id="iDemo" />
-          <span class="toggle-track"></span>
-        </label>
-        <span style="font-size:13px;">Bật Demo Mode (không cần API, dùng dữ liệu ảo)</span>
+    <!-- ════ TAB 3: Demo Mode ════ -->
+    <div class="stab-panel" id="spanel3">
+      <div style="text-align:center;padding:30px 20px;">
+        <div style="font-size:56px;margin-bottom:12px;">⚡</div>
+        <div style="font-size:18px;font-weight:700;margin-bottom:8px;">Demo Mode</div>
+        <div style="font-size:14px;color:var(--text2);line-height:1.7;margin-bottom:24px;">
+          Dùng dữ liệu mẫu để xem thử toàn bộ tính năng.<br>
+          Không cần API, không cần tài khoản TikTok.<br>
+          <strong>Tất cả thao tác bật/tắt, sửa ngân sách đều mô phỏng được.</strong>
+        </div>
+        <button class="btn btn-primary" style="font-size:15px;padding:10px 28px;" onclick="closeSettings();enableDemo();">
+          ⚡ Bật Demo Mode ngay
+        </button>
       </div>
     </div>
 
-    <div class="form-actions">
-      <button class="btn" onclick="closeSettings()">Hủy</button>
-      <button class="btn btn-primary" onclick="saveSettings()">💾 Lưu & Kết nối</button>
-    </div>
   </div>
 </div>
 
@@ -600,23 +827,64 @@ const S = {
 /* ═══════════════════════════ API ═══════════════════════════ */
 const BASE = 'https://business-api.tiktok.com/open_api/v1.3';
 
-function buildURL(path, params = {}) {
-  const proxy = S.config.proxy || '';
+function buildURL(path, params = {}, proxy = undefined) {
+  const p = proxy !== undefined ? proxy : (S.config.proxy || '');
   const u = new URL(BASE + path);
   for (const [k, v] of Object.entries(params)) {
     if (v === undefined || v === null || v === '') continue;
     u.searchParams.set(k, Array.isArray(v) || typeof v === 'object' ? JSON.stringify(v) : v);
   }
-  return proxy ? proxy + encodeURIComponent(u.toString()) : u.toString();
+  return p ? p + encodeURIComponent(u.toString()) : u.toString();
+}
+
+const PROXIES = [
+  'https://corsproxy.io/?url=',
+  'https://api.allorigins.win/raw?url=',
+  'https://corsproxy.org/?',
+];
+
+async function fetchWithTimeout(url, opts, ms = 12000) {
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), ms);
+  try {
+    const r = await fetch(url, { ...opts, signal: ctrl.signal });
+    clearTimeout(t);
+    return r;
+  } catch(e) { clearTimeout(t); throw e; }
 }
 
 async function apiGet(path, params = {}) {
-  const r = await fetch(buildURL(path, params), {
-    headers: { 'Access-Token': S.config.token, 'Content-Type': 'application/json' }
-  });
-  const d = await r.json();
-  if (d.code !== 0) throw new Error(d.message || `API error ${d.code}`);
-  return d.data;
+  const baseUrl = buildURL(path, params, ''); // no proxy yet
+  const headers = { 'Access-Token': S.config.token, 'Content-Type': 'application/json' };
+
+  // custom proxy first, then built-in list
+  const proxies = S.config.proxy
+    ? [S.config.proxy, ...PROXIES]
+    : PROXIES;
+
+  let lastErr = 'Không thể kết nối';
+  for (const p of proxies) {
+    try {
+      const url = p + encodeURIComponent(baseUrl);
+      const r = await fetchWithTimeout(url, { headers });
+      const d = await r.json();
+      if (d.code !== undefined) {
+        if (d.code !== 0) throw new Error(d.message || `API error ${d.code}`);
+        return d.data;
+      }
+      // allorigins wraps in {contents}
+      if (d.contents) {
+        const inner = JSON.parse(d.contents);
+        if (inner.code !== 0) throw new Error(inner.message || `API error ${inner.code}`);
+        return inner.data;
+      }
+      throw new Error('Phản hồi không hợp lệ từ proxy');
+    } catch(e) {
+      lastErr = e.name === 'AbortError' ? 'Timeout (proxy quá chậm)' : e.message;
+      if (e.message && e.message.startsWith('API error')) throw e; // API err, no point retrying
+    }
+  }
+  throw new Error(lastErr);
 }
 
 async function apiPost(path, body = {}) {
@@ -720,13 +988,9 @@ async function fetchAccounts() {
   if (S.demo) return mockAccounts();
   const ids = S.config.advIds || [];
   if (ids.length) {
-    const d = await apiGet('/advertiser/info/', { advertiser_ids: ids });
-    return d.list || [];
+    return ids.map(id => ({ advertiser_id: id, advertiser_name: id }));
   }
-  const d = await apiGet('/oauth2/advertiser/get/', {
-    app_id: S.config.appId, secret: S.config.secret,
-  });
-  return d.list || [];
+  return [];
 }
 
 async function fetchCampaigns(aid) {
@@ -786,14 +1050,23 @@ async function loadCampaigns(aid) {
   setLoading(true);
   try {
     S.campaigns = await fetchCampaigns(aid);
-    if (S.campaigns.length) {
+  } catch(e) {
+    toast('error', 'Lỗi tải chiến dịch: ' + e.message);
+    setLoading(false);
+    return;
+  }
+  render();
+  updateSummary();
+  setLoading(false);
+
+  if (S.campaigns.length) {
+    try {
       const ids = S.campaigns.map(c => c.campaign_id);
       Object.assign(S.metrics, await fetchMetrics(aid, 'campaign', ids));
-    }
-    render();
-    updateSummary();
-  } catch(e) { toast('error', 'Lỗi tải chiến dịch: ' + e.message); }
-  setLoading(false);
+      render();
+      updateSummary();
+    } catch(e) { toast('warn', 'Không tải được số liệu: ' + e.message); }
+  }
 }
 
 async function loadAdGroups(cid) {
@@ -801,9 +1074,13 @@ async function loadAdGroups(cid) {
   try {
     const ags = await fetchAdGroups(S.accountId, cid);
     S.adgroups[cid] = ags;
+    renderAGRows(cid);
+    updateCards();
     if (ags.length) {
-      const ids = ags.map(a => a.adgroup_id);
-      Object.assign(S.metrics, await fetchMetrics(S.accountId, 'adgroup', ids));
+      try {
+        const ids = ags.map(a => a.adgroup_id);
+        Object.assign(S.metrics, await fetchMetrics(S.accountId, 'adgroup', ids));
+      } catch(e) { toast('warn', 'Không tải được số liệu nhóm QC: ' + e.message); }
     }
     renderAGRows(cid);
     updateCards();
@@ -1241,35 +1518,318 @@ async function saveBid() {
 }
 
 /* ═══════════════════════════ SETTINGS ═══════════════════════════ */
+/* ═══════ SETTINGS STATE ═══════ */
+let _advIds       = [];
+let _advIdsManual = [];
+let _activeTab    = 1;
+
+/* ─ TAB SWITCHING ─ */
+function switchTab(n) {
+  _activeTab = n;
+  [1,2,3].forEach(i => {
+    document.getElementById('stab'+(i)).classList.toggle('active', i===n);
+    document.getElementById('spanel'+i).classList.toggle('active', i===n);
+  });
+}
+
+/* ─ VISIBILITY TOGGLES ─ */
+function toggleSecretVis() {
+  const inp = document.getElementById('iSecret');
+  inp.type = inp.type==='password'?'text':'password';
+}
+function toggleTokenVis() {
+  const inp = document.getElementById('iToken');
+  inp.type = inp.type==='password'?'text':'password';
+  document.getElementById('tokenEyeBtn').textContent = inp.type==='password'?'👁':'🙈';
+}
+function toggleManualTokenVis() {
+  const inp = document.getElementById('iTokenManual');
+  inp.type = inp.type==='password'?'text':'password';
+}
+
+/* ─ AUTH URL BUILDER ─ */
+const COMMON_REDIRECTS = [
+  'https://seongon.com/',
+  'http://localhost:8080/callback',
+  'https://dashboard-one-zeta-73.vercel.app/api/oauth',
+];
+
+function renderRedirectPresets() {
+  const box = document.getElementById('redirectPresets');
+  if (!box) return;
+  box.innerHTML = COMMON_REDIRECTS.map(u =>
+    `<button class="btn btn-sm" style="font-size:11px;font-family:monospace;" onclick="setRedirect('${u}')">${u}</button>`
+  ).join('');
+}
+
+function setRedirect(uri) {
+  document.getElementById('iRedirectUri').value = uri;
+  onAppIdInput();
+}
+
+function setProxy(url) {
+  ['iProxy','iProxyManual'].forEach(id => { const el = document.getElementById(id); if(el) el.value = url; });
+}
+
+function onAppIdInput() {
+  const appId       = document.getElementById('iAppId').value.trim();
+  const secret      = document.getElementById('iSecret').value.trim();
+  const redirectUri = (document.getElementById('iRedirectUri')?.value || '').trim();
+  const btn         = document.getElementById('btnOpenAuth');
+  const urlBox      = document.getElementById('authUrlBox');
+  const copyBtn     = document.getElementById('btnCopyUrl');
+
+  if (appId && secret && redirectUri) {
+    const authUrl = `https://business-api.tiktok.com/portal/auth?app_id=${appId}&state=hung_tiktok_tool&redirect_uri=${encodeURIComponent(redirectUri)}`;
+    btn.disabled  = false;
+    btn._url      = authUrl;
+    urlBox.textContent   = authUrl;
+    urlBox.style.display = 'block';
+    copyBtn.style.display = '';
+  } else if (appId && secret && !redirectUri) {
+    btn.disabled = true;
+    urlBox.textContent   = '⚠ Vui lòng điền Redirect URI bên trên trước (chọn nút gợi ý hoặc nhập tay)';
+    urlBox.style.display = 'block';
+    urlBox.style.color   = '#92400E';
+    copyBtn.style.display = 'none';
+  } else {
+    btn.disabled = true;
+    urlBox.style.display = 'none';
+    copyBtn.style.display = 'none';
+  }
+}
+
+function openAuthUrl() {
+  const btn = document.getElementById('btnOpenAuth');
+  if (btn._url) window.open(btn._url, '_blank');
+}
+
+function copyAuthUrl() {
+  const btn = document.getElementById('btnOpenAuth');
+  if (!btn._url) return;
+  navigator.clipboard.writeText(btn._url).then(()=>toast('success','Đã copy link ủy quyền'));
+}
+
+/* ─ EXCHANGE auth_code → access_token ─ */
+async function exchangeToken() {
+  const appId    = document.getElementById('iAppId').value.trim();
+  const secret   = document.getElementById('iSecret').value.trim();
+  const authCode = document.getElementById('iAuthCode').value.trim();
+  const proxy    = document.getElementById('iProxy').value.trim();
+
+  if (!appId || !secret) { toast('warn','Vui lòng nhập App ID và Secret trước'); return; }
+  if (!authCode) { toast('warn','Vui lòng nhập auth_code'); return; }
+
+  const statusEl = document.getElementById('exchangeStatus');
+  const btnEx    = document.getElementById('btnExchange');
+  statusEl.className = 'status-box show wait';
+  statusEl.innerHTML = '<div class="spinner" style="width:14px;height:14px;border-width:2px;"></div> Đang đổi token...';
+  btnEx.disabled = true;
+
+  const BASE = 'https://business-api.tiktok.com/open_api/v1.3';
+  const body = JSON.stringify({ app_id: appId, secret, auth_code: authCode });
+
+  // try a list of proxies in order
+  const proxies = [
+    proxy || null,
+    'https://corsproxy.io/?url=',
+    'https://api.allorigins.win/raw?url=',
+  ].filter(Boolean);
+
+  let lastErr = '';
+  for (const p of proxies) {
+    try {
+      const url = p + encodeURIComponent(`${BASE}/oauth2/access_token/`);
+      const res  = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body,
+      });
+      const data = await res.json();
+
+      if (data.code === 0 && data.data?.access_token) {
+        const token = data.data.access_token;
+        document.getElementById('iToken').value    = token;
+        document.getElementById('iToken').readOnly = false;
+        statusEl.className = 'status-box show ok';
+        statusEl.innerHTML = '✅ Đổi token thành công! Token đã điền tự động bên dưới.';
+        document.getElementById('fn4').style.background = 'var(--green)';
+        toast('success', 'Lấy Access Token thành công ✓');
+        btnEx.disabled = false;
+        return;
+      } else if (data.code) {
+        // API responded but error
+        lastErr = `API lỗi ${data.code}: ${data.message}`;
+        break; // no point retrying other proxies for API errors
+      }
+    } catch(e) {
+      lastErr = e.message;
+      // continue to next proxy
+    }
+  }
+
+  // All proxies failed → show PowerShell fallback
+  statusEl.className = 'status-box show fail';
+  statusEl.innerHTML = `
+    <div style="width:100%">
+      <div style="font-weight:600;margin-bottom:8px;">❌ Trình duyệt bị chặn CORS khi gọi API TikTok</div>
+      <div style="font-size:12px;margin-bottom:10px;color:#666;">Dùng <strong>PowerShell</strong> (không phải Command Prompt/cmd) — nhấn Start → gõ <strong>powershell</strong> → Enter, rồi dán lệnh bên dưới:</div>
+
+      <div style="background:#1E1E1E;border-radius:8px;padding:12px;font-family:monospace;font-size:11px;color:#9CDCFE;line-height:1.6;word-break:break-all;margin-bottom:8px;" id="psCmd">
+        Invoke-RestMethod -Method POST -Uri "https://business-api.tiktok.com/open_api/v1.3/oauth2/access_token/" -ContentType "application/json" -Body '{"app_id":"${appId}","secret":"${secret}","auth_code":"${authCode}"}'
+      </div>
+
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button class="btn btn-sm" style="background:#1E1E1E;color:#9CDCFE;border-color:#444;" onclick="copyPsCmd()">📋 Copy lệnh PowerShell</button>
+        <button class="btn btn-sm" onclick="openPsFallback()">📂 Mở PowerShell</button>
+        <button class="btn btn-sm" style="background:#166534;color:#fff;border-color:#166534;" onclick="pasteTokenManual()">✏ Tôi đã có token → dán vào đây</button>
+      </div>
+
+      <div style="margin-top:10px;font-size:12px;color:#555;">
+        Sau khi chạy lệnh, kết quả hiện <code style="background:#F0F2F5;padding:1px 5px;border-radius:3px;">access_token : eyJh...</code> — copy chuỗi dài đó → nhấn nút <strong style="color:#166534;">✏ Tôi đã có token</strong> bên trên và dán vào.
+      </div>
+      <div style="margin-top:6px;padding:8px;background:#FFF3CD;border-radius:6px;border:1px solid #FCD34D;font-size:12px;">
+        ⚠️ <strong>auth_code chỉ dùng được 1 lần và hết hạn sau vài phút.</strong> Chạy lệnh ngay sau khi copy auth_code, đừng để lâu.
+      </div>
+    </div>
+  `;
+  btnEx.disabled = false;
+}
+
+function copyPsCmd() {
+  const el = document.getElementById('psCmd');
+  if (!el) return;
+  navigator.clipboard.writeText(el.textContent.trim())
+    .then(() => toast('success', 'Đã copy lệnh PowerShell ✓'));
+}
+
+function openPsFallback() {
+  // Windows: open PowerShell
+  toast('info', 'Nhấn Start → gõ "PowerShell" → dán lệnh vừa copy vào');
+}
+
+function pasteTokenManual() {
+  // switch to Tab 2 (manual token entry)
+  switchTab(2);
+  toast('info', 'Dán access_token vào ô bên dưới rồi nhấn Lưu & Kết nối');
+}
+
+/* ─ ID TAGS ─ */
+function renderIdTags(arr, boxId) {
+  const box = document.getElementById(boxId);
+  if (!arr.length) {
+    box.innerHTML = '<span style="color:var(--text3);font-size:12px;">Chưa có — để trống sẽ lấy tất cả tài khoản</span>';
+    return;
+  }
+  box.innerHTML = arr.map((id,i) =>
+    `<span class="id-tag">${id}<button onclick="removeId('${boxId}',${i})">✕</button></span>`
+  ).join('');
+}
+
+function removeId(boxId, i) {
+  const arr = boxId === 'idTagsManual' ? _advIdsManual : _advIds;
+  arr.splice(i,1);
+  renderIdTags(arr, boxId);
+}
+
+function addAdvIdManual() {
+  const inp = document.getElementById('iAdvManual');
+  const val = inp.value.trim().replace(/\D/g,'');
+  if (!val) return;
+  if (!_advIdsManual.includes(val)) _advIdsManual.push(val);
+  inp.value = '';
+  renderIdTags(_advIdsManual, 'idTagsManual');
+}
+
+/* ─ TEST MANUAL TOKEN ─ */
+async function testManualToken() {
+  const token = document.getElementById('iTokenManual').value.trim();
+  const proxy = document.getElementById('iProxyManual').value.trim();
+  if (!token) { toast('warn','Vui lòng nhập token trước'); return; }
+
+  const el = document.getElementById('manualTestStatus');
+  el.className = 'status-box show wait';
+  el.innerHTML = '<div class="spinner" style="width:14px;height:14px;border-width:2px;"></div> Đang kiểm tra...';
+
+  try {
+    const base = 'https://business-api.tiktok.com/open_api/v1.3';
+    const url  = proxy ? proxy + encodeURIComponent(`${base}/user/info/`) : `${base}/user/info/`;
+    const res  = await fetch(url, { headers:{ 'Access-Token': token } });
+    const data = await res.json();
+    if (data.code === 0 || (data.code !== 40105 && data.code !== 40001)) {
+      el.className = 'status-box show ok';
+      el.innerHTML = '✅ Token hợp lệ!';
+    } else {
+      el.className = 'status-box show fail';
+      el.innerHTML = '❌ Token không hợp lệ';
+    }
+  } catch(e) {
+    el.className = 'status-box show fail';
+    el.innerHTML = e.message.includes('fetch') ? '❌ Lỗi CORS — cần điền CORS Proxy' : '❌ ' + e.message;
+  }
+}
+
+/* ─ OPEN / CLOSE ─ */
 function openSettings() {
-  document.getElementById('iToken').value    = S.config.token || '';
-  document.getElementById('iProxy').value    = S.config.proxy || '';
-  document.getElementById('iAdvIds').value   = (S.config.advIds || []).join('\n');
-  document.getElementById('iDemo').checked   = S.demo;
+  // restore Tab 1 fields
+  document.getElementById('iAppId').value  = S.config.appId  || '';
+  document.getElementById('iSecret').value = S.config.secret || '';
+  document.getElementById('iToken').value  = S.config.token  || '';
+  document.getElementById('iProxy').value  = S.config.proxy  || '';
+  // restore Tab 2 fields
+  document.getElementById('iTokenManual').value = S.config.token || '';
+  document.getElementById('iProxyManual').value = S.config.proxy || '';
+  _advIdsManual = [...(S.config.advIds || [])];
+  renderIdTags(_advIdsManual, 'idTagsManual');
+  // reset statuses
+  ['exchangeStatus','manualTestStatus'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) { el.className='status-box'; el.innerHTML=''; }
+  });
+  // pick tab: if already has token go to tab 2, else tab 1
+  switchTab(S.config.token ? 2 : 1);
+  renderRedirectPresets();
+  onAppIdInput(); // rebuild auth URL if app id is filled
   document.getElementById('settingsOverlay').classList.add('open');
 }
+
 function closeSettings() { document.getElementById('settingsOverlay').classList.remove('open'); }
 
+/* ─ SAVE ─ */
 async function saveSettings() {
-  const token  = document.getElementById('iToken').value.trim();
-  const proxy  = document.getElementById('iProxy').value.trim();
-  const ids    = document.getElementById('iAdvIds').value.trim().split('\n').map(s=>s.trim()).filter(Boolean);
-  const demo   = document.getElementById('iDemo').checked;
+  const token = document.getElementById('iToken').value.trim();
+  const proxy = document.getElementById('iProxy').value.trim();
+  const appId = document.getElementById('iAppId').value.trim();
+  const secret= document.getElementById('iSecret').value.trim();
+  if (!token) { toast('warn','Chưa có Access Token — hoàn thành bước 3 trước'); return; }
 
-  S.config = { token, proxy, advIds: ids };
-  S.demo   = demo;
+  S.config = { token, proxy, appId, secret, advIds: _advIds };
+  S.demo   = false;
   localStorage.setItem('tt_cfg',  JSON.stringify(S.config));
-  localStorage.setItem('tt_demo', demo ? '1' : '0');
+  localStorage.setItem('tt_demo', '0');
   closeSettings();
+  document.getElementById('demoBadge').style.display = 'none';
+  showDashboard();
+  S.campaigns = []; S.adgroups = {}; S.metrics = {}; S.expanded.clear();
+  await loadAccounts();
+  toast('success', 'Đã kết nối TikTok API ✓');
+}
 
-  document.getElementById('demoBadge').style.display = demo ? '' : 'none';
+async function saveManual() {
+  const token = document.getElementById('iTokenManual').value.trim();
+  const proxy = document.getElementById('iProxyManual').value.trim();
+  if (!token) { toast('warn','Vui lòng nhập Access Token'); return; }
 
-  if (demo || token) {
-    showDashboard();
-    S.campaigns = []; S.adgroups = {}; S.metrics = {}; S.expanded.clear();
-    await loadAccounts();
-    if (!demo) toast('success', 'Đã kết nối TikTok API ✓');
-  }
+  S.config = { token, proxy, advIds: _advIdsManual };
+  S.demo   = false;
+  localStorage.setItem('tt_cfg',  JSON.stringify(S.config));
+  localStorage.setItem('tt_demo', '0');
+  closeSettings();
+  document.getElementById('demoBadge').style.display = 'none';
+  showDashboard();
+  S.campaigns = []; S.adgroups = {}; S.metrics = {}; S.expanded.clear();
+  await loadAccounts();
+  toast('success', 'Đã kết nối TikTok API ✓');
 }
 
 function enableDemo() {
@@ -1279,6 +1839,24 @@ function enableDemo() {
   showDashboard();
   loadAccounts();
 }
+
+/* ─ AUTO-CAPTURE auth_code FROM URL (when TikTok redirects back here) ─ */
+(function checkOAuthCallback() {
+  const params   = new URLSearchParams(window.location.search);
+  const authCode = params.get('auth_code');
+  const state    = params.get('state');
+  if (authCode && state === 'hung_tiktok_tool') {
+    // Clean URL
+    history.replaceState({}, '', window.location.pathname);
+    // Auto-fill and open settings at tab 1
+    setTimeout(() => {
+      openSettings();
+      switchTab(1);
+      document.getElementById('iAuthCode').value = authCode;
+      toast('success', 'Đã nhận auth_code từ TikTok! Nhấn "Đổi lấy Token" để hoàn tất.');
+    }, 500);
+  }
+})();
 
 /* ═══════════════════════════ REFRESH ═══════════════════════════ */
 async function refreshData() {
