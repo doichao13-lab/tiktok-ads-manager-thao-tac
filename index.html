@@ -869,19 +869,27 @@ async function apiGet(path, params = {}) {
       const r = await fetchWithTimeout(url, { headers });
       const d = await r.json();
       if (d.code !== undefined) {
-        if (d.code !== 0) throw new Error(d.message || `API error ${d.code}`);
+        if (d.code !== 0) {
+          const err = new Error(`[${d.code}] ${d.message || 'API error'}`);
+          err.isApiError = true;
+          throw err;
+        }
         return d.data;
       }
       // allorigins wraps in {contents}
       if (d.contents) {
         const inner = JSON.parse(d.contents);
-        if (inner.code !== 0) throw new Error(inner.message || `API error ${inner.code}`);
+        if (inner.code !== 0) {
+          const err = new Error(`[${inner.code}] ${inner.message || 'API error'}`);
+          err.isApiError = true;
+          throw err;
+        }
         return inner.data;
       }
       throw new Error('Phản hồi không hợp lệ từ proxy');
     } catch(e) {
+      if (e.isApiError) throw e; // TikTok API error — don't retry other proxies
       lastErr = e.name === 'AbortError' ? 'Timeout (proxy quá chậm)' : e.message;
-      if (e.message && e.message.startsWith('API error')) throw e; // API err, no point retrying
     }
   }
   throw new Error(lastErr);
