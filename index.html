@@ -791,10 +791,10 @@ while ($listener.IsListening) {
 /* ═══════════════════════════ COLUMN DEFINITIONS ═══════════════════════════ */
 const COLS = {
   reach:        { label: 'Reach',       metric: 'reach',                  icon: '👁' },
-  video_2s:     { label: 'View 2s',     metric: 'video_play_2s',          icon: '▶' },
-  video_6s:     { label: 'View 6s',     metric: 'video_watched_6s',       icon: '▶▶' },
-  lead_form:    { label: 'Lead Form',   metric: 'total_lead',             icon: '📋' },
-  conversion:   { label: 'Conversion',  metric: 'total_complete_payment', icon: '✅' },
+  video_2s:     { label: 'View 2s',     metric: 'video_watched_2s',  icon: '▶' },
+  video_6s:     { label: 'View 6s',     metric: 'video_watched_6s',  icon: '▶▶' },
+  lead_form:    { label: 'Lead Form',   metric: 'result',            icon: '📋' },
+  conversion:   { label: 'Conversion',  metric: 'complete_payment',  icon: '✅' },
   click_to_web: { label: 'Click Web',   metric: 'clicks',                 icon: '🖱' },
   follow:       { label: 'Follow',      metric: 'follows',                icon: '➕' },
 };
@@ -979,10 +979,10 @@ function mockMetrics(ids) {
     r[id] = {
       spend:                 +(Math.random()*2500000 + 300000).toFixed(0),
       reach:                 Math.floor(Math.random()*45000 + 3000),
-      video_play_2s:         Math.floor(Math.random()*28000 + 1500),
-      video_watched_6s:      Math.floor(Math.random()*12000 + 800),
-      total_lead:            Math.floor(Math.random()*120 + 5),
-      total_complete_payment:Math.floor(Math.random()*60 + 2),
+      video_watched_2s:  Math.floor(Math.random()*28000 + 1500),
+      video_watched_6s:  Math.floor(Math.random()*12000 + 800),
+      result:            Math.floor(Math.random()*120 + 5),
+      complete_payment:  Math.floor(Math.random()*60 + 2),
       clicks:                Math.floor(Math.random()*2500 + 150),
       follows:               Math.floor(Math.random()*600 + 30),
       impressions:           Math.floor(Math.random()*120000 + 8000),
@@ -1028,7 +1028,7 @@ async function fetchMetrics(aid, level, ids) {
     report_type: 'BASIC',
     data_level: level === 'campaign' ? 'AUCTION_CAMPAIGN' : 'AUCTION_ADGROUP',
     dimensions: [dim],
-    metrics: ['spend','reach','video_play_2s','video_watched_6s','total_lead','total_complete_payment','clicks','follows','impressions'],
+    metrics: ['spend','reach','video_watched_2s','video_watched_6s','result','complete_payment','clicks','follows','impressions'],
     start_date: start, end_date: end, page_size: 1000,
   });
   const r = {};
