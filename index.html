@@ -146,9 +146,10 @@
 
     /* ── TABLE ── */
     .table-wrap {
-      overflow-x: auto; border-radius: 12px;
+      overflow: auto; border-radius: 12px;
       border: 1px solid var(--border); background: var(--bg2);
       box-shadow: 0 1px 4px rgba(0,0,0,.07);
+      max-height: calc(100vh - 365px); min-height: 320px;
     }
     table { width: 100%; border-collapse: collapse; min-width: 860px; }
     thead th {
@@ -156,22 +157,46 @@
       text-align: left; font-size: 11px; font-weight: 600;
       color: var(--text2); white-space: nowrap;
       border-bottom: 1px solid var(--border);
-      position: sticky; top: 194px; z-index: 2;
+      position: sticky; top: 0; z-index: 2;
     }
-    thead th:first-child {
-      position: sticky; left: 0; z-index: 3; min-width: 260px;
+    /* Campaign level: checkbox col (1st) + name col (2nd) both sticky */
+    .tbl-campaign thead th:first-child {
+      position: sticky; left: 0; top: 0; z-index: 3; width: 36px; min-width: 36px;
+      background: var(--bg3); text-align: center;
+    }
+    .tbl-campaign thead th:nth-child(2) {
+      position: sticky; left: 36px; top: 0; z-index: 3; min-width: 240px;
       background: var(--bg3);
     }
+    .tbl-campaign tbody td:first-child {
+      position: sticky; left: 0; background: var(--bg2); z-index: 1;
+      text-align: center; width: 36px;
+    }
+    .tbl-campaign tbody td:nth-child(2) {
+      position: sticky; left: 36px; background: var(--bg2); z-index: 1;
+    }
+    .tbl-campaign tbody tr:hover td:first-child,
+    .tbl-campaign tbody tr:hover td:nth-child(2) { background: var(--bg3); }
+
+    /* Adgroup level: only name col (1st) sticky */
+    .tbl-adgroup thead th:first-child {
+      position: sticky; left: 0; top: 0; z-index: 3; min-width: 260px;
+      background: var(--bg3);
+    }
+    .tbl-adgroup tbody td:first-child {
+      position: sticky; left: 0; background: var(--bg2); z-index: 1;
+    }
+    .tbl-adgroup tbody tr:hover td:first-child { background: var(--bg3); }
+    /* Checkbox column */
+    .col-check { width: 36px; text-align: center; }
+    .row-check { width: 36px; text-align: center; vertical-align: middle; }
+    .row-check input, .col-check input { width: 15px; height: 15px; cursor: pointer; accent-color: var(--red); }
     tbody td {
       padding: 9px 14px; white-space: nowrap; font-size: 13px;
       border-bottom: 1px solid var(--border); vertical-align: middle;
     }
     tbody tr:last-child td { border-bottom: none; }
-    tbody td:first-child {
-      position: sticky; left: 0; background: var(--bg2); z-index: 1;
-    }
     tbody tr:hover td { background: var(--bg3); }
-    tbody tr:hover td:first-child { background: var(--bg3); }
 
     /* Campaign row */
     .campaign-row { cursor: pointer; }
@@ -505,7 +530,7 @@
     <!-- Desktop table -->
     <div id="viewDesktop">
       <div class="table-wrap">
-        <table>
+        <table id="mainTable">
           <thead><tr id="tHead"></tr></thead>
           <tbody id="tBody"></tbody>
         </table>
@@ -877,9 +902,10 @@ const S = {
   dateRange: '7',
   statusFilter: '',
   nameFilter: '',
-  level: 'campaign',        // 'campaign' | 'adgroup'
-  selectedCampaignId: null, // for adgroup level view
-  agCount: null,            // { total, active } from quick fetch
+  level: 'campaign',           // 'campaign' | 'adgroup'
+  selectedCampaignId: null,    // current campaign shown in adgroup view
+  selectedCampaignIds: new Set(), // checkbox multi-select
+  agCount: null,               // { total, active } from quick fetch
   budgetEdit: null,
   bidEdit: null,
 };
@@ -1058,14 +1084,19 @@ async function fetchAccounts() {
   if (!ids.length) return [];
   try {
     const d = await apiGet('/advertiser/info/', { advertiser_ids: ids });
-    const list = d.list || [];
-    if (list.length) return list.map(a => ({
-      advertiser_id: String(a.advertiser_id),
-      advertiser_name: a.advertiser_name || a.advertiser_id,
-      currency: a.currency,
-      balance: a.balance,
-    }));
-  } catch(e) { /* fallback to IDs */ }
+    const list = d.list || d.advertiser_list || [];
+    if (list.length) {
+      return list.map(a => ({
+        advertiser_id: String(a.advertiser_id),
+        advertiser_name: a.advertiser_name || String(a.advertiser_id),
+        currency: a.currency,
+        balance: a.balance,
+      }));
+    }
+    toast('warn', 'Không lấy được tên TK: ' + JSON.stringify(d).slice(0, 100));
+  } catch(e) {
+    toast('warn', 'Lỗi lấy tên tài khoản: ' + e.message);
+  }
   return ids.map(id => ({ advertiser_id: id, advertiser_name: id }));
 }
 
@@ -1190,15 +1221,36 @@ function colDefs() { return S.columns.map(id => COLS[id]); }
 
 function renderHead() {
   const cols = colDefs();
-  const firstCol = S.level === 'adgroup' ? 'Nhóm quảng cáo' : 'Chiến dịch';
-  document.getElementById('tHead').innerHTML = `
-    <th>${firstCol}</th>
-    <th>Bật / Tắt</th>
-    <th>Ngân sách</th>
-    <th>Chi tiêu</th>
-    ${cols.map(c => `<th>${c.icon} ${c.label}</th>`).join('')}
-    <th>Thao tác</th>
-  `;
+  const tbl = document.getElementById('mainTable');
+  if (tbl) {
+    tbl.classList.toggle('tbl-campaign', S.level === 'campaign');
+    tbl.classList.toggle('tbl-adgroup', S.level === 'adgroup');
+  }
+  if (S.level === 'campaign') {
+    const allChecked = S.campaigns.length > 0 && S.campaigns.every(c => S.selectedCampaignIds.has(c.campaign_id));
+    const someChecked = S.selectedCampaignIds.size > 0 && !allChecked;
+    document.getElementById('tHead').innerHTML = `
+      <th class="col-check"><input type="checkbox" id="selectAllCmp" ${allChecked?'checked':''} onchange="toggleSelectAll(this.checked)" title="Chọn tất cả" /></th>
+      <th>Chiến dịch</th>
+      <th>Bật / Tắt</th>
+      <th>Ngân sách</th>
+      <th>Chi tiêu</th>
+      ${cols.map(c => `<th>${c.icon} ${c.label}</th>`).join('')}
+      <th>Thao tác</th>
+    `;
+    // Set indeterminate state
+    const cb = document.getElementById('selectAllCmp');
+    if (cb) cb.indeterminate = someChecked;
+  } else {
+    document.getElementById('tHead').innerHTML = `
+      <th>Nhóm quảng cáo</th>
+      <th>Bật / Tắt</th>
+      <th>Ngân sách</th>
+      <th>Chi tiêu</th>
+      ${cols.map(c => `<th>${c.icon} ${c.label}</th>`).join('')}
+      <th>Thao tác</th>
+    `;
+  }
 }
 
 function render() {
@@ -1225,28 +1277,58 @@ function renderCampaignLevel() {
 
 function renderAdGroupLevel() {
   renderHead();
-  // Update campaign selector in ag-level-head
+  // Build campaign selector
   const sel = document.getElementById('agCmpSel');
   if (sel) {
-    sel.innerHTML = S.campaigns.map(c =>
+    const selectedIds = [...S.selectedCampaignIds];
+    const srcCampaigns = selectedIds.length
+      ? S.campaigns.filter(c => selectedIds.includes(c.campaign_id))
+      : S.campaigns;
+    let opts = '';
+    if (srcCampaigns.length > 1) {
+      opts += `<option value="__all__" ${S.selectedCampaignId === '__all__' ? 'selected' : ''}>— Tất cả đã chọn (${srcCampaigns.length}) —</option>`;
+    }
+    opts += srcCampaigns.map(c =>
       `<option value="${c.campaign_id}" ${c.campaign_id === S.selectedCampaignId ? 'selected' : ''}>${esc(c.campaign_name)}</option>`
     ).join('');
+    sel.innerHTML = opts;
   }
+
   const tb = document.getElementById('tBody');
   tb.innerHTML = '';
+
+  if (S.selectedCampaignId === '__all__') {
+    // Show all adgroups from selected campaigns
+    const selectedIds = [...S.selectedCampaignIds];
+    const allLoaded = selectedIds.every(id => S.adgroups[id]);
+    if (!allLoaded) {
+      tb.innerHTML = `<tr><td colspan="20" style="text-align:center;padding:40px;color:var(--text2);"><div class="spinner" style="margin:auto;margin-bottom:8px;"></div>Đang tải nhóm QC...</td></tr>`;
+      return;
+    }
+    let allAgs = [];
+    selectedIds.forEach(cid => { allAgs = allAgs.concat(S.adgroups[cid] || []); });
+    if (S.statusFilter) allAgs = allAgs.filter(ag => ag.operation_status === S.statusFilter);
+    if (!allAgs.length) {
+      tb.innerHTML = `<tr><td colspan="20" style="text-align:center;padding:40px;color:var(--text2);">Không có nhóm QC nào</td></tr>`;
+      return;
+    }
+    allAgs.forEach(ag => tb.appendChild(makeAGRow(ag)));
+    return;
+  }
+
   if (!S.selectedCampaignId) {
-    tb.innerHTML = `<tr><td colspan="20" style="text-align:center;padding:50px;color:var(--text2);">Chọn chiến dịch để xem nhóm quảng cáo</td></tr>`;
+    tb.innerHTML = `<tr><td colspan="20" style="text-align:center;padding:40px;color:var(--text2);">Chọn chiến dịch để xem nhóm quảng cáo</td></tr>`;
     return;
   }
   const ags = S.adgroups[S.selectedCampaignId];
   if (!ags) {
-    tb.innerHTML = `<tr><td colspan="20" style="text-align:center;padding:50px;color:var(--text2);"><div class="spinner" style="margin:auto;margin-bottom:8px;"></div>Đang tải nhóm QC...</td></tr>`;
+    tb.innerHTML = `<tr><td colspan="20" style="text-align:center;padding:40px;color:var(--text2);"><div class="spinner" style="margin:auto;margin-bottom:8px;"></div>Đang tải nhóm QC...</td></tr>`;
     return;
   }
   let list = ags;
   if (S.statusFilter) list = list.filter(ag => ag.operation_status === S.statusFilter);
   if (!list.length) {
-    tb.innerHTML = `<tr><td colspan="20" style="text-align:center;padding:50px;color:var(--text2);">Không có nhóm quảng cáo nào</td></tr>`;
+    tb.innerHTML = `<tr><td colspan="20" style="text-align:center;padding:40px;color:var(--text2);">Không có nhóm QC nào</td></tr>`;
     return;
   }
   list.forEach(ag => tb.appendChild(makeAGRow(ag)));
@@ -1256,11 +1338,15 @@ function makeCampaignRow(c) {
   const tr = document.createElement('tr');
   tr.className = 'campaign-row';
   tr.dataset.cid = c.campaign_id;
-  const active  = c.operation_status === 'ENABLE';
-  const m       = S.metrics[c.campaign_id] || {};
-  const bmode   = c.budget_mode === 'BUDGET_MODE_DAILY' ? '/ng' : '';
-  const cols    = colDefs();
+  const active   = c.operation_status === 'ENABLE';
+  const selected = S.selectedCampaignIds.has(c.campaign_id);
+  const m        = S.metrics[c.campaign_id] || {};
+  const bmode    = c.budget_mode === 'BUDGET_MODE_DAILY' ? '/ng' : '';
+  const cols     = colDefs();
   tr.innerHTML = `
+    <td class="row-check" onclick="event.stopPropagation()">
+      <input type="checkbox" ${selected?'checked':''} onchange="toggleCampaignSelect('${c.campaign_id}',this.checked)" />
+    </td>
     <td>
       <div class="name-cell">
         <div class="name-info">
@@ -1523,13 +1609,13 @@ function updateSummary() {
     agSub = '';
   }
 
-  document.getElementById('s-spend').textContent  = fmtCur(totalSpend);
+  document.getElementById('s-spend').textContent  = fmtCurShort(totalSpend);
   document.getElementById('s-cmp').textContent    = activeCmp;
   document.getElementById('s-cmp-sub').textContent= `/ ${cs.length} chiến dịch`;
   document.getElementById('s-ag').textContent     = activeAG;
   document.getElementById('s-ag-sub').textContent = agSub;
-  document.getElementById('s-budget').textContent = fmtCur(totalBudget);
-  document.getElementById('s-budget-sub').textContent = `Còn lại: ${fmtCur(Math.max(0, totalBudget - totalSpend))}`;
+  document.getElementById('s-budget').textContent = fmtCurShort(totalBudget);
+  document.getElementById('s-budget-sub').textContent = `Còn lại: ${fmtCurShort(Math.max(0, totalBudget - totalSpend))}`;
 }
 
 /* ═══════════════════════════ COLUMNS ═══════════════════════════ */
@@ -1575,7 +1661,8 @@ function onAccountChange(v) {
   S.accountId = v;
   localStorage.setItem('tt_acc', v);
   S.campaigns = []; S.adgroups = {}; S.metrics = {}; S.expanded.clear();
-  S.agCount = null; S.level = 'campaign'; S.selectedCampaignId = null; S.nameFilter = '';
+  S.agCount = null; S.level = 'campaign'; S.selectedCampaignId = null;
+  S.selectedCampaignIds = new Set(); S.nameFilter = '';
   document.getElementById('nameFilterInput').value = '';
   switchLevel('campaign');
   if (v) loadCampaigns(v);
@@ -1599,7 +1686,21 @@ function onNameFilter(v) {
 
 function switchLevel(level, campaignId) {
   S.level = level;
-  if (campaignId !== undefined) S.selectedCampaignId = campaignId;
+  if (level === 'adgroup') {
+    // Determine which campaign(s) to show
+    const selectedIds = [...S.selectedCampaignIds];
+    if (campaignId) {
+      // Specific campaign clicked → show it, also add to selection if empty
+      S.selectedCampaignId = campaignId;
+      if (selectedIds.length === 0) S.selectedCampaignIds.add(campaignId);
+    } else if (selectedIds.length === 1) {
+      S.selectedCampaignId = selectedIds[0];
+    } else if (selectedIds.length > 1) {
+      S.selectedCampaignId = '__all__';
+    } else if (S.campaigns.length) {
+      S.selectedCampaignId = S.campaigns[0].campaign_id;
+    }
+  }
   const lt1 = document.getElementById('ltabCampaign');
   const lt2 = document.getElementById('ltabAdgroup');
   if (lt1) lt1.classList.toggle('active', level === 'campaign');
@@ -1609,15 +1710,35 @@ function switchLevel(level, campaignId) {
   const nfw = document.getElementById('nameFilterWrap');
   if (nfw) nfw.style.display = level === 'campaign' ? '' : 'none';
   if (S.campaigns.length) render();
-  if (level === 'adgroup' && S.selectedCampaignId && !S.adgroups[S.selectedCampaignId]) {
-    loadAdGroups(S.selectedCampaignId);
+  // Kick off loading
+  if (level === 'adgroup') {
+    if (S.selectedCampaignId === '__all__') {
+      [...S.selectedCampaignIds].forEach(id => { if (!S.adgroups[id]) loadAdGroups(id); });
+    } else if (S.selectedCampaignId && !S.adgroups[S.selectedCampaignId]) {
+      loadAdGroups(S.selectedCampaignId);
+    }
   }
 }
 
 function onAGCmpChange(cid) {
   S.selectedCampaignId = cid;
   render();
-  if (cid && !S.adgroups[cid]) loadAdGroups(cid);
+  if (cid && cid !== '__all__' && !S.adgroups[cid]) loadAdGroups(cid);
+  if (cid === '__all__') {
+    [...S.selectedCampaignIds].forEach(id => { if (!S.adgroups[id]) loadAdGroups(id); });
+  }
+}
+
+function toggleCampaignSelect(cid, checked) {
+  if (checked) S.selectedCampaignIds.add(cid);
+  else S.selectedCampaignIds.delete(cid);
+  renderHead(); // update select-all checkbox state
+}
+
+function toggleSelectAll(checked) {
+  if (checked) S.campaigns.forEach(c => S.selectedCampaignIds.add(c.campaign_id));
+  else S.selectedCampaignIds.clear();
+  render();
 }
 
 /* ═══════════════════════════ VIEW MODE ═══════════════════════════ */
@@ -1987,6 +2108,7 @@ async function saveSettings() {
   showDashboard();
   S.campaigns = []; S.adgroups = {}; S.metrics = {}; S.expanded.clear();
   S.agCount = null; S.level = 'campaign'; S.selectedCampaignId = null;
+  S.selectedCampaignIds = new Set();
   switchLevel('campaign');
   await loadAccounts();
   toast('success', 'Đã kết nối TikTok API ✓');
@@ -2006,6 +2128,7 @@ async function saveManual() {
   showDashboard();
   S.campaigns = []; S.adgroups = {}; S.metrics = {}; S.expanded.clear();
   S.agCount = null; S.level = 'campaign'; S.selectedCampaignId = null;
+  S.selectedCampaignIds = new Set();
   switchLevel('campaign');
   await loadAccounts();
   toast('success', 'Đã kết nối TikTok API ✓');
@@ -2041,6 +2164,7 @@ function enableDemo() {
 async function refreshData() {
   if (!S.accountId) { toast('warn','Vui lòng chọn tài khoản'); return; }
   S.metrics = {}; S.adgroups = {}; S.expanded.clear(); S.agCount = null;
+  S.selectedCampaignIds = new Set();
   await loadCampaigns(S.accountId);
   toast('success', 'Đã làm mới dữ liệu ✓');
 }
@@ -2054,7 +2178,7 @@ function showDashboard() {
 
 function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
-function fmtCur(v) {
+function fmtCurShort(v) { // abbreviated — for summary stat cards only
   const n = parseFloat(v) || 0;
   if (n >= 1e9) return (n/1e9).toFixed(1) + 'B';
   if (n >= 1e6) return (n/1e6).toFixed(1) + 'M';
@@ -2062,16 +2186,18 @@ function fmtCur(v) {
   return n.toLocaleString('vi-VN');
 }
 
+function fmtCur(v) { // full number — for table cells
+  const n = parseFloat(v) || 0;
+  return n.toLocaleString('vi-VN');
+}
+
 function fmtCurFull(v) {
   return parseFloat(v||0).toLocaleString('vi-VN') + ' đ';
 }
 
-function fmtN(v) {
+function fmtN(v) { // full number — for metric cells
   if (v === undefined || v === null || v === '') return '—';
-  const n = parseFloat(v) || 0;
-  if (n >= 1e6) return (n/1e6).toFixed(1) + 'M';
-  if (n >= 1e3) return (n/1e3).toFixed(0) + 'K';
-  return n.toLocaleString('vi-VN');
+  return (parseFloat(v) || 0).toLocaleString('vi-VN');
 }
 
 /* ═══════════════════════════ TOAST ═══════════════════════════ */
