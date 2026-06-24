@@ -200,6 +200,12 @@
 
     /* Campaign row */
     .campaign-row { cursor: pointer; }
+    .campaign-row.active-row > td { background: rgba(254,44,85,.07) !important; }
+    .campaign-row.active-row > td:first-child { background: rgba(254,44,85,.07) !important; }
+    .campaign-row.active-row > td:nth-child(2) { background: rgba(254,44,85,.07) !important; }
+    .campaign-row.active-row > td:nth-child(2)::before {
+      content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: var(--red);
+    }
     .campaign-row.expanded > td:nth-child(2) { background: rgba(254,44,85,.04) !important; }
     .campaign-row.expanded > td:first-child { background: rgba(254,44,85,.04) !important; }
     .adgroup-row td { background: #FAFBFC !important; }
@@ -941,6 +947,7 @@ while ($listener.IsListening) {
 <script>
 /* ═══════════════════════════ COLUMN DEFINITIONS ═══════════════════════════ */
 const COLS = {
+  impressions:  { label: 'Hiển thị',   metric: 'impressions',            icon: '📺' },
   reach:        { label: 'Reach',       metric: 'reach',                  icon: '👁' },
   video_2s:     { label: 'View 2s',     metric: 'video_watched_2s',  icon: '▶' },
   video_6s:     { label: 'View 6s',     metric: 'video_watched_6s',  icon: '▶▶' },
@@ -975,6 +982,7 @@ const S = {
   level: 'campaign',           // 'campaign' | 'adgroup'
   selectedCampaignId: null,    // current campaign shown in adgroup view
   selectedCampaignIds: new Set(), // checkbox multi-select
+  activeCampaignId: null,      // campaign row currently clicked/highlighted (single select)
   agCount: null,               // { total, active } from quick fetch
   budgetEdit: null,
   bidEdit: null,
@@ -1439,8 +1447,13 @@ function renderAdGroupLevel() {
 
 function makeCampaignRow(c) {
   const tr = document.createElement('tr');
-  tr.className = 'campaign-row';
+  const isActive = S.activeCampaignId === c.campaign_id;
+  tr.className = 'campaign-row' + (isActive ? ' active-row' : '');
   tr.dataset.cid = c.campaign_id;
+  tr.onclick = (e) => {
+    if (e.target.closest('input,label,.toggle,button,.edit-btn')) return;
+    setActiveCampaign(c.campaign_id);
+  };
   const active     = c.operation_status === 'ENABLE';
   const selected   = S.selectedCampaignIds.has(c.campaign_id);
   const isExpanded = S.expanded.has(c.campaign_id);
@@ -1799,6 +1812,7 @@ function onAccountChange(v) {
   localStorage.setItem('tt_acc', v);
   S.campaigns = []; S.adgroups = {}; S.metrics = {}; S.expanded.clear();
   S.agCount = null; S.level = 'campaign'; S.selectedCampaignId = null;
+  S.activeCampaignId = null;
   S.selectedCampaignIds = new Set(); S.nameFilter = '';
   document.getElementById('nameFilterInput').value = '';
   switchLevel('campaign');
@@ -1821,15 +1835,28 @@ function onNameFilter(v) {
   render();
 }
 
+function setActiveCampaign(cid) {
+  S.activeCampaignId = cid;
+  // Update highlight on all campaign rows
+  document.querySelectorAll('.campaign-row').forEach(row => {
+    row.classList.toggle('active-row', row.dataset.cid === cid);
+  });
+  // Pre-load adgroups in background for quick switch
+  if (!S.adgroups[cid]) loadAdGroups(cid);
+}
+
 function switchLevel(level, campaignId) {
   S.level = level;
   if (level === 'adgroup') {
-    // Determine which campaign(s) to show
     const selectedIds = [...S.selectedCampaignIds];
     if (campaignId) {
-      // Specific campaign clicked → show it, also add to selection if empty
+      // Specific campaign button clicked
       S.selectedCampaignId = campaignId;
+      S.activeCampaignId = campaignId;
       if (selectedIds.length === 0) S.selectedCampaignIds.add(campaignId);
+    } else if (S.activeCampaignId) {
+      // Use the campaign the user last clicked on
+      S.selectedCampaignId = S.activeCampaignId;
     } else if (selectedIds.length === 1) {
       S.selectedCampaignId = selectedIds[0];
     } else if (selectedIds.length > 1) {
