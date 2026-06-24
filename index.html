@@ -503,6 +503,17 @@
       <button class="btn btn-primary" onclick="openSettings()">⚙ Cài đặt kết nối API</button>
       <button class="btn" onclick="enableDemo()">⚡ Dùng dữ liệu mẫu</button>
     </div>
+    <!-- Cloud Sync quick-load -->
+    <div style="margin-top:28px;padding:20px 24px;background:#F0F9FF;border:1px solid #BAE6FD;border-radius:12px;max-width:360px;width:100%;">
+      <div style="font-size:13px;font-weight:600;color:#0369A1;margin-bottom:10px;">☁️ Đã dùng trước đây? Tải lại cài đặt từ Cloud</div>
+      <div style="display:flex;gap:8px;">
+        <input type="text" id="setupCloudPin" class="form-input" placeholder="Nhập PIN của bạn..."
+               style="flex:1;letter-spacing:1px;font-size:14px;"
+               onkeydown="if(event.key==='Enter')quickLoadCloud()" />
+        <button class="btn btn-primary" onclick="quickLoadCloud()" style="white-space:nowrap;padding:0 14px;">Tải</button>
+      </div>
+      <div id="setupCloudStatus" style="margin-top:8px;font-size:12px;min-height:16px;color:var(--text2);"></div>
+    </div>
   </div>
 
   <!-- Dashboard -->
@@ -1288,7 +1299,7 @@ async function loadCampaigns(aid) {
     setLoading(false);
     return;
   }
-  render();
+  try { render(); } catch(e) { toast('error', 'Lỗi hiển thị: ' + e.message); console.error(e); }
   updateSummary();
   setLoading(false);
 
@@ -1418,7 +1429,13 @@ function renderCampaignLevel() {
     tb.innerHTML = `<tr><td colspan="20" style="text-align:center;padding:50px;color:var(--text2);">Không có chiến dịch nào</td></tr>`;
     return;
   }
-  list.forEach(c => tb.appendChild(makeCampaignRow(c)));
+  list.forEach(c => {
+    try { tb.appendChild(makeCampaignRow(c)); }
+    catch(e) {
+      console.error('makeCampaignRow error:', e);
+      toast('error', 'Lỗi hiển thị chiến dịch: ' + e.message);
+    }
+  });
 }
 
 function renderAdGroupLevel() {
@@ -2503,6 +2520,38 @@ async function saveToCloud() {
     }
   } catch(e) {
     statusEl.innerHTML = '<span style="color:#DC2626;">❌ ' + e.message + '</span>';
+  }
+}
+
+async function quickLoadCloud() {
+  const pin = (document.getElementById('setupCloudPin').value || '').trim().toLowerCase();
+  const statusEl = document.getElementById('setupCloudStatus');
+  if (!pin) { statusEl.innerHTML = '<span style="color:#DC2626;">Vui lòng nhập PIN</span>'; return; }
+  statusEl.innerHTML = '⏳ Đang tải...';
+  try {
+    const workerBase = 'https://tiktok-proxy.doichao13.workers.dev';
+    const res = await fetch(`${workerBase}/config/load?pin=${encodeURIComponent(pin)}`);
+    const data = await res.json();
+    if (data.ok && data.config) {
+      S.config = data.config;
+      S.demo = false;
+      localStorage.setItem('tt_cfg', JSON.stringify(S.config));
+      localStorage.setItem('tt_demo', '0');
+      statusEl.innerHTML = '<span style="color:#16A34A;">✅ Thành công! Đang kết nối...</span>';
+      setTimeout(() => {
+        showDashboard();
+        S.campaigns = []; S.adgroups = {}; S.metrics = {}; S.expanded.clear();
+        S.agCount = null; S.level = 'campaign';
+        S.selectedCampaignId = null; S.selectedCampaignIds = new Set();
+        switchLevel('campaign');
+        loadAccounts();
+        toast('success', '✅ Đã nạp cài đặt từ cloud!');
+      }, 600);
+    } else {
+      statusEl.innerHTML = `<span style="color:#DC2626;">❌ ${data.error || 'PIN không đúng'}</span>`;
+    }
+  } catch(e) {
+    statusEl.innerHTML = `<span style="color:#DC2626;">❌ ${e.message}</span>`;
   }
 }
 
