@@ -200,10 +200,13 @@
 
     /* Campaign row */
     .campaign-row { cursor: pointer; }
+    .campaign-row.expanded > td:nth-child(2) { background: rgba(254,44,85,.04) !important; }
+    .campaign-row.expanded > td:first-child { background: rgba(254,44,85,.04) !important; }
     .adgroup-row td { background: #FAFBFC !important; }
     .adgroup-row:hover td { background: #F0F2F5 !important; }
     .adgroup-row td:first-child { background: #FAFBFC !important; }
     .adgroup-row:hover td:first-child { background: #F0F2F5 !important; }
+    .adgroup-row td:first-child { border-left: 3px solid var(--red); }
 
     .name-cell { display: flex; align-items: center; gap: 8px; }
     .expand-btn {
@@ -1262,6 +1265,9 @@ async function loadAdGroupCount(aid) {
 
 async function loadAdGroups(cid) {
   if (S.adgroups[cid]) {
+    // Remove loading placeholder if any
+    document.getElementById('tBody').querySelectorAll(`[data-cpar="${cid}"].ag-loading-row`).forEach(r=>r.remove());
+    if (S.expanded.has(cid)) renderAGRows(cid);
     if (S.level === 'adgroup' && S.selectedCampaignId === cid) render();
     updateCards();
     return;
@@ -1269,18 +1275,35 @@ async function loadAdGroups(cid) {
   try {
     const ags = await fetchAdGroups(S.accountId, cid);
     S.adgroups[cid] = ags;
+    // Remove loading placeholder
+    document.getElementById('tBody').querySelectorAll(`[data-cpar="${cid}"].ag-loading-row`).forEach(r=>r.remove());
+    if (S.expanded.has(cid)) renderAGRows(cid);
     if (S.level === 'adgroup' && S.selectedCampaignId === cid) render();
     updateCards();
+    // Update campaign row subtitle (show adgroup count)
+    const campRow = document.getElementById('tBody').querySelector(`[data-cid="${cid}"]`);
+    if (campRow) {
+      const sub = campRow.querySelector('.name-sub');
+      if (sub) {
+        const c = S.campaigns.find(x => x.campaign_id === cid);
+        if (c) sub.textContent = `${OBJ_MAP[c.objective_type]||c.objective_type||'—'} • ${ags.length} nhóm QC`;
+      }
+    }
     if (ags.length) {
       try {
         const ids = ags.map(a => a.adgroup_id);
         Object.assign(S.metrics, await fetchMetrics(S.accountId, 'adgroup', ids));
       } catch(e) { toast('warn', 'Không tải được số liệu nhóm QC: ' + e.message); }
     }
+    if (S.expanded.has(cid)) renderAGRows(cid);
     if (S.level === 'adgroup' && S.selectedCampaignId === cid) render();
     updateCards();
     updateSummary();
-  } catch(e) { toast('error', 'Lỗi tải nhóm QC: ' + e.message); }
+  } catch(e) {
+    // Remove loading placeholder on error
+    document.getElementById('tBody').querySelectorAll(`[data-cpar="${cid}"].ag-loading-row`).forEach(r=>r.remove());
+    toast('error', 'Lỗi tải nhóm QC: ' + e.message);
+  }
 }
 
 /* ═══════════════════════════ RENDER – TABLE ═══════════════════════════ */
@@ -1405,20 +1428,24 @@ function makeCampaignRow(c) {
   const tr = document.createElement('tr');
   tr.className = 'campaign-row';
   tr.dataset.cid = c.campaign_id;
-  const active   = c.operation_status === 'ENABLE';
-  const selected = S.selectedCampaignIds.has(c.campaign_id);
-  const m        = S.metrics[c.campaign_id] || {};
-  const bmode    = c.budget_mode === 'BUDGET_MODE_DAILY' ? '/ng' : '';
-  const cols     = colDefs();
+  const active     = c.operation_status === 'ENABLE';
+  const selected   = S.selectedCampaignIds.has(c.campaign_id);
+  const isExpanded = S.expanded.has(c.campaign_id);
+  const m          = S.metrics[c.campaign_id] || {};
+  const bmode      = c.budget_mode === 'BUDGET_MODE_DAILY' ? '/ng' : '';
+  const cols       = colDefs();
+  const agLoaded   = S.adgroups[c.campaign_id];
+  const agCount    = agLoaded ? agLoaded.length : '?';
   tr.innerHTML = `
     <td class="row-check" onclick="event.stopPropagation()">
       <input type="checkbox" ${selected?'checked':''} onchange="toggleCampaignSelect('${c.campaign_id}',this.checked)" />
     </td>
-    <td>
+    <td onclick="toggleExpand('${c.campaign_id}', event)" style="cursor:pointer;">
       <div class="name-cell">
+        <div class="expand-btn ${isExpanded?'open':''}" title="${isExpanded?'Thu gọn nhóm QC':'Xem nhóm QC'}">▶</div>
         <div class="name-info">
           <div class="name-main" title="${esc(c.campaign_name)}">${esc(c.campaign_name)}</div>
-          <div class="name-sub">${OBJ_MAP[c.objective_type]||c.objective_type||'—'}</div>
+          <div class="name-sub">${OBJ_MAP[c.objective_type]||c.objective_type||'—'} ${agLoaded ? `• ${agCount} nhóm QC` : ''}</div>
         </div>
       </div>
     </td>
@@ -1436,9 +1463,9 @@ function makeCampaignRow(c) {
     </td>
     <td><span class="spend-val">${fmtCur(m.spend||0)}</span></td>
     ${cols.map(cl=>`<td class="metric-num">${fmtN(m[cl.metric])}</td>`).join('')}
-    <td>
+    <td onclick="event.stopPropagation()">
       <button class="btn btn-sm btn-ghost" onclick="switchLevel('adgroup','${c.campaign_id}')">
-        👥 Nhóm QC
+        👥 Tab riêng
       </button>
     </td>
   `;
@@ -1455,13 +1482,16 @@ function makeAGRow(ag) {
   const bmode  = ag.budget_mode === 'BUDGET_MODE_DAILY' ? '/ng' : '';
   const bidLabel = ag.bid_type === 'BID_TYPE_CUSTOM_BID' ? fmtCur(ag.bid_price) : 'Auto';
   const cols   = colDefs();
+  // Show parent campaign name when in flat adgroup tab view
+  const parentCamp = S.level === 'adgroup' ? S.campaigns.find(c => c.campaign_id === ag.campaign_id) : null;
+  const parentLabel = parentCamp ? `<span style="color:var(--text3);font-size:10px;display:block;margin-top:1px;">📊 ${esc(parentCamp.campaign_name)}</span>` : '';
   tr.innerHTML = `
     <td>
       <div class="adgroup-indent">
         <div class="adgroup-bar"></div>
         <div class="name-info">
           <div class="name-main" title="${esc(ag.adgroup_name)}" style="font-weight:400;">${esc(ag.adgroup_name)}</div>
-          <div class="name-sub">Bid: ${bidLabel}</div>
+          <div class="name-sub">Bid: ${bidLabel}${parentLabel}</div>
         </div>
       </div>
     </td>
@@ -1489,22 +1519,34 @@ function makeAGRow(ag) {
 }
 
 function renderAGRows(cid) {
-  const tb   = document.getElementById('tBody');
-  const camp = S.campaigns.find(c => c.campaign_id === cid);
-  // remove old rows
-  tb.querySelectorAll(`[data-cpar="${cid}"]`).forEach(r => r.remove());
-  if (!S.expanded.has(cid)) return;
+  const tb = document.getElementById('tBody');
+  // remove old rows (but not loading placeholders — they get removed separately)
+  tb.querySelectorAll(`[data-cpar="${cid}"]:not(.ag-loading-row)`).forEach(r => r.remove());
   const anchor = tb.querySelector(`[data-cid="${cid}"]`);
   if (!anchor) return;
+  if (!S.expanded.has(cid)) {
+    anchor.classList.remove('expanded');
+    const btn = anchor.querySelector('.expand-btn');
+    if (btn) btn.classList.remove('open');
+    return;
+  }
+  anchor.classList.add('expanded');
+  const btn = anchor.querySelector('.expand-btn');
+  if (btn) btn.classList.add('open');
+  const ags = S.adgroups[cid] || [];
   let after = anchor;
-  (S.adgroups[cid] || []).forEach(ag => {
+  ags.forEach(ag => {
     const row = makeAGRow(ag);
     after.insertAdjacentElement('afterend', row);
     after = row;
   });
-  // update expand button
-  const btn = anchor.querySelector('.expand-btn');
-  if (btn) btn.classList.add('open');
+  if (!ags.length) {
+    const emptyRow = document.createElement('tr');
+    emptyRow.className = 'adgroup-row';
+    emptyRow.dataset.cpar = cid;
+    emptyRow.innerHTML = `<td colspan="20" style="text-align:center;padding:12px;color:var(--text3);font-size:12px;">Không có nhóm QC nào</td>`;
+    anchor.insertAdjacentElement('afterend', emptyRow);
+  }
 }
 
 function setLoading(on) {
@@ -1600,8 +1642,23 @@ function toggleExpand(cid, e) {
     if (btn) btn.classList.remove('open');
   } else {
     S.expanded.add(cid);
-    if (!S.adgroups[cid]) loadAdGroups(cid);
-    else renderAGRows(cid);
+    const btn = document.querySelector(`[data-cid="${cid}"] .expand-btn`);
+    if (btn) btn.classList.add('open');
+    if (!S.adgroups[cid]) {
+      // Insert loading placeholder rows
+      const anchor = document.getElementById('tBody').querySelector(`[data-cid="${cid}"]`);
+      if (anchor) {
+        const loadRow = document.createElement('tr');
+        loadRow.className = 'adgroup-row ag-loading-row';
+        loadRow.dataset.cpar = cid;
+        loadRow.innerHTML = `<td colspan="20" style="text-align:center;padding:14px;color:var(--text2);font-size:13px;">
+          <div class="spinner" style="display:inline-block;vertical-align:middle;margin-right:6px;"></div>Đang tải nhóm QC...</td>`;
+        anchor.insertAdjacentElement('afterend', loadRow);
+      }
+      loadAdGroups(cid);
+    } else {
+      renderAGRows(cid);
+    }
   }
 }
 
