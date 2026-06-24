@@ -466,6 +466,10 @@
       <option value="DISABLE">Đã tắt</option>
     </select>
   </div>
+  <button class="btn" id="convertBtn" style="display:none;" onclick="toggleConvert()" title="Quy đổi USD → VND">
+    💱 <span id="convertBtnLabel">Đổi sang VND</span>
+  </button>
+  <span id="currencyBadge" style="display:none;padding:4px 10px;border-radius:20px;font-size:11px;font-weight:600;background:#FEF3C7;border:1px solid #FCD34D;color:#92400E;"></span>
   <div class="name-filter-wrap" id="nameFilterWrap">
     <input type="text" id="nameFilterInput" placeholder="Tìm tên chiến dịch..." oninput="onNameFilter(this.value)" />
   </div>
@@ -806,9 +810,13 @@ while ($listener.IsListening) {
       <div class="form-group" style="margin-top:16px;">
         <label class="form-label" style="font-weight:600;">Advertiser IDs</label>
         <div class="id-tags" id="idTagsManual"><span style="color:var(--text3);font-size:12px;">Chưa có — để trống sẽ lấy tất cả</span></div>
-        <div style="display:flex;gap:8px;">
-          <input type="text" id="iAdvManual" placeholder="Nhập ID rồi bấm Enter..." style="flex:1;" onkeydown="if(event.key==='Enter')addAdvIdManual()" />
+        <div style="display:flex;gap:8px;margin-bottom:6px;">
+          <input type="text" id="iAdvManual" placeholder="Nhập Advertiser ID..." style="flex:1;" onkeydown="if(event.key==='Enter')addAdvIdManual()" />
           <button class="btn" onclick="addAdvIdManual()">+ Thêm</button>
+        </div>
+        <div style="background:#F0F9FF;border:1px solid #BAE6FD;border-radius:8px;padding:10px 12px;">
+          <div style="font-size:11px;font-weight:600;color:#0369A1;margin-bottom:8px;">✏️ Đặt tên hiển thị cho tài khoản</div>
+          <div id="advNamesList" style="display:flex;flex-direction:column;gap:6px;"></div>
         </div>
       </div>
 
@@ -958,7 +966,9 @@ const COLS = {
   follow:       { label: 'Follow',      metric: 'follows',                icon: '➕' },
 };
 
-const OBJ_MAP = {
+const USD_VND_RATE = 26423; // 1 USD = 26,423 VND
+
+
   REACH: 'Reach', VIDEO_VIEWS: 'Video Views', LEAD_GENERATION: 'Lead Form',
   CONVERSIONS: 'Conversion', APP_PROMOTION: 'App Install',
   TRAFFIC: 'Click to Web', COMMUNITY_INTERACTION: 'Follow',
@@ -988,6 +998,7 @@ const S = {
   selectedCampaignId: null,    // current campaign shown in adgroup view
   selectedCampaignIds: new Set(), // checkbox multi-select
   activeCampaignId: null,      // campaign row currently clicked/highlighted (single select)
+  convertCurrency: false,      // true = convert USD → VND for display
   agCount: null,               // { total, active } from quick fetch
   budgetEdit: null,
   bidEdit: null,
@@ -1174,22 +1185,32 @@ async function fetchAccounts() {
   if (S.demo) return mockAccounts();
   const ids = S.config.advIds || [];
   if (!ids.length) return [];
+  const customNames = S.config.advNames || {};
+
+  // Try to get names from API
+  let apiNames = {};
   try {
-    const d = await apiGet('/advertiser/info/', { advertiser_ids: ids });
+    const d = await apiGet('/advertiser/info/', {
+      advertiser_ids: ids,
+      fields: ['advertiser_id','advertiser_name','currency','balance'],
+    });
     const list = d.list || d.advertiser_list || [];
-    if (list.length) {
-      return list.map(a => ({
-        advertiser_id: String(a.advertiser_id),
-        advertiser_name: a.advertiser_name || String(a.advertiser_id),
-        currency: a.currency,
-        balance: a.balance,
-      }));
-    }
-    toast('warn', 'Không lấy được tên TK: ' + JSON.stringify(d).slice(0, 100));
-  } catch(e) {
-    toast('warn', 'Lỗi lấy tên tài khoản: ' + e.message);
-  }
-  return ids.map(id => ({ advertiser_id: id, advertiser_name: id }));
+    list.forEach(a => {
+      const sid = String(a.advertiser_id);
+      if (a.advertiser_name && a.advertiser_name !== sid) apiNames[sid] = a.advertiser_name;
+    });
+  } catch(e) { /* silent — fall back to custom names or ID */ }
+
+  return ids.map(id => {
+    const sid = String(id);
+    const name = customNames[sid] || apiNames[sid] || null;
+    return {
+      advertiser_id: sid,
+      advertiser_name: name || `TK ...${sid.slice(-6)}`,
+      currency: 'VND',
+      balance: 0,
+    };
+  });
 }
 
 async function fetchCampaigns(aid) {
@@ -1237,6 +1258,7 @@ async function loadAccounts() {
   try {
     S.accounts = await fetchAccounts();
     renderAccountSel();
+    updateCurrencyUI();
     if (S.accountId && S.accounts.find(a => a.advertiser_id === S.accountId)) {
       loadCampaigns(S.accountId);
     } else if (S.accounts.length === 1) {
@@ -1818,9 +1840,10 @@ function onAccountChange(v) {
   localStorage.setItem('tt_acc', v);
   S.campaigns = []; S.adgroups = {}; S.metrics = {}; S.expanded.clear();
   S.agCount = null; S.level = 'campaign'; S.selectedCampaignId = null;
-  S.activeCampaignId = null;
+  S.activeCampaignId = null; S.convertCurrency = false;
   S.selectedCampaignIds = new Set(); S.nameFilter = '';
   document.getElementById('nameFilterInput').value = '';
+  updateCurrencyUI();
   switchLevel('campaign');
   if (v) loadCampaigns(v);
 }
@@ -1985,9 +2008,10 @@ async function saveBid() {
 
 /* ═══════════════════════════ SETTINGS ═══════════════════════════ */
 /* ═══════ SETTINGS STATE ═══════ */
-let _advIds       = [];
-let _advIdsManual = [];
-let _activeTab    = 1;
+let _advIds        = [];
+let _advIdsManual  = [];
+let _advNamesManual = {};  // { id: customName }
+let _activeTab     = 1;
 
 /* ─ TAB SWITCHING ─ */
 function switchTab(n) {
@@ -2194,8 +2218,10 @@ function renderIdTags(arr, boxId) {
 
 function removeId(boxId, i) {
   const arr = boxId === 'idTagsManual' ? _advIdsManual : _advIds;
+  if (boxId === 'idTagsManual') delete _advNamesManual[arr[i]];
   arr.splice(i,1);
   renderIdTags(arr, boxId);
+  if (boxId === 'idTagsManual') renderAdvNames();
 }
 
 function addAdvIdManual() {
@@ -2205,6 +2231,25 @@ function addAdvIdManual() {
   if (!_advIdsManual.includes(val)) _advIdsManual.push(val);
   inp.value = '';
   renderIdTags(_advIdsManual, 'idTagsManual');
+  renderAdvNames();
+}
+
+function renderAdvNames() {
+  const box = document.getElementById('advNamesList');
+  if (!box) return;
+  if (!_advIdsManual.length) {
+    box.innerHTML = '<span style="color:var(--text3);font-size:12px;">Thêm Advertiser ID bên trên để đặt tên</span>';
+    return;
+  }
+  box.innerHTML = _advIdsManual.map(id => `
+    <div style="display:flex;align-items:center;gap:6px;">
+      <span style="font-size:11px;font-family:monospace;color:var(--text2);min-width:80px;flex-shrink:0;">...${id.slice(-6)}</span>
+      <input type="text" value="${esc(_advNamesManual[id]||'')}"
+        placeholder="Tên tài khoản (VD: Shop ABC)"
+        style="flex:1;padding:5px 8px;font-size:12px;"
+        oninput="_advNamesManual['${id}']=this.value.trim()" />
+    </div>
+  `).join('');
 }
 
 /* ─ TEST MANUAL TOKEN ─ */
@@ -2245,8 +2290,10 @@ function openSettings() {
   // restore Tab 2 fields
   document.getElementById('iTokenManual').value = S.config.token || '';
   document.getElementById('iProxyManual').value = S.config.proxy || '';
-  _advIdsManual = [...(S.config.advIds || [])];
+  _advIdsManual  = [...(S.config.advIds || [])];
+  _advNamesManual = {...(S.config.advNames || {})};
   renderIdTags(_advIdsManual, 'idTagsManual');
+  renderAdvNames();
   // reset statuses
   ['exchangeStatus','manualTestStatus'].forEach(id => {
     const el = document.getElementById(id);
@@ -2299,7 +2346,7 @@ async function saveManual() {
   const proxy = document.getElementById('iProxyManual').value.trim();
   if (!token) { toast('warn','Vui lòng nhập Access Token'); return; }
 
-  S.config = { token, proxy, advIds: _advIdsManual };
+  S.config = { token, proxy, advIds: _advIdsManual, advNames: _advNamesManual };
   S.demo   = false;
   localStorage.setItem('tt_cfg',  JSON.stringify(S.config));
   localStorage.setItem('tt_demo', '0');
@@ -2501,8 +2548,51 @@ function showDashboard() {
 
 function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
-function fmtCurShort(v) { // abbreviated — for summary stat cards only
+/* ═══════════ CURRENCY CONVERSION ═══════════ */
+function cvt(v) {
+  // Apply USD→VND conversion if enabled and account uses USD
   const n = parseFloat(v) || 0;
+  if (!S.convertCurrency) return n;
+  const acc = S.accounts.find(a => a.advertiser_id === S.accountId);
+  if (!acc || (acc.currency || 'VND').toUpperCase() !== 'USD') return n;
+  return n * USD_VND_RATE;
+}
+
+function toggleConvert() {
+  S.convertCurrency = !S.convertCurrency;
+  updateCurrencyUI();
+  render(); updateCards(); updateSummary();
+}
+
+function updateCurrencyUI() {
+  const acc = S.accounts.find(a => a.advertiser_id === S.accountId);
+  const isUSD = acc && (acc.currency || 'VND').toUpperCase() === 'USD';
+  const btn   = document.getElementById('convertBtn');
+  const badge = document.getElementById('currencyBadge');
+  const label = document.getElementById('convertBtnLabel');
+  if (!btn) return;
+
+  if (isUSD) {
+    btn.style.display = '';
+    badge.style.display = '';
+    if (S.convertCurrency) {
+      btn.style.background = '#16A34A'; btn.style.borderColor = '#16A34A'; btn.style.color = '#fff';
+      label.textContent = 'Đang hiện VND';
+      badge.textContent = '💱 USD × 26,423 = VND';
+    } else {
+      btn.style.background = ''; btn.style.borderColor = ''; btn.style.color = '';
+      label.textContent = 'Đổi sang VND';
+      badge.textContent = '💵 Đang hiện USD';
+    }
+  } else {
+    btn.style.display = 'none';
+    badge.style.display = 'none';
+    S.convertCurrency = false;
+  }
+}
+
+function fmtCurShort(v) { // abbreviated — for summary stat cards only
+  const n = cvt(v);
   if (n >= 1e9) return (n/1e9).toFixed(1) + 'B';
   if (n >= 1e6) return (n/1e6).toFixed(1) + 'M';
   if (n >= 1e3) return (n/1e3).toFixed(0) + 'K';
@@ -2510,8 +2600,8 @@ function fmtCurShort(v) { // abbreviated — for summary stat cards only
 }
 
 function fmtCur(v) { // full number — for table cells
-  const n = parseFloat(v) || 0;
-  return n.toLocaleString('vi-VN');
+  const n = cvt(v);
+  return n.toLocaleString('vi-VN', { maximumFractionDigits: S.convertCurrency ? 0 : 2 });
 }
 
 function fmtCurFull(v) {
