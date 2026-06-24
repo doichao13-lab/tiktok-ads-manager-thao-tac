@@ -1222,7 +1222,8 @@ async function fetchCampaigns(aid) {
   if (S.demo) return mockCampaigns();
   const params = { advertiser_id: aid, page_size: 200,
     fields: ['campaign_id','campaign_name','operation_status','budget','budget_mode','objective_type'] };
-  if (S.statusFilter) params.filtering = { primary_status: S.statusFilter };
+  const STATUS_API = { ENABLE: 'STATUS_DELIVERY_OK', DISABLE: 'STATUS_DISABLE' };
+  if (S.statusFilter) params.filtering = { primary_status: STATUS_API[S.statusFilter] || S.statusFilter };
   const d = await apiGet('/campaign/get/', params);
   return d.list || [];
 }
