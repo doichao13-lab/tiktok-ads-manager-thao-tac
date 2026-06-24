@@ -968,7 +968,7 @@ const COLS = {
 
 const USD_VND_RATE = 26423; // 1 USD = 26,423 VND
 
-
+const OBJECTIVE_LABELS = {
   REACH: 'Reach', VIDEO_VIEWS: 'Video Views', LEAD_GENERATION: 'Lead Form',
   CONVERSIONS: 'Conversion', APP_PROMOTION: 'App Install',
   TRAFFIC: 'Click to Web', COMMUNITY_INTERACTION: 'Follow',
@@ -1024,10 +1024,15 @@ const PROXIES = [
 ];
 
 // Safe JSON parser — keeps large integers (TikTok IDs are 19 digits) as strings
-// to avoid JS floating-point precision loss (JS only handles integers up to 2^53 exactly)
+// Avoids lookbehind regex (not supported in all browsers) — uses key:value pattern instead
 function safeParseJSON(text) {
-  // Quote any standalone JSON number value with 16+ digits before parsing
-  return JSON.parse(text.replace(/(?<=[:\[,])\s*(\d{16,})\s*(?=[,\]\}])/g, '"$1"'));
+  try {
+    // Replace "key": 1234567890123456789 → "key": "1234567890123456789"
+    const fixed = text.replace(/"([^"]+)":\s*(\d{16,})/g, '"$1":"$2"');
+    return JSON.parse(fixed);
+  } catch(e) {
+    return JSON.parse(text); // fallback to native parse if regex fails
+  }
 }
 
 async function fetchWithTimeout(url, opts, ms = 12000) {
