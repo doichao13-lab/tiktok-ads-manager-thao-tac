@@ -999,6 +999,13 @@ const PROXIES = [
   'https://corsproxy.org/?',
 ];
 
+// Safe JSON parser — keeps large integers (TikTok IDs are 19 digits) as strings
+// to avoid JS floating-point precision loss (JS only handles integers up to 2^53 exactly)
+function safeParseJSON(text) {
+  // Quote any standalone JSON number value with 16+ digits before parsing
+  return JSON.parse(text.replace(/(?<=[:\[,])\s*(\d{16,})\s*(?=[,\]\}])/g, '"$1"'));
+}
+
 async function fetchWithTimeout(url, opts, ms = 12000) {
   const ctrl = new AbortController();
   const t = setTimeout(() => ctrl.abort(), ms);
@@ -1023,7 +1030,8 @@ async function apiGet(path, params = {}) {
     try {
       const url = p + encodeURIComponent(baseUrl);
       const r = await fetchWithTimeout(url, { headers });
-      const d = await r.json();
+      const text = await r.text();
+      const d = safeParseJSON(text);
       if (d.code !== undefined) {
         if (d.code !== 0) {
           const err = new Error(`[${d.code}] ${d.message || 'API error'}`);
@@ -1034,7 +1042,7 @@ async function apiGet(path, params = {}) {
       }
       // allorigins wraps in {contents}
       if (d.contents) {
-        const inner = JSON.parse(d.contents);
+        const inner = safeParseJSON(typeof d.contents === 'string' ? d.contents : JSON.stringify(d.contents));
         if (inner.code !== 0) {
           const err = new Error(`[${inner.code}] ${inner.message || 'API error'}`);
           err.isApiError = true;
@@ -1182,10 +1190,15 @@ async function fetchCampaigns(aid) {
 async function fetchAdGroups(aid, cid) {
   if (S.demo) return mockAdGroups(cid);
   const d = await apiGet('/adgroup/get/', {
-    advertiser_id: aid, campaign_id: cid, page_size: 200,
+    advertiser_id: aid,
+    page_size: 200,
+    filtering: { campaign_ids: [String(cid)] },
     fields: ['adgroup_id','adgroup_name','campaign_id','operation_status','budget','budget_mode','bid_price','bid_type'],
   });
-  return d.list || [];
+  const list = d.list || [];
+  // Client-side filter as safety net — IDs are now preserved as strings by safeParseJSON
+  // so comparison is reliable even for 19-digit TikTok IDs
+  return cid ? list.filter(ag => String(ag.campaign_id) === String(cid)) : list;
 }
 
 async function fetchMetrics(aid, level, ids) {
