@@ -466,10 +466,16 @@
       <option value="DISABLE">Đã tắt</option>
     </select>
   </div>
-  <button class="btn" id="convertBtn" style="display:none;" onclick="toggleConvert()" title="Quy đổi USD → VND">
+  <button class="btn" id="convertBtn" onclick="toggleConvert()" title="Bật/tắt quy đổi sang VND">
     💱 <span id="convertBtnLabel">Đổi sang VND</span>
   </button>
-  <span id="currencyBadge" style="display:none;padding:4px 10px;border-radius:20px;font-size:11px;font-weight:600;background:#FEF3C7;border:1px solid #FCD34D;color:#92400E;"></span>
+  <div id="rateWrap" style="display:none;align-items:center;gap:4px;">
+    <span style="font-size:12px;color:var(--text2);">1 USD =</span>
+    <input type="number" id="rateInput" value="26423" min="100" step="100"
+      style="width:82px;padding:5px 8px;border:1px solid var(--border);border-radius:6px;font-size:12px;background:var(--bg3);color:var(--text);text-align:right;"
+      oninput="onRateChange()" />
+    <span style="font-size:12px;color:var(--text2);">đ</span>
+  </div>
   <div class="name-filter-wrap" id="nameFilterWrap">
     <input type="text" id="nameFilterInput" placeholder="Tìm tên chiến dịch..." oninput="onNameFilter(this.value)" />
   </div>
@@ -2605,13 +2611,14 @@ function showDashboard() {
 function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
 /* ═══════════ CURRENCY CONVERSION ═══════════ */
+function getRate() {
+  return parseFloat(document.getElementById('rateInput')?.value) || USD_VND_RATE;
+}
+
 function cvt(v) {
-  // Apply USD→VND conversion if enabled and account uses USD
   const n = parseFloat(v) || 0;
   if (!S.convertCurrency) return n;
-  const acc = S.accounts.find(a => a.advertiser_id === S.accountId);
-  if (!acc || (acc.currency || 'VND').toUpperCase() !== 'USD') return n;
-  return n * USD_VND_RATE;
+  return n * getRate();
 }
 
 function toggleConvert() {
@@ -2620,30 +2627,24 @@ function toggleConvert() {
   render(); updateCards(); updateSummary();
 }
 
+function onRateChange() {
+  if (S.convertCurrency) { render(); updateCards(); updateSummary(); }
+}
+
 function updateCurrencyUI() {
-  const acc = S.accounts.find(a => a.advertiser_id === S.accountId);
-  const isUSD = acc && (acc.currency || 'VND').toUpperCase() === 'USD';
-  const btn   = document.getElementById('convertBtn');
-  const badge = document.getElementById('currencyBadge');
-  const label = document.getElementById('convertBtnLabel');
+  const btn      = document.getElementById('convertBtn');
+  const rateWrap = document.getElementById('rateWrap');
+  const label    = document.getElementById('convertBtnLabel');
   if (!btn) return;
 
-  if (isUSD) {
-    btn.style.display = '';
-    badge.style.display = '';
-    if (S.convertCurrency) {
-      btn.style.background = '#16A34A'; btn.style.borderColor = '#16A34A'; btn.style.color = '#fff';
-      label.textContent = 'Đang hiện VND';
-      badge.textContent = '💱 USD × 26,423 = VND';
-    } else {
-      btn.style.background = ''; btn.style.borderColor = ''; btn.style.color = '';
-      label.textContent = 'Đổi sang VND';
-      badge.textContent = '💵 Đang hiện USD';
-    }
+  if (S.convertCurrency) {
+    btn.style.background = '#16A34A'; btn.style.borderColor = '#16A34A'; btn.style.color = '#fff';
+    label.textContent = 'Đang hiện VND';
+    if (rateWrap) rateWrap.style.display = 'flex';
   } else {
-    btn.style.display = 'none';
-    badge.style.display = 'none';
-    S.convertCurrency = false;
+    btn.style.background = ''; btn.style.borderColor = ''; btn.style.color = '';
+    label.textContent = 'Đổi sang VND';
+    if (rateWrap) rateWrap.style.display = 'none';
   }
 }
 
