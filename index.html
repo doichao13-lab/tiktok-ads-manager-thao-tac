@@ -418,6 +418,48 @@
     }
     .ag-level-head .select-wrap { flex: 1; min-width: 200px; max-width: 400px; }
     .ag-level-head .select-wrap select { width: 100%; }
+
+    /* ── KPI TRACKING ── */
+    .kpi-banner {
+      background: linear-gradient(135deg, #16A34A, #15803D);
+      color: #fff; padding: 18px 24px;
+    }
+    .kpi-banner input[type=text] {
+      background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.35);
+      color: #fff; border-radius: 8px; padding: 6px 12px;
+      font-size: 20px; font-weight: 700;
+    }
+    .kpi-banner input[type=text]::placeholder { color: rgba(255,255,255,0.5); }
+    .kpi-banner input[type=date] {
+      background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.35);
+      color: #fff; border-radius: 6px; padding: 5px 8px; font-size: 12px;
+    }
+    .kpi-rates-bar {
+      background: #F0FDF4; border-bottom: 1px solid #BBF7D0;
+      padding: 8px 20px; display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
+    }
+    .kpi-rates-bar label { font-size: 12px; color: #166534; display: flex; align-items: center; gap: 4px; }
+    .kpi-rates-bar input[type=number] {
+      width: 66px; padding: 3px 6px; border: 1px solid #BBF7D0;
+      border-radius: 4px; font-size: 12px; text-align: right;
+      background: #fff; color: var(--text);
+    }
+    #kpiTable { width: 100%; border-collapse: collapse; }
+    #kpiTable th {
+      padding: 9px 14px; font-size: 11px; font-weight: 700; letter-spacing: .04em;
+      text-transform: uppercase; border-bottom: 2px solid var(--border);
+      white-space: nowrap; text-align: right;
+    }
+    #kpiTable th:first-child { text-align: left; }
+    #kpiTable td {
+      padding: 10px 14px; border-bottom: 1px solid var(--border);
+      font-size: 13px; text-align: right; white-space: nowrap;
+    }
+    #kpiTable td:first-child { text-align: left; font-weight: 500; }
+    #kpiTable tbody tr:hover { background: var(--bg3); }
+    #kpiTable tfoot td { background: var(--bg3); font-weight: 700; }
+    .kpi-group-head { background: #E0F2FE !important; color: #0369A1; }
+    .kpi-group-head2 { background: #DCFCE7 !important; color: #166534; }
   </style>
 </head>
 <body>
@@ -495,6 +537,7 @@
 <div class="level-bar" id="levelBar" style="display:none;">
   <div class="level-tab active" id="ltabCampaign" onclick="switchLevel('campaign')">📊 Chiến dịch</div>
   <div class="level-tab" id="ltabAdgroup" onclick="switchLevel('adgroup')">👥 Nhóm QC</div>
+  <div class="level-tab" id="ltabKpi" onclick="switchLevel('kpi')">🎯 Theo dõi KPI</div>
 </div>
 
 <!-- ===================== MAIN ===================== -->
@@ -571,6 +614,54 @@
     <!-- Mobile cards -->
     <div id="viewMobile" style="display:none;">
       <div class="cards" id="cardGrid"></div>
+    </div>
+
+    <!-- KPI Tracking -->
+    <div id="kpiSection" style="display:none; padding-bottom:40px;">
+      <div class="kpi-banner">
+        <div style="display:flex; align-items:center; gap:16px; flex-wrap:wrap;">
+          <input type="text" id="kpiClientName" placeholder="Tên khách hàng / dự án..."
+            style="min-width:200px; max-width:320px;"
+            oninput="kpiSave()" />
+          <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+            <input type="date" id="kpiStart" oninput="kpiSave(); kpiRenderBanner()" />
+            <span style="font-size:13px;">→</span>
+            <input type="date" id="kpiEnd" oninput="kpiSave(); kpiRenderBanner()" />
+            <span id="kpiDaysLeft" style="background:rgba(0,0,0,0.25); padding:4px 12px; border-radius:20px; font-size:12px;"></span>
+          </div>
+        </div>
+      </div>
+      <div class="kpi-rates-bar">
+        <span style="font-size:12px; font-weight:600; color:#166534;">💰 Đơn giá KPI:</span>
+        <label>Reach × <input type="number" id="kpiRateReach" value="8" min="1" step="1" oninput="kpiSave(); kpiRender()" /> đ</label>
+        <label>View 6s × <input type="number" id="kpiRateView" value="20" min="1" step="1" oninput="kpiSave(); kpiRender()" /> đ</label>
+        <div style="margin-left:auto;">
+          <button class="btn btn-sm" onclick="kpiAddRow()"
+            style="background:#16A34A; border-color:#16A34A; color:#fff;">+ Thêm KOC</button>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table id="kpiTable">
+          <thead>
+            <tr>
+              <th rowspan="2" style="text-align:left; min-width:160px;">TÊN KOC</th>
+              <th rowspan="2">THỜI GIAN AIR</th>
+              <th rowspan="2">BÁO GIÁ</th>
+              <th colspan="2" class="kpi-group-head" style="text-align:center; border-bottom:1px solid #BAE6FD;">KPI PHÂN BỔ</th>
+              <th colspan="2" class="kpi-group-head2" style="text-align:center; border-bottom:1px solid #BBF7D0;">NGÂN SÁCH DỰ KIẾN</th>
+              <th rowspan="2" style="width:72px;"></th>
+            </tr>
+            <tr>
+              <th class="kpi-group-head">REACH</th>
+              <th class="kpi-group-head">VIEW 6S</th>
+              <th class="kpi-group-head2" id="kpiHeadNsReach">REACH (×8đ)</th>
+              <th class="kpi-group-head2" id="kpiHeadNsView">VIEW 6S (×20đ)</th>
+            </tr>
+          </thead>
+          <tbody id="kpiBody"></tbody>
+          <tfoot id="kpiFoot"></tfoot>
+        </table>
+      </div>
     </div>
 
   </div>
@@ -965,6 +1056,43 @@ while ($listener.IsListening) {
   </div>
 </div>
 
+<!-- ===================== KPI ROW MODAL ===================== -->
+<div class="overlay" id="kpiRowOverlay">
+  <div class="modal" style="max-width:420px;">
+    <div class="modal-head">
+      <span id="kpiRowTitle">Thêm KOC</span>
+      <button class="modal-close" onclick="document.getElementById('kpiRowOverlay').classList.remove('open')">✕</button>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Tên KOC / Creator</label>
+      <input type="text" id="kriName" class="form-input" placeholder="Nhập tên KOC..." />
+    </div>
+    <div class="form-group">
+      <label class="form-label">Thời gian air</label>
+      <input type="date" id="kriAirDate" class="form-input" />
+    </div>
+    <div class="form-group">
+      <label class="form-label">Báo giá (đ)</label>
+      <input type="number" id="kriQuote" class="form-input" placeholder="0" min="0" step="1000000" />
+    </div>
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+      <div class="form-group">
+        <label class="form-label">KPI Reach</label>
+        <input type="number" id="kriReach" class="form-input" placeholder="0" min="0" step="1000" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">KPI View 6s</label>
+        <input type="number" id="kriView" class="form-input" placeholder="0" min="0" step="1000" />
+      </div>
+    </div>
+    <input type="hidden" id="kriIndex" value="-1" />
+    <div class="form-actions">
+      <button class="btn" onclick="document.getElementById('kpiRowOverlay').classList.remove('open')">Hủy</button>
+      <button class="btn btn-primary" onclick="kpiRowSave()">Lưu</button>
+    </div>
+  </div>
+</div>
+
 <!-- ===================== TOASTS ===================== -->
 <div class="toasts" id="toasts"></div>
 
@@ -1012,7 +1140,7 @@ const S = {
   dateRange: '7',
   statusFilter: '',
   nameFilter: '',
-  level: 'campaign',           // 'campaign' | 'adgroup'
+  level: 'campaign',           // 'campaign' | 'adgroup' | 'kpi'
   selectedCampaignId: null,    // current campaign shown in adgroup view
   selectedCampaignIds: new Set(), // checkbox multi-select
   activeCampaignId: null,      // campaign row currently clicked/highlighted (single select)
@@ -1020,6 +1148,7 @@ const S = {
   agCount: null,               // { total, active } from quick fetch
   budgetEdit: null,
   bidEdit: null,
+  kpiRows: [],
 };
 
 /* ═══════════════════════════ API ═══════════════════════════ */
@@ -1906,15 +2035,40 @@ function setActiveCampaign(cid) {
 
 function switchLevel(level, campaignId) {
   S.level = level;
+
+  // KPI mode — swap table views for KPI section
+  const kpiSec = document.getElementById('kpiSection');
+  const vd = document.getElementById('viewDesktop');
+  const vm = document.getElementById('viewMobile');
+  if (level === 'kpi') {
+    if (kpiSec) kpiSec.style.display = '';
+    if (vd) vd.style.display = 'none';
+    if (vm) vm.style.display = 'none';
+    const lt1 = document.getElementById('ltabCampaign');
+    const lt2 = document.getElementById('ltabAdgroup');
+    const lt3 = document.getElementById('ltabKpi');
+    if (lt1) lt1.classList.remove('active');
+    if (lt2) lt2.classList.remove('active');
+    if (lt3) lt3.classList.add('active');
+    const agHead = document.getElementById('agLevelHead');
+    if (agHead) agHead.style.display = 'none';
+    const nfw = document.getElementById('nameFilterWrap');
+    if (nfw) nfw.style.display = 'none';
+    kpiLoad();
+    return;
+  }
+  // Leaving KPI — restore table views
+  if (kpiSec) kpiSec.style.display = 'none';
+  if (vd) vd.style.display = S.view === 'mobile' ? 'none' : '';
+  if (vm) vm.style.display = S.view === 'mobile' ? '' : 'none';
+
   if (level === 'adgroup') {
     const selectedIds = [...S.selectedCampaignIds];
     if (campaignId) {
-      // Specific campaign button clicked
       S.selectedCampaignId = campaignId;
       S.activeCampaignId = campaignId;
       if (selectedIds.length === 0) S.selectedCampaignIds.add(campaignId);
     } else if (S.activeCampaignId) {
-      // Use the campaign the user last clicked on
       S.selectedCampaignId = S.activeCampaignId;
     } else if (selectedIds.length === 1) {
       S.selectedCampaignId = selectedIds[0];
@@ -1926,14 +2080,15 @@ function switchLevel(level, campaignId) {
   }
   const lt1 = document.getElementById('ltabCampaign');
   const lt2 = document.getElementById('ltabAdgroup');
+  const lt3 = document.getElementById('ltabKpi');
   if (lt1) lt1.classList.toggle('active', level === 'campaign');
   if (lt2) lt2.classList.toggle('active', level === 'adgroup');
+  if (lt3) lt3.classList.remove('active');
   const agHead = document.getElementById('agLevelHead');
   if (agHead) agHead.style.display = level === 'adgroup' ? '' : 'none';
   const nfw = document.getElementById('nameFilterWrap');
   if (nfw) nfw.style.display = level === 'campaign' ? '' : 'none';
   if (S.campaigns.length) render();
-  // Kick off loading
   if (level === 'adgroup') {
     if (S.selectedCampaignId === '__all__') {
       [...S.selectedCampaignIds].forEach(id => { if (!S.adgroups[id]) loadAdGroups(id); });
@@ -1970,9 +2125,11 @@ function setView(mode) {
   localStorage.setItem('tt_view', mode);
   document.getElementById('btnDesk').classList.toggle('active', mode === 'desktop');
   document.getElementById('btnMobi').classList.toggle('active', mode === 'mobile');
-  document.getElementById('viewDesktop').style.display = mode === 'desktop' ? '' : 'none';
-  document.getElementById('viewMobile').style.display  = mode === 'mobile'  ? '' : 'none';
-  if (mode === 'mobile' && S.campaigns.length) updateCards();
+  if (S.level !== 'kpi') {
+    document.getElementById('viewDesktop').style.display = mode === 'desktop' ? '' : 'none';
+    document.getElementById('viewMobile').style.display  = mode === 'mobile'  ? '' : 'none';
+  }
+  if (mode === 'mobile' && S.campaigns.length && S.level !== 'kpi') updateCards();
 }
 
 /* ═══════════════════════════ BUDGET MODAL ═══════════════════════════ */
@@ -2682,6 +2839,151 @@ function toast(type, msg) {
 /* ═══════════════════════════ OVERLAY CLOSE ═══════════════════════════ */
 document.querySelectorAll('.overlay').forEach(o => o.addEventListener('click', e => { if(e.target===o) o.classList.remove('open'); }));
 document.addEventListener('keydown', e => { if(e.key==='Escape') document.querySelectorAll('.overlay.open').forEach(o=>o.classList.remove('open')); });
+
+/* ═══════════════════════════ KPI TRACKING ═══════════════════════════ */
+function kpiLoad() {
+  const saved = JSON.parse(localStorage.getItem('tt_kpi') || 'null');
+  if (saved) {
+    S.kpiRows = saved.rows || [];
+    const cn = document.getElementById('kpiClientName');
+    const ks = document.getElementById('kpiStart');
+    const ke = document.getElementById('kpiEnd');
+    const rr = document.getElementById('kpiRateReach');
+    const rv = document.getElementById('kpiRateView');
+    if (cn) cn.value = saved.client || '';
+    if (ks) ks.value = saved.periodStart || '';
+    if (ke) ke.value = saved.periodEnd || '';
+    if (rr) rr.value = saved.rateReach != null ? saved.rateReach : 8;
+    if (rv) rv.value = saved.rateView  != null ? saved.rateView  : 20;
+  }
+  kpiRenderBanner();
+  kpiRender();
+}
+
+function kpiSave() {
+  const data = {
+    client:      (document.getElementById('kpiClientName')?.value || ''),
+    periodStart: (document.getElementById('kpiStart')?.value || ''),
+    periodEnd:   (document.getElementById('kpiEnd')?.value || ''),
+    rateReach:   parseFloat(document.getElementById('kpiRateReach')?.value) || 8,
+    rateView:    parseFloat(document.getElementById('kpiRateView')?.value) || 20,
+    rows: S.kpiRows || [],
+  };
+  localStorage.setItem('tt_kpi', JSON.stringify(data));
+}
+
+function kpiRenderBanner() {
+  const start = document.getElementById('kpiStart')?.value;
+  const end   = document.getElementById('kpiEnd')?.value;
+  const el    = document.getElementById('kpiDaysLeft');
+  if (!el) return;
+  if (start && end) {
+    const today   = new Date(); today.setHours(0,0,0,0);
+    const endDate = new Date(end);
+    const diff    = Math.ceil((endDate - today) / 86400000);
+    el.textContent = diff > 0
+      ? `Còn lại ${diff} ngày (hết hạn ${end})`
+      : diff === 0 ? 'Hết hạn hôm nay'
+      : `Đã hết hạn ${-diff} ngày`;
+    el.style.background = diff <= 3 ? 'rgba(220,38,38,0.35)' : 'rgba(0,0,0,0.2)';
+  } else {
+    el.textContent = '';
+  }
+}
+
+function kpiRender() {
+  const rateReach = parseFloat(document.getElementById('kpiRateReach')?.value) || 8;
+  const rateView  = parseFloat(document.getElementById('kpiRateView')?.value)  || 20;
+  const hr = document.getElementById('kpiHeadNsReach');
+  const hv = document.getElementById('kpiHeadNsView');
+  if (hr) hr.textContent = `REACH (×${rateReach}đ)`;
+  if (hv) hv.textContent = `VIEW 6S (×${rateView}đ)`;
+
+  const body = document.getElementById('kpiBody');
+  const foot = document.getElementById('kpiFoot');
+  if (!body) return;
+  const rows = S.kpiRows || [];
+
+  body.innerHTML = rows.map((r, i) => {
+    const nsReach = (r.kpiReach || 0) * rateReach;
+    const nsView  = (r.kpiView  || 0) * rateView;
+    return `<tr>
+      <td>${esc(r.name || '')}</td>
+      <td>${r.airDate || '—'}</td>
+      <td>${(r.quote || 0).toLocaleString('vi-VN')} đ</td>
+      <td style="color:#0369A1;">${(r.kpiReach || 0).toLocaleString('vi-VN')}</td>
+      <td style="color:#0369A1;">${(r.kpiView  || 0).toLocaleString('vi-VN')}</td>
+      <td style="color:#16A34A;">${nsReach.toLocaleString('vi-VN')} đ</td>
+      <td style="color:#16A34A;">${nsView.toLocaleString('vi-VN')} đ</td>
+      <td style="text-align:center;">
+        <button class="btn btn-ghost btn-sm" onclick="kpiEditRow(${i})" style="padding:3px 7px;" title="Sửa">✏</button>
+        <button class="btn btn-ghost btn-sm" onclick="kpiDeleteRow(${i})" style="padding:3px 7px;color:var(--danger);" title="Xóa">✕</button>
+      </td>
+    </tr>`;
+  }).join('');
+
+  const totQuote = rows.reduce((s, r) => s + (r.quote    || 0), 0);
+  const totReach = rows.reduce((s, r) => s + (r.kpiReach || 0), 0);
+  const totView  = rows.reduce((s, r) => s + (r.kpiView  || 0), 0);
+  foot.innerHTML = `<tr>
+    <td colspan="2" style="padding:10px 14px;">TỔNG — ${rows.length} KOC</td>
+    <td>${totQuote.toLocaleString('vi-VN')} đ</td>
+    <td style="color:#0369A1;">${totReach.toLocaleString('vi-VN')}</td>
+    <td style="color:#0369A1;">${totView.toLocaleString('vi-VN')}</td>
+    <td style="color:#16A34A;">${(totReach * rateReach).toLocaleString('vi-VN')} đ</td>
+    <td style="color:#16A34A;">${(totView  * rateView ).toLocaleString('vi-VN')} đ</td>
+    <td></td>
+  </tr>`;
+}
+
+function kpiAddRow() {
+  document.getElementById('kpiRowTitle').textContent = 'Thêm KOC';
+  ['kriName','kriAirDate','kriQuote','kriReach','kriView'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+  document.getElementById('kriIndex').value = '-1';
+  document.getElementById('kpiRowOverlay').classList.add('open');
+  setTimeout(() => document.getElementById('kriName').focus(), 100);
+}
+
+function kpiEditRow(i) {
+  const r = (S.kpiRows || [])[i];
+  if (!r) return;
+  document.getElementById('kpiRowTitle').textContent = 'Sửa KOC';
+  document.getElementById('kriName').value    = r.name    || '';
+  document.getElementById('kriAirDate').value = r.airDate || '';
+  document.getElementById('kriQuote').value   = r.quote   || '';
+  document.getElementById('kriReach').value   = r.kpiReach || '';
+  document.getElementById('kriView').value    = r.kpiView  || '';
+  document.getElementById('kriIndex').value   = i;
+  document.getElementById('kpiRowOverlay').classList.add('open');
+}
+
+function kpiDeleteRow(i) {
+  if (!confirm('Xóa KOC này?')) return;
+  S.kpiRows.splice(i, 1);
+  kpiSave(); kpiRender();
+}
+
+function kpiRowSave() {
+  if (!S.kpiRows) S.kpiRows = [];
+  const idx = parseInt(document.getElementById('kriIndex').value);
+  const name = document.getElementById('kriName').value.trim();
+  if (!name) { toast('warn', 'Vui lòng nhập tên KOC'); return; }
+  const row = {
+    name,
+    airDate:  document.getElementById('kriAirDate').value,
+    quote:    parseFloat(document.getElementById('kriQuote').value)  || 0,
+    kpiReach: parseFloat(document.getElementById('kriReach').value)  || 0,
+    kpiView:  parseFloat(document.getElementById('kriView').value)   || 0,
+  };
+  if (idx >= 0) S.kpiRows[idx] = row;
+  else S.kpiRows.push(row);
+  kpiSave(); kpiRender();
+  document.getElementById('kpiRowOverlay').classList.remove('open');
+  toast('success', idx >= 0 ? '✅ Đã cập nhật KOC' : '✅ Đã thêm KOC');
+}
 
 /* ═══════════════════════════ INIT ═══════════════════════════ */
 function init() {
