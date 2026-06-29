@@ -694,7 +694,9 @@
           <span style="font-size:12px; font-weight:600; color:#166534;">💰 Đơn giá KPI:</span>
           <label>Reach × <input type="number" id="kpiRateReach" value="8" min="1" step="1" oninput="kpiSave(); kpiRender()" /> đ</label>
           <label>View 6s × <input type="number" id="kpiRateView" value="20" min="1" step="1" oninput="kpiSave(); kpiRender()" /> đ</label>
-          <div style="margin-left:auto;">
+          <div style="margin-left:auto; display:flex; gap:6px;">
+            <button class="btn btn-sm" onclick="kpiImportPreset('traphaco')"
+              style="background:#0369A1; border-color:#0369A1; color:#fff;">📥 Nhập Traphaco</button>
             <button class="btn btn-sm" onclick="kpiAddRow()"
               style="background:#16A34A; border-color:#16A34A; color:#fff;">+ Thêm KOC</button>
           </div>
@@ -2936,6 +2938,56 @@ function toast(type, msg) {
 /* ═══════════════════════════ OVERLAY CLOSE ═══════════════════════════ */
 document.querySelectorAll('.overlay').forEach(o => o.addEventListener('click', e => { if(e.target===o) o.classList.remove('open'); }));
 document.addEventListener('keydown', e => { if(e.key==='Escape') document.querySelectorAll('.overlay.open').forEach(o=>o.classList.remove('open')); });
+
+/* ═══════════════════════════ KPI PRESETS ═══════════════════════════ */
+const KPI_PRESETS = {
+  traphaco: {
+    client: 'Traphaco',
+    periodStart: '2026-06-01',
+    periodEnd:   '2026-06-30',
+    rateReach: 8, rateView: 20,
+    rows: [
+      { name: 'Tô Quang Nam',           airDate:'2026-06-03', quote:103000000, kpiReach:1340000, kpiView:144000, agReachId:'1867053769812193', agViewId:'1867053986969745' },
+      { name: 'Mai Tri Thức',            airDate:'2026-06-04', quote: 90000000, kpiReach:1005000, kpiView:108000, agReachId:'1867143718423697', agViewId:'1867144811102273' },
+      { name: 'ngan',                    airDate:'2026-05-29', quote: 54000000, kpiReach:1005000, kpiView:108000, agReachId:'1866763677568001', agViewId:'1866764530801858' },
+      { name: 'Phương Hà',               airDate:'2026-06-12', quote: 36000000, kpiReach: 670000, kpiView: 72000, agReachId:'', agViewId:'' },
+      { name: 'Hubert Cù',               airDate:'2026-06-08', quote: 19500000, kpiReach: 536000, kpiView: 57600, agReachId:'', agViewId:'' },
+      { name: 'Đổ nhiều chuyện',         airDate:'2026-06-04', quote: 15000000, kpiReach: 469000, kpiView: 50400, agReachId:'1867492976502897', agViewId:'1867493320642626' },
+      { name: 'Hoàng Tuyết',             airDate:'2026-06-07', quote:  8200000, kpiReach: 200000, kpiView: 21493, agReachId:'', agViewId:'' },
+      { name: 'Đan Tâm',                 airDate:'2026-06-06', quote:  7000000, kpiReach: 190000, kpiView: 20418, agReachId:'', agViewId:'' },
+      { name: 'Heidy & Kiwi',            airDate:'2026-06-07', quote:  7000000, kpiReach: 190000, kpiView: 20418, agReachId:'1867397280848385', agViewId:'1867397526285506' },
+      { name: 'Huỳnh nguyễn',            airDate:'2026-05-29', quote:  5250000, kpiReach: 182500, kpiView: 19612, agReachId:'1866763916180577', agViewId:'1866764737357970' },
+      { name: 'Link Konn',               airDate:'2026-06-09', quote:  5250000, kpiReach: 182500, kpiView: 19612, agReachId:'', agViewId:'' },
+      { name: 'hanhdung0602',            airDate:'2026-06-07', quote:  5000000, kpiReach: 182500, kpiView: 19612, agReachId:'', agViewId:'' },
+      { name: 'Leo tay bé ghét đi tập', airDate:'2026-06-05', quote:  4000000, kpiReach: 182500, kpiView: 19612, agReachId:'1867408806708322', agViewId:'1867409192923362' },
+      { name: 'Lan công sở',             airDate:'2026-06-22', quote:  4000000, kpiReach: 182500, kpiView: 19612, agReachId:'', agViewId:'' },
+      { name: 'Thái giản dị',            airDate:'2026-06-22', quote:  4000000, kpiReach: 182500, kpiView: 19612, agReachId:'', agViewId:'' },
+    ]
+  }
+};
+
+function kpiImportPreset(key) {
+  const p = KPI_PRESETS[key];
+  if (!p) return;
+  if (S.kpiRows && S.kpiRows.length > 0) {
+    if (!confirm('Nhập sẽ ghi đè dữ liệu KOC hiện tại. Tiếp tục?')) return;
+  }
+  S.kpiRows = p.rows.map(r => ({ ...r }));
+  const cn = document.getElementById('kpiClientName');
+  const ks = document.getElementById('kpiStart');
+  const ke = document.getElementById('kpiEnd');
+  const rr = document.getElementById('kpiRateReach');
+  const rv = document.getElementById('kpiRateView');
+  if (cn && !cn.value) cn.value = p.client;
+  if (ks && !ks.value) ks.value = p.periodStart;
+  if (ke && !ke.value) ke.value = p.periodEnd;
+  if (rr) rr.value = p.rateReach;
+  if (rv) rv.value = p.rateView;
+  kpiSave();
+  kpiRenderBanner();
+  kpiRender();
+  toast('success', '✅ Đã nhập ' + p.rows.length + ' KOC từ cấu hình ' + p.client);
+}
 
 /* ═══════════════════════════ KPI TRACKING ═══════════════════════════ */
 function kpiLoad() {
