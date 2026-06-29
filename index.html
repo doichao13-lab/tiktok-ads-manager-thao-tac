@@ -3104,12 +3104,16 @@ function kpiSubTab(n) {
     if (tab) tab.style.display = i === n ? '' : 'none';
     if (btn) btn.classList.toggle('active', i === n);
   });
-  // Pre-fill report dates from campaign period if empty
+  // Pre-fill report dates — cap end date at today (API has no future data)
   if (n === 2 || n === 3) {
-    const from = document.getElementById('kpiRptFrom');
-    const to   = document.getElementById('kpiRptTo');
+    const today = new Date().toISOString().slice(0, 10);
+    const from  = document.getElementById('kpiRptFrom');
+    const to    = document.getElementById('kpiRptTo');
     if (from && !from.value) from.value = document.getElementById('kpiStart')?.value || '';
-    if (to   && !to.value  ) to.value   = document.getElementById('kpiEnd')?.value   || '';
+    if (to   && !to.value) {
+      const campEnd = document.getElementById('kpiEnd')?.value || '';
+      to.value = campEnd && campEnd < today ? campEnd : today;
+    }
   }
 }
 
@@ -3123,8 +3127,12 @@ async function kpiLoadReport() {
     return;
   }
   const from = document.getElementById('kpiRptFrom').value;
-  const to   = document.getElementById('kpiRptTo').value;
-  if (!from || !to) { toast('warn', 'Vui lòng chọn kỳ báo cáo'); return; }
+  const rawTo = document.getElementById('kpiRptTo').value;
+  if (!from || !rawTo) { toast('warn', 'Vui lòng chọn kỳ báo cáo'); return; }
+  // Cap end date at yesterday (TikTok API has ~1-day reporting lag for complete data)
+  const today = new Date().toISOString().slice(0, 10);
+  const to = rawTo > today ? today : rawTo;
+  if (to !== rawTo) document.getElementById('kpiRptTo').value = to;
 
   const spin = '<div style="display:flex;align-items:center;gap:10px;padding:40px 20px;color:var(--text2);"><div class="spinner" style="width:18px;height:18px;border-width:2px;"></div> Đang tải từ TikTok Ads...</div>';
   document.getElementById('kpiReportContent').innerHTML   = spin;
@@ -3134,6 +3142,7 @@ async function kpiLoadReport() {
 
   try {
     const aid = S.accountId;
+    console.log('[KPI Report] account:', aid, 'from:', from, 'to:', to);
 
     // 1. Fetch all adgroups for name-matching (skip in demo mode)
     let nameMap = {};
@@ -3142,6 +3151,7 @@ async function kpiLoadReport() {
         advertiser_id: aid, page_size: 1000, page: 1,
         fields: ['adgroup_id', 'adgroup_name']
       });
+      console.log('[KPI Report] adgroups fetched:', agData.list?.length || 0);
       const byKol = {};
       for (const ag of (agData.list || [])) {
         const parts = (ag.adgroup_name || '').split('|').map(p => p.trim());
@@ -3161,14 +3171,18 @@ async function kpiLoadReport() {
 
     // 2. Fetch adgroup metrics for date range
     let byId = {};
+    let rptRowCount = 0;
     if (!S.demo) {
       const rptData = await apiGet('/report/integrated/get/', {
         advertiser_id: aid,
         report_type: 'BASIC', data_level: 'AUCTION_ADGROUP',
         dimensions: ['adgroup_id'],
         metrics: ['spend','impressions','reach','frequency','video_watched_6s'],
-        start_date: from, end_date: to, page_size: 1000, page: 1
+        start_date: from, end_date: to, page_size: 1000
       });
+      rptRowCount = rptData.list?.length || 0;
+      console.log('[KPI Report] report rows:', rptRowCount, '| code:', rptData.code, '| msg:', rptData.message);
+      if (rptRowCount > 0) console.log('[KPI Report] sample id:', rptData.list[0]?.dimensions?.adgroup_id);
       for (const row of (rptData.list || [])) {
         const id = String(row.dimensions?.adgroup_id || '');
         const m  = row.metrics || {};
@@ -3180,6 +3194,7 @@ async function kpiLoadReport() {
           view6s:      parseFloat(m.video_watched_6s || 0),
         };
       }
+      console.log('[KPI Report] byId keys count:', Object.keys(byId).length);
     }
 
     // 3. Match each KOC to adgroups and sum metrics
@@ -3214,7 +3229,14 @@ async function kpiLoadReport() {
     kpiRenderReport(kocs);
     kpiRenderProgress(kocs);
     const matched = kocs.filter(k => k.matched).length;
-    if (statusEl) statusEl.textContent = `✅ ${matched}/${kocs.length} KOC khớp`;
+    const hasData = kocs.filter(k => k.actualReach > 0 || k.actualView6s > 0).length;
+    if (statusEl) {
+      if (S.demo) {
+        statusEl.textContent = `✅ Demo: ${matched}/${kocs.length} KOC`;
+      } else {
+        statusEl.textContent = `✅ ${matched}/${kocs.length} khớp · ${hasData} có data · API: ${rptRowCount} rows`;
+      }
+    }
 
   } catch(e) {
     const err = `<div style="padding:16px;background:#FEF2F2;border:1px solid #FECACA;border-radius:8px;color:var(--danger);">⚠️ ${e.message}</div>`;
