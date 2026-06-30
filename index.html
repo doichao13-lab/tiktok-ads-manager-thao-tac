@@ -538,28 +538,10 @@
     /* AI modal */
     .ai-modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,.55); z-index:9000; align-items:center; justify-content:center; }
     .ai-modal-overlay.open { display:flex; }
-    .ai-modal { background:var(--bg); border-radius:12px; width:820px; max-width:96vw; max-height:90vh; display:flex; flex-direction:column; box-shadow:0 20px 60px rgba(0,0,0,.35); overflow:hidden; }
-    .ai-modal-head { padding:13px 18px; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; flex-shrink:0; }
-    /* AI prose formatting */
-    .ai-prose h2 { font-size:15px; font-weight:700; margin:16px 0 6px; padding-bottom:4px; border-bottom:1px solid var(--border); }
-    .ai-prose h3 { font-size:13px; font-weight:700; margin:12px 0 4px; color:var(--red); }
-    .ai-prose h4 { font-size:12px; font-weight:700; margin:10px 0 3px; }
-    .ai-prose p  { margin:4px 0 8px; }
-    .ai-prose ul, .ai-prose ol { margin:4px 0 8px 18px; }
-    .ai-prose li { margin:2px 0; }
-    .ai-prose strong { font-weight:700; }
-    .ai-prose em { font-style:italic; }
-    .ai-prose code { font-family:monospace; font-size:11px; background:var(--bg3); padding:1px 5px; border-radius:4px; }
-    .ai-prose pre { background:var(--bg3); border:1px solid var(--border); border-radius:6px; padding:10px 12px; overflow-x:auto; font-size:11px; margin:8px 0; }
-    .ai-prose hr { border:none; border-top:1px solid var(--border); margin:14px 0; }
-    .ai-prose table { border-collapse:collapse; width:100%; margin:8px 0; font-size:12px; }
-    .ai-prose th { padding:6px 10px; background:var(--bg3); font-weight:700; border:1px solid var(--border); text-align:left; }
-    .ai-prose td { padding:5px 10px; border:1px solid var(--border); }
-    .ai-prose .tag-good   { color:#15803D; font-weight:700; }
-    .ai-prose .tag-warn   { color:#D97706; font-weight:700; }
-    .ai-prose .tag-bad    { color:#DC2626; font-weight:700; }
-    .ai-cursor { display:inline-block; width:2px; height:14px; background:var(--red); animation:blink .7s step-end infinite; vertical-align:middle; margin-left:1px; }
-    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+    .ai-modal { background:var(--bg); border-radius:12px; width:700px; max-width:95vw; max-height:90vh; display:flex; flex-direction:column; box-shadow:0 20px 60px rgba(0,0,0,.35); overflow:hidden; }
+    .ai-modal-head { padding:14px 18px; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; flex-shrink:0; }
+    .ai-modal-body { flex:1; overflow-y:auto; padding:16px 18px; }
+    .ai-data-pre { font-family:monospace; font-size:11px; white-space:pre-wrap; background:var(--bg3); border:1px solid var(--border); border-radius:8px; padding:12px; max-height:420px; overflow-y:auto; color:var(--text); }
   </style>
 </head>
 <body>
@@ -1232,57 +1214,27 @@ while ($listener.IsListening) {
 </div>
 
 <!-- ===================== AI ANALYSIS MODAL ===================== -->
-<div class="ai-modal-overlay" id="aiModalOverlay" onclick="if(event.target===this)aiCloseModal()">
-  <div class="ai-modal" style="width:820px;max-width:96vw;">
+<div class="ai-modal-overlay" id="aiModalOverlay" onclick="if(event.target===this)this.classList.remove('open')">
+  <div class="ai-modal">
     <div class="ai-modal-head">
-      <div style="display:flex;align-items:center;gap:10px;">
-        <span style="font-size:18px;">🤖</span>
-        <div>
-          <div style="font-size:15px;font-weight:700;">Phân tích quảng cáo — Claude AI</div>
-          <div style="font-size:11px;color:var(--text2);margin-top:1px;" id="aiModelLabel">claude-sonnet-4-6 · tiktok-ads-optimizer skill</div>
-        </div>
+      <div>
+        <div style="font-size:15px;font-weight:700;">🤖 Phân tích với AI (Claude)</div>
+        <div style="font-size:12px;color:var(--text2);margin-top:2px;">Dữ liệu đã được format sẵn — copy và dán vào Claude.ai</div>
       </div>
-      <div style="display:flex;align-items:center;gap:8px;">
-        <button class="btn btn-ghost" style="font-size:11px;" onclick="aiShowKeyConfig()" title="Cài đặt API key">⚙ API Key</button>
-        <button class="btn btn-ghost" onclick="aiCloseModal()">✕</button>
-      </div>
+      <button class="btn btn-ghost" onclick="document.getElementById('aiModalOverlay').classList.remove('open')">✕</button>
     </div>
-
-    <!-- API Key setup (shown when no key) -->
-    <div id="aiKeySetup" style="display:none;padding:20px;border-bottom:1px solid var(--border);background:var(--bg2);">
-      <div style="font-size:13px;font-weight:600;margin-bottom:8px;">🔑 Nhập Anthropic API Key</div>
-      <div style="font-size:12px;color:var(--text2);margin-bottom:10px;line-height:1.6;">
-        Lấy key tại <a href="https://console.anthropic.com/settings/keys" target="_blank" style="color:var(--red);">console.anthropic.com</a>.
-        Key được lưu <strong>local</strong> trong trình duyệt, không gửi đến server nào khác.
+    <div class="ai-modal-body">
+      <div style="background:#EFF6FF;border:1px solid #BFDBFE;border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:12px;color:#1E40AF;line-height:1.7;">
+        <strong>📌 Cách dùng:</strong><br>
+        1. Nhấn <strong>Copy toàn bộ</strong> bên dưới<br>
+        2. Mở <a href="https://claude.ai" target="_blank" style="color:#2563EB;font-weight:600;">claude.ai</a> → Dán vào chat<br>
+        3. Skill <em>tiktok-ads-optimizer</em> tự kích hoạt → Claude phân tích và đề xuất tối ưu
       </div>
-      <div style="display:flex;gap:8px;">
-        <input type="password" id="aiKeyInput" placeholder="sk-ant-api03-..." style="flex:1;padding:7px 10px;border:1px solid var(--border);border-radius:6px;font-size:12px;background:var(--bg3);color:var(--text);" />
-        <button class="btn btn-primary" onclick="aiSaveKey()">Lưu</button>
-        <button class="btn btn-ghost" onclick="aiSkipKey()">Bỏ qua</button>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+        <span style="font-size:12px;font-weight:600;color:var(--text2);">Dữ liệu được export</span>
+        <button class="btn" onclick="copyAIData()" id="copyAIBtn">📋 Copy toàn bộ</button>
       </div>
-    </div>
-
-    <div class="ai-modal-body" style="display:flex;flex-direction:column;gap:0;padding:0;max-height:calc(90vh - 120px);">
-      <!-- Response area -->
-      <div id="aiResponseArea" style="flex:1;overflow-y:auto;padding:16px 20px;min-height:200px;">
-        <div id="aiPlaceholder" style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:200px;color:var(--text2);gap:10px;">
-          <div style="font-size:32px;">🤖</div>
-          <div style="font-size:13px;text-align:center;line-height:1.6;">
-            Claude sẽ phân tích dữ liệu TikTok Ads theo <strong>tiktok-ads-optimizer</strong><br>
-            và đưa ra đề xuất tối ưu cụ thể.
-          </div>
-        </div>
-        <div id="aiResponseContent" style="display:none;font-size:13px;line-height:1.7;color:var(--text);" class="ai-prose"></div>
-      </div>
-      <!-- Bottom toolbar -->
-      <div style="padding:10px 16px;border-top:1px solid var(--border);background:var(--bg2);display:flex;align-items:center;gap:8px;flex-shrink:0;">
-        <button class="btn btn-primary" id="aiAnalyzeBtn" onclick="aiRunAnalysis()" style="min-width:140px;">
-          <span id="aiAnalyzeBtnTxt">▶ Phân tích ngay</span>
-        </button>
-        <button class="btn btn-ghost" id="aiStopBtn" onclick="aiStop()" style="display:none;">⏹ Dừng</button>
-        <span id="aiStatusTxt" style="font-size:12px;color:var(--text2);flex:1;"></span>
-        <button class="btn btn-ghost" id="aiCopyRespBtn" onclick="aiCopyResponse()" style="display:none;font-size:12px;">📋 Copy</button>
-      </div>
+      <pre id="aiDataPre" class="ai-data-pre"></pre>
     </div>
   </div>
 </div>
@@ -3949,61 +3901,8 @@ function exportToCSV() {
   toast('success', '✅ Đã xuất CSV');
 }
 
-/* ─── AI ENGINE ─── */
-
-const AI_SYSTEM_PROMPT = `Bạn là chuyên gia tối ưu quảng cáo TikTok tại thị trường Việt Nam (FMCG, mỹ phẩm, thực phẩm chức năng). Phân tích toàn diện và đưa ra phương án tối ưu cụ thể theo cấu trúc bên dưới.
-
-## Ngưỡng benchmark (đơn vị VND)
-| Mục tiêu | KPI | Tốt | Cần theo dõi | Đắt |
-|---|---|---|---|---|
-| Reach | CPR (đ/reach) | ≤5đ | 5–8đ | >8đ |
-| Video View 2s | CPV 2s | ≤27đ | 27–35đ | >35đ |
-| Video View 6s | CPV 6s | ≤70đ | 70–90đ | >90đ |
-| Lead Form | CPL | ≤KPI | KPI+20% | >KPI+50% |
-| Conversion Web | CPA | ≤KPI | KPI+20% | >KPI+50% |
-
-## Quy tắc phân tích
-
-**Reach/Video View:** CPR/CPV là KPI chính. View rate >50% là tốt. Nếu nhóm tuổi lệch >60% budget sang ngoài target → tạo ad group mới khóa độ tuổi. Scale 20% khi đạt ≥70% budget/ngày.
-
-**Lead Form:** Cần ~50 leads/ad group để machine learning ổn định (5–7 ngày). Khi CPL tăng: tắt ad (không tắt ad group), bật lại sau 4–5 giờ. 3 ngày liên tiếp không ổn → tắt hẳn. 2–3 video/ad group, không để 1 video trong 2 ad group cùng mục tiêu.
-
-**Conversion Web:** CPA là KPI chính. CTR cao + CVR thấp = vấn đề landing page. Dùng Cost Cap đặt cao hơn 20–30% CPA mục tiêu.
-
-**Khi quảng cáo đắt:** Tắt ad → tạo biến thể video tương tự → theo dõi trong ngày. Khi 1 video chiếm >70% budget → tách ad group riêng.
-
-## Cấu trúc trình bày BẮT BUỘC:
-
-### 📊 Tổng quan
-1–2 câu: chiến dịch gì, kỳ nào, KPI tổng đạt hay chưa.
-
-### 🔍 Phân tích chi tiết
-Cho mỗi campaign/objective:
-- Chỉ số chính với đánh giá: ✅ Tốt / ⚠️ Cần theo dõi / ❌ Chưa đạt (kèm số liệu cụ thể)
-- Điểm bất thường hoặc cơ hội
-
-### 🎯 Phương án tối ưu
-- **Làm ngay (trong ngày):** dừng gì, tăng gì, điều chỉnh gì
-- **Theo dõi (2–3 ngày):** những gì đang trong giai đoạn học
-- **Thử nghiệm (tuần tới):** test mới
-
-### 📝 Tóm tắt
-5–7 điểm then chốt để copy vào báo cáo.
-
-Trả lời bằng tiếng Việt. Cụ thể, thẳng thắn, kèm số liệu thực.`;
-
-let AI_ABORT = null;
-let AI_CURRENT_TEXT = '';
-
 function exportForAI() {
   if (!EX.rows.length) { toast('warn', 'Tải dữ liệu trước'); return; }
-  aiPrepareData();
-  document.getElementById('aiModalOverlay').classList.add('open');
-  const hasKey = !!localStorage.getItem('tt_ai_key');
-  document.getElementById('aiKeySetup').style.display = hasKey ? 'none' : '';
-}
-
-function aiPrepareData() {
   const from    = document.getElementById('exportFrom').value;
   const to      = document.getElementById('exportTo').value;
   const dimCols = EX.cols.filter(c=>c.type==='dim');
@@ -4019,210 +3918,35 @@ function aiPrepareData() {
   metCols.forEach(c => { totals[c.key] = EX.rows.reduce((s,r)=>s+(parseFloat(r[c.key])||0),0); });
   const totRow = [...dimCols.map(()=>'TỔNG'), ...metCols.map(c=>fmtRaw(totals[c.key],c.fmt))].join('\t');
   const cur = S.convertCurrency ? 'VND' : 'USD (nhân ~26.000 để ra VND)';
-  AI_CURRENT_TEXT = '';
-  AI_PREPARED_MSG = [
+
+  const text = [
     `BÁO CÁO QUẢNG CÁO TIKTOK`,
     `Tài khoản: ${S.accountId||'Demo'} | Kỳ: ${from} → ${to} | Đơn vị: ${cur} | ${EX.rows.length} dòng`,
     ``,
     `DỮ LIỆU CHI TIẾT:`,
     header, ...rows,
     ``, `TỔNG CỘNG:`, totRow,
+    ``,
+    `Hãy phân tích hiệu quả quảng cáo TikTok ở trên và đưa ra phương án tối ưu.`,
   ].join('\n');
-}
-let AI_PREPARED_MSG = '';
 
-function aiCloseModal() {
-  aiStop();
-  document.getElementById('aiModalOverlay').classList.remove('open');
+  document.getElementById('aiDataPre').textContent = text;
+  document.getElementById('aiModalOverlay').classList.add('open');
 }
 
-function aiShowKeyConfig() {
-  const ks = document.getElementById('aiKeySetup');
-  ks.style.display = ks.style.display === 'none' ? '' : 'none';
-  if (ks.style.display !== 'none') {
-    const existing = localStorage.getItem('tt_ai_key');
-    if (existing) document.getElementById('aiKeyInput').value = existing;
-    document.getElementById('aiKeyInput').focus();
-  }
-}
-
-function aiSaveKey() {
-  const key = document.getElementById('aiKeyInput').value.trim();
-  if (!key.startsWith('sk-')) { toast('warn', 'API key phải bắt đầu bằng sk-ant-...'); return; }
-  localStorage.setItem('tt_ai_key', key);
-  document.getElementById('aiKeySetup').style.display = 'none';
-  toast('success', '✅ Đã lưu API key');
-}
-
-function aiSkipKey() {
-  document.getElementById('aiKeySetup').style.display = 'none';
-}
-
-async function aiRunAnalysis() {
-  const apiKey = localStorage.getItem('tt_ai_key');
-  if (!apiKey) {
-    document.getElementById('aiKeySetup').style.display = '';
-    document.getElementById('aiKeyInput').focus();
-    return;
-  }
-  if (!AI_PREPARED_MSG) { aiPrepareData(); }
-
-  const placeholder = document.getElementById('aiPlaceholder');
-  const content     = document.getElementById('aiResponseContent');
-  const analyzeBtn  = document.getElementById('aiAnalyzeBtn');
-  const stopBtn     = document.getElementById('aiStopBtn');
-  const statusTxt   = document.getElementById('aiStatusTxt');
-  const copyBtn     = document.getElementById('aiCopyRespBtn');
-
-  placeholder.style.display = 'none';
-  content.style.display = '';
-  content.innerHTML = '<span class="ai-cursor"></span>';
-  analyzeBtn.style.display = 'none';
-  stopBtn.style.display = '';
-  copyBtn.style.display = 'none';
-  statusTxt.textContent = '⏳ Đang kết nối Claude...';
-  AI_CURRENT_TEXT = '';
-
-  try {
-    const ctrl = new AbortController();
-    AI_ABORT = ctrl;
-
-    const resp = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      signal: ctrl.signal,
-      headers: {
-        'content-type': 'application/json',
-        'x-api-key': apiKey,
-        'anthropic-version': '2023-06-01',
-        'anthropic-dangerous-direct-browser-access': 'true',
-      },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-6',
-        max_tokens: 4096,
-        stream: true,
-        system: AI_SYSTEM_PROMPT,
-        messages: [{ role: 'user', content: AI_PREPARED_MSG }]
-      })
-    });
-
-    if (!resp.ok) {
-      const errText = await resp.text();
-      let msg = `Lỗi ${resp.status}`;
-      try { msg = JSON.parse(errText).error?.message || msg; } catch(e) {}
-      throw new Error(msg);
-    }
-
-    statusTxt.textContent = '⚡ Đang phân tích...';
-    const reader  = resp.body.getReader();
-    const decoder = new TextDecoder();
-    let buffer = '';
-    let tokenCount = 0;
-
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-      buffer += decoder.decode(value, { stream: true });
-      const lines = buffer.split('\n');
-      buffer = lines.pop() || '';
-      for (const line of lines) {
-        if (!line.startsWith('data: ')) continue;
-        const data = line.slice(6).trim();
-        if (data === '[DONE]') break;
-        try {
-          const ev = JSON.parse(data);
-          if (ev.type === 'content_block_delta' && ev.delta?.type === 'text_delta') {
-            AI_CURRENT_TEXT += ev.delta.text;
-            tokenCount++;
-            if (tokenCount % 5 === 0) {
-              content.innerHTML = aiRenderMarkdown(AI_CURRENT_TEXT) + '<span class="ai-cursor"></span>';
-              content.scrollTop = content.scrollHeight;
-            }
-          } else if (ev.type === 'message_stop') {
-            break;
-          }
-        } catch(e) {}
-      }
-    }
-
-    content.innerHTML = aiRenderMarkdown(AI_CURRENT_TEXT);
-    statusTxt.textContent = `✅ Hoàn thành`;
-    copyBtn.style.display = '';
-
-  } catch(e) {
-    if (e.name === 'AbortError') {
-      content.innerHTML = aiRenderMarkdown(AI_CURRENT_TEXT) + '<br><em style="color:var(--text2);font-size:11px;">— Đã dừng —</em>';
-      statusTxt.textContent = 'Đã dừng';
-    } else {
-      content.innerHTML = `<div style="color:var(--danger);padding:12px;background:#FEF2F2;border-radius:8px;font-size:12px;">⚠️ ${e.message}</div>`;
-      statusTxt.textContent = '';
-      if (e.message.includes('401') || e.message.includes('invalid_api_key')) {
-        localStorage.removeItem('tt_ai_key');
-        document.getElementById('aiKeySetup').style.display = '';
-        toast('error', 'API key không hợp lệ — vui lòng nhập lại');
-      } else {
-        toast('error', 'Lỗi Claude API: ' + e.message);
-      }
-    }
-  } finally {
-    AI_ABORT = null;
-    analyzeBtn.style.display = '';
-    stopBtn.style.display = 'none';
-    document.getElementById('aiAnalyzeBtnTxt').textContent = '🔄 Phân tích lại';
-  }
-}
-
-function aiStop() {
-  if (AI_ABORT) { AI_ABORT.abort(); AI_ABORT = null; }
-}
-
-function aiCopyResponse() {
-  if (!AI_CURRENT_TEXT) return;
-  navigator.clipboard.writeText(AI_CURRENT_TEXT).then(() => {
-    const btn = document.getElementById('aiCopyRespBtn');
+function copyAIData() {
+  const text = document.getElementById('aiDataPre').textContent;
+  navigator.clipboard.writeText(text).then(() => {
+    const btn = document.getElementById('copyAIBtn');
+    const orig = btn.textContent;
     btn.textContent = '✅ Đã copy!';
-    setTimeout(() => { btn.textContent = '📋 Copy'; }, 2000);
-  }).catch(() => toast('error', 'Không thể copy'));
-}
-
-function aiRenderMarkdown(text) {
-  let html = text
-    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
-    // Code blocks
-    .replace(/```[\s\S]*?```/g, m => `<pre><code>${m.slice(3,-3).replace(/^\w*\n/,'')}</code></pre>`)
-    // Headers
-    .replace(/^### (.+)$/gm, '<h3>$1</h3>')
-    .replace(/^## (.+)$/gm,  '<h2>$2</h2>'.replace('$2','$1'))
-    .replace(/^#### (.+)$/gm,'<h4>$1</h4>')
-    // HR
-    .replace(/^---$/gm, '<hr>')
-    // Bold + italic
-    .replace(/\*\*\*(.+?)\*\*\*/g, '<strong><em>$1</em></strong>')
-    .replace(/\*\*(.+?)\*\*/g,     '<strong>$1</strong>')
-    .replace(/\*(.+?)\*/g,         '<em>$1</em>')
-    // Inline code
-    .replace(/`([^`]+)`/g, '<code>$1</code>')
-    // Emoji status tags
-    .replace(/✅ (Tốt|Đạt)/g,       '<span class="tag-good">✅ $1</span>')
-    .replace(/⚠️ (.+?)(?=<|\n)/g,   '<span class="tag-warn">⚠️ $1</span>')
-    .replace(/❌ (.+?)(?=<|\n)/g,   '<span class="tag-bad">❌ $1</span>')
-    // Tables (simple)
-    .replace(/(\|.+\|\n)+/g, m => {
-      const rows = m.trim().split('\n').filter(r => !/^\|[-|: ]+\|/.test(r));
-      const isHeader = (i) => i === 0;
-      return '<table>' + rows.map((r,i) => {
-        const cells = r.split('|').slice(1,-1).map(c=>c.trim());
-        const tag   = isHeader(i) ? 'th' : 'td';
-        return `<tr>${cells.map(c=>`<${tag}>${c}</${tag}>`).join('')}</tr>`;
-      }).join('') + '</table>';
-    })
-    // Lists
-    .replace(/^[*\-] (.+)$/gm, '<li>$1</li>')
-    .replace(/(<li>.*<\/li>(\n|$))+/g, m => `<ul>${m}</ul>`)
-    .replace(/^\d+\. (.+)$/gm, '<li>$1</li>')
-    // Paragraphs
-    .replace(/\n\n+/g, '</p><p>')
-    .replace(/\n/g, '<br>');
-  return `<div class="ai-prose"><p>${html}</p></div>`;
+    setTimeout(() => { btn.textContent = orig; }, 2000);
+  }).catch(() => {
+    const pre = document.getElementById('aiDataPre');
+    const r = document.createRange(); r.selectNode(pre);
+    window.getSelection().removeAllRanges(); window.getSelection().addRange(r);
+    toast('info', 'Đã chọn text — nhấn Ctrl+C để copy');
+  });
 }
 
 /* ═══════════════════════════ INIT ═══════════════════════════ */
