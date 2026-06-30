@@ -509,6 +509,39 @@
     .prog-pct.green  { color: #15803D; }
     .prog-pct.yellow { color: #92400E; }
     .prog-pct.red    { color: #991B1B; }
+
+    /* ── EXPORT REPORT ── */
+    .export-layout { display:flex; height:calc(100vh - 215px); min-height:400px; }
+    .export-picker { width:260px; flex-shrink:0; border-right:1px solid var(--border); overflow-y:auto; background:var(--bg2); display:flex; flex-direction:column; }
+    .export-picker-tabs { display:flex; border-bottom:1px solid var(--border); flex-shrink:0; }
+    .export-picker-tab { flex:1; padding:10px 4px; text-align:center; font-size:12px; font-weight:600; color:var(--text2); cursor:pointer; border-bottom:2px solid transparent; margin-bottom:-1px; transition:.15s; }
+    .export-picker-tab.active { color:var(--red); border-bottom-color:var(--red); }
+    .export-picker-search { padding:8px; border-bottom:1px solid var(--border); flex-shrink:0; }
+    .export-picker-search input { width:100%; box-sizing:border-box; padding:6px 8px; border:1px solid var(--border); border-radius:6px; font-size:12px; background:var(--bg3); color:var(--text); }
+    .export-tree { flex:1; overflow-y:auto; padding:4px 0; }
+    .export-group-label { display:flex; align-items:center; gap:5px; padding:7px 10px 7px 12px; font-size:12px; font-weight:700; color:var(--text2); cursor:pointer; user-select:none; }
+    .export-group-label:hover { background:var(--bg3); }
+    .export-group-label .xcaret { font-size:9px; transition:transform .15s; display:inline-block; }
+    .export-group-label.xopen .xcaret { transform:rotate(90deg); }
+    .export-item { display:flex; align-items:center; gap:7px; padding:5px 10px 5px 26px; font-size:12px; cursor:pointer; color:var(--text); }
+    .export-item:hover { background:var(--bg3); }
+    .export-item input[type=checkbox] { cursor:pointer; width:13px; height:13px; flex-shrink:0; }
+    .export-main { flex:1; overflow-y:auto; padding:14px 16px; }
+    .export-topbar { display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-bottom:14px; background:var(--bg2); border:1px solid var(--border); padding:10px 14px; border-radius:10px; }
+    .export-data-table { width:100%; border-collapse:collapse; font-size:12px; }
+    .export-data-table th { padding:7px 10px; text-align:right; font-size:11px; font-weight:700; color:var(--text2); background:var(--bg3); border-bottom:2px solid var(--border); white-space:nowrap; position:sticky; top:0; z-index:1; }
+    .export-data-table th.dim-col { text-align:left; }
+    .export-data-table td { padding:6px 10px; text-align:right; border-bottom:1px solid var(--bg3); white-space:nowrap; font-variant-numeric:tabular-nums; }
+    .export-data-table td.dim-col { text-align:left; max-width:200px; overflow:hidden; text-overflow:ellipsis; }
+    .export-data-table tbody tr:hover { background:var(--bg2); }
+    .export-data-table tfoot td { background:var(--bg3); font-weight:700; border-top:2px solid var(--border); }
+    /* AI modal */
+    .ai-modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,.55); z-index:9000; align-items:center; justify-content:center; }
+    .ai-modal-overlay.open { display:flex; }
+    .ai-modal { background:var(--bg); border-radius:12px; width:700px; max-width:95vw; max-height:90vh; display:flex; flex-direction:column; box-shadow:0 20px 60px rgba(0,0,0,.35); overflow:hidden; }
+    .ai-modal-head { padding:14px 18px; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; flex-shrink:0; }
+    .ai-modal-body { flex:1; overflow-y:auto; padding:16px 18px; }
+    .ai-data-pre { font-family:monospace; font-size:11px; white-space:pre-wrap; background:var(--bg3); border:1px solid var(--border); border-radius:8px; padding:12px; max-height:420px; overflow-y:auto; color:var(--text); }
   </style>
 </head>
 <body>
@@ -587,6 +620,7 @@
   <div class="level-tab active" id="ltabCampaign" onclick="switchLevel('campaign')">📊 Chiến dịch</div>
   <div class="level-tab" id="ltabAdgroup" onclick="switchLevel('adgroup')">👥 Nhóm QC</div>
   <div class="level-tab" id="ltabKpi" onclick="switchLevel('kpi')">🎯 Theo dõi KPI</div>
+  <div class="level-tab" id="ltabExport" onclick="switchLevel('export')">📋 Xuất báo cáo</div>
 </div>
 
 <!-- ===================== MAIN ===================== -->
@@ -1136,6 +1170,70 @@ while ($listener.IsListening) {
     <div class="form-actions">
       <button class="btn" onclick="closeBid()">Hủy</button>
       <button class="btn btn-primary" onclick="saveBid()">Cập nhật</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== EXPORT REPORT SECTION ===================== -->
+<div id="exportSection" style="display:none;">
+  <div class="export-layout">
+    <!-- LEFT: Picker -->
+    <div class="export-picker">
+      <div class="export-picker-tabs">
+        <div class="export-picker-tab active" id="eptDim" onclick="exportPickerTab('dim')">Khía cạnh</div>
+        <div class="export-picker-tab" id="eptMet" onclick="exportPickerTab('met')">Số liệu</div>
+      </div>
+      <div class="export-picker-search">
+        <input type="text" id="exportSearchInput" placeholder="🔍 Tìm kiếm..." oninput="exportFilterTree(this.value)" />
+      </div>
+      <div id="exportDimTree" class="export-tree"></div>
+      <div id="exportMetTree" class="export-tree" style="display:none;"></div>
+    </div>
+    <!-- RIGHT: Main -->
+    <div class="export-main">
+      <div class="export-topbar">
+        <label style="font-size:12px;color:var(--text2);">Từ ngày</label>
+        <input type="date" id="exportFrom" style="padding:5px 8px;border:1px solid var(--border);border-radius:6px;font-size:12px;background:var(--bg3);color:var(--text);" />
+        <label style="font-size:12px;color:var(--text2);">Đến ngày</label>
+        <input type="date" id="exportTo" style="padding:5px 8px;border:1px solid var(--border);border-radius:6px;font-size:12px;background:var(--bg3);color:var(--text);" />
+        <button class="btn" onclick="exportFetch()" id="exportFetchBtn">🔄 Tải dữ liệu</button>
+        <span id="exportStatus" style="font-size:12px;color:var(--text2);"></span>
+        <div style="flex:1;min-width:10px;"></div>
+        <button class="btn" id="exportAIBtn" onclick="exportForAI()" style="display:none;background:#7C3AED;border-color:#7C3AED;color:#fff;">🤖 Phân tích AI</button>
+        <button class="btn btn-ghost" id="exportCSVBtn" onclick="exportToCSV()" style="display:none;">⬇ CSV</button>
+      </div>
+      <div id="exportTableWrap">
+        <div style="padding:60px 20px;text-align:center;color:var(--text2);font-size:13px;line-height:1.7;">
+          <div style="font-size:32px;margin-bottom:8px;">📋</div>
+          Chọn <strong>khía cạnh</strong> và <strong>số liệu</strong> từ panel bên trái,<br>
+          sau đó nhấn <strong>Tải dữ liệu</strong> để xem báo cáo.
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== AI ANALYSIS MODAL ===================== -->
+<div class="ai-modal-overlay" id="aiModalOverlay" onclick="if(event.target===this)this.classList.remove('open')">
+  <div class="ai-modal">
+    <div class="ai-modal-head">
+      <div>
+        <div style="font-size:15px;font-weight:700;">🤖 Phân tích với AI (Claude)</div>
+        <div style="font-size:12px;color:var(--text2);margin-top:2px;">Dữ liệu đã được format sẵn — copy và dán vào Claude.ai</div>
+      </div>
+      <button class="btn btn-ghost" onclick="document.getElementById('aiModalOverlay').classList.remove('open')">✕</button>
+    </div>
+    <div class="ai-modal-body">
+      <div style="background:#EFF6FF;border:1px solid #BFDBFE;border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:12px;color:#1E40AF;line-height:1.6;">
+        <strong>📌 Cách dùng:</strong> Nhấn <strong>Copy toàn bộ</strong> bên dưới →
+        Mở <a href="https://claude.ai" target="_blank" style="color:#2563EB;">claude.ai</a> →
+        Dán vào chat. Skill <em>tiktok-ads-optimizer</em> sẽ tự kích hoạt và phân tích hiệu quả cùng đề xuất tối ưu.
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+        <span style="font-size:12px;font-weight:600;color:var(--text2);">Dữ liệu được export</span>
+        <button class="btn" onclick="copyAIData()" id="copyAIBtn">📋 Copy toàn bộ</button>
+      </div>
+      <pre id="aiDataPre" class="ai-data-pre"></pre>
     </div>
   </div>
 </div>
@@ -2135,29 +2233,51 @@ function setActiveCampaign(cid) {
 function switchLevel(level, campaignId) {
   S.level = level;
 
-  // KPI mode — swap table views for KPI section
-  const kpiSec = document.getElementById('kpiSection');
+  const kpiSec    = document.getElementById('kpiSection');
+  const exportSec = document.getElementById('exportSection');
   const vd = document.getElementById('viewDesktop');
   const vm = document.getElementById('viewMobile');
+  const lt1 = document.getElementById('ltabCampaign');
+  const lt2 = document.getElementById('ltabAdgroup');
+  const lt3 = document.getElementById('ltabKpi');
+  const lt4 = document.getElementById('ltabExport');
+  const agHead = document.getElementById('agLevelHead');
+  const nfw    = document.getElementById('nameFilterWrap');
+
+  // Hide all special sections first
+  if (kpiSec)    kpiSec.style.display    = 'none';
+  if (exportSec) exportSec.style.display = 'none';
+
   if (level === 'kpi') {
     if (kpiSec) kpiSec.style.display = '';
     if (vd) vd.style.display = 'none';
     if (vm) vm.style.display = 'none';
-    const lt1 = document.getElementById('ltabCampaign');
-    const lt2 = document.getElementById('ltabAdgroup');
-    const lt3 = document.getElementById('ltabKpi');
     if (lt1) lt1.classList.remove('active');
     if (lt2) lt2.classList.remove('active');
     if (lt3) lt3.classList.add('active');
-    const agHead = document.getElementById('agLevelHead');
+    if (lt4) lt4.classList.remove('active');
     if (agHead) agHead.style.display = 'none';
-    const nfw = document.getElementById('nameFilterWrap');
-    if (nfw) nfw.style.display = 'none';
+    if (nfw)    nfw.style.display    = 'none';
     kpiLoad();
     return;
   }
-  // Leaving KPI — restore table views
-  if (kpiSec) kpiSec.style.display = 'none';
+
+  if (level === 'export') {
+    if (exportSec) exportSec.style.display = '';
+    if (vd) vd.style.display = 'none';
+    if (vm) vm.style.display = 'none';
+    if (lt1) lt1.classList.remove('active');
+    if (lt2) lt2.classList.remove('active');
+    if (lt3) lt3.classList.remove('active');
+    if (lt4) lt4.classList.add('active');
+    if (agHead) agHead.style.display = 'none';
+    if (nfw)    nfw.style.display    = 'none';
+    exportInit();
+    return;
+  }
+
+  // Leaving special tabs — restore table views
+
   if (vd) vd.style.display = S.view === 'mobile' ? 'none' : '';
   if (vm) vm.style.display = S.view === 'mobile' ? '' : 'none';
 
@@ -2177,15 +2297,11 @@ function switchLevel(level, campaignId) {
       S.selectedCampaignId = S.campaigns[0].campaign_id;
     }
   }
-  const lt1 = document.getElementById('ltabCampaign');
-  const lt2 = document.getElementById('ltabAdgroup');
-  const lt3 = document.getElementById('ltabKpi');
   if (lt1) lt1.classList.toggle('active', level === 'campaign');
   if (lt2) lt2.classList.toggle('active', level === 'adgroup');
   if (lt3) lt3.classList.remove('active');
-  const agHead = document.getElementById('agLevelHead');
+  if (lt4) lt4.classList.remove('active');
   if (agHead) agHead.style.display = level === 'adgroup' ? '' : 'none';
-  const nfw = document.getElementById('nameFilterWrap');
   if (nfw) nfw.style.display = level === 'campaign' ? '' : 'none';
   if (S.campaigns.length) render();
   if (level === 'adgroup') {
@@ -3435,6 +3551,415 @@ function kpiRowSave() {
   kpiSave(); kpiRender();
   document.getElementById('kpiRowOverlay').classList.remove('open');
   toast('success', idx >= 0 ? '✅ Đã cập nhật KOC' : '✅ Đã thêm KOC');
+}
+
+/* ═══════════════════════════ EXPORT REPORT ═══════════════════════════ */
+
+const EXPORT_DIMS = {
+  campaign: { label: 'Chiến dịch', items: [
+    { key: 'campaign_name',  label: 'Tên chiến dịch',      def: true  },
+    { key: 'campaign_id',    label: 'ID chiến dịch',        def: false },
+    { key: 'objective_type', label: 'Mục tiêu QC',          def: false },
+    { key: 'primary_status', label: 'Trạng thái',           def: false },
+    { key: 'budget',         label: 'Ngân sách chiến dịch', def: false },
+  ]},
+  adgroup: { label: 'Nhóm quảng cáo', items: [
+    { key: 'adgroup_name',      label: 'Tên nhóm QC',          def: false },
+    { key: 'adgroup_id',        label: 'ID nhóm QC',            def: false },
+    { key: 'optimization_goal', label: 'Mục tiêu tối ưu hóa',  def: false },
+    { key: 'bid_type',          label: 'Chiến lược giá thầu',   def: false },
+  ]},
+  time: { label: 'Thời gian', items: [
+    { key: 'stat_time_day',   label: 'Theo ngày',  def: false },
+    { key: 'stat_time_week',  label: 'Theo tuần',  def: false },
+    { key: 'stat_time_month', label: 'Theo tháng', def: false },
+  ]},
+};
+
+const EXPORT_METS = {
+  core: { label: 'Cốt lõi', items: [
+    { key: 'spend',               label: 'Chi phí',               def: true,  fmt: '$' },
+    { key: 'impressions',         label: 'Lần hiển thị',          def: true,  fmt: 'N' },
+    { key: 'reach',               label: 'Phạm vi tiếp cận',      def: true,  fmt: 'N' },
+    { key: 'frequency',           label: 'Tần suất',              def: false, fmt: 'F' },
+    { key: 'clicks',              label: 'Lượt nhấp',             def: false, fmt: 'N' },
+    { key: 'ctr',                 label: 'CTR',                   def: false, fmt: '%' },
+    { key: 'cpm',                 label: 'CPM',                   def: false, fmt: '$' },
+    { key: 'cpc',                 label: 'CPC (điểm đến)',        def: false, fmt: '$' },
+    { key: 'result',              label: 'Kết quả',               def: false, fmt: 'N' },
+    { key: 'cost_per_result',     label: 'Chi phí / kết quả',     def: false, fmt: '$' },
+    { key: 'result_rate',         label: 'Tỷ lệ kết quả',        def: false, fmt: '%' },
+    { key: 'conversion',          label: 'Lượt chuyển đổi',       def: false, fmt: 'N' },
+    { key: 'cost_per_conversion', label: 'Chi phí / chuyển đổi', def: false, fmt: '$' },
+    { key: 'conversion_rate',     label: 'Tỷ lệ chuyển đổi',     def: false, fmt: '%' },
+  ]},
+  video: { label: 'Video', items: [
+    { key: 'video_play_actions',    label: 'Lượt xem video',    def: true,  fmt: 'N' },
+    { key: 'video_watched_2s',      label: 'Lượt xem 2 giây',  def: true,  fmt: 'N' },
+    { key: 'video_watched_6s',      label: 'Lượt xem 6 giây',  def: true,  fmt: 'N' },
+    { key: 'video_views_p25',       label: 'Xem 25% video',    def: false, fmt: 'N' },
+    { key: 'video_views_p50',       label: 'Xem 50% video',    def: false, fmt: 'N' },
+    { key: 'video_views_p75',       label: 'Xem 75% video',    def: false, fmt: 'N' },
+    { key: 'video_views_p100',      label: 'Xem 100% video',   def: false, fmt: 'N' },
+    { key: 'average_video_play',    label: 'TG phát TB (giây)',def: false, fmt: 'F' },
+    { key: 'video_watched_2s_rate', label: 'Tỷ lệ xem 2 giây',def: false, fmt: '%' },
+    { key: 'video_watched_6s_rate', label: 'Tỷ lệ xem 6 giây',def: false, fmt: '%' },
+  ]},
+  engage: { label: 'Lượt tương tác', items: [
+    { key: 'likes',          label: 'Lượt thích',      def: false, fmt: 'N' },
+    { key: 'comments',       label: 'Bình luận',       def: false, fmt: 'N' },
+    { key: 'shares',         label: 'Chia sẻ',         def: false, fmt: 'N' },
+    { key: 'follows',        label: 'Theo dõi',        def: false, fmt: 'N' },
+    { key: 'profile_visits', label: 'Ghé thăm trang', def: false, fmt: 'N' },
+  ]},
+};
+
+const EX = { pickerTab: 'dim', checkedDims: new Set(), checkedMets: new Set(), rows: [], cols: [], inited: false };
+
+function exportInit() {
+  if (!EX.inited) {
+    Object.values(EXPORT_DIMS).forEach(g => g.items.forEach(i => { if (i.def) EX.checkedDims.add(i.key); }));
+    Object.values(EXPORT_METS).forEach(g => g.items.forEach(i => { if (i.def) EX.checkedMets.add(i.key); }));
+    const today = new Date().toISOString().slice(0,10);
+    const d30   = new Date(Date.now() - 29*86400000).toISOString().slice(0,10);
+    const ef = document.getElementById('exportFrom');
+    const et = document.getElementById('exportTo');
+    if (ef && !ef.value) ef.value = d30;
+    if (et && !et.value) et.value = today;
+    EX.inited = true;
+  }
+  exportRenderDimTree();
+  exportRenderMetTree();
+}
+
+function exportPickerTab(t) {
+  EX.pickerTab = t;
+  document.getElementById('eptDim').classList.toggle('active', t==='dim');
+  document.getElementById('eptMet').classList.toggle('active', t==='met');
+  document.getElementById('exportDimTree').style.display = t==='dim' ? '' : 'none';
+  document.getElementById('exportMetTree').style.display = t==='met' ? '' : 'none';
+  document.getElementById('exportSearchInput').value = '';
+  exportFilterTree('');
+}
+
+function exportFilterTree(q) {
+  const qq = q.toLowerCase();
+  const treeId = EX.pickerTab === 'dim' ? 'exportDimTree' : 'exportMetTree';
+  const tree = document.getElementById(treeId);
+  if (!tree) return;
+  tree.querySelectorAll('.export-item').forEach(el => {
+    el.style.display = (!qq || el.textContent.toLowerCase().includes(qq)) ? '' : 'none';
+  });
+  tree.querySelectorAll('.export-group').forEach(el => {
+    const vis = [...el.querySelectorAll('.export-item')].some(i => i.style.display !== 'none');
+    el.style.display = vis ? '' : 'none';
+  });
+}
+
+function exportRenderDimTree() {
+  const wrap = document.getElementById('exportDimTree');
+  if (!wrap) return;
+  wrap.innerHTML = Object.entries(EXPORT_DIMS).map(([gk, g]) => `
+    <div class="export-group">
+      <div class="export-group-label xopen" onclick="this.classList.toggle('xopen');this.nextElementSibling.style.display=this.classList.contains('xopen')?'':'none'">
+        <span class="xcaret">▶</span> ${g.label}
+      </div>
+      <div>${g.items.map(i => `
+        <label class="export-item">
+          <input type="checkbox" data-dim="${i.key}" ${EX.checkedDims.has(i.key)?'checked':''} onchange="exportToggleDim('${i.key}',this.checked)" />
+          ${i.label}
+        </label>`).join('')}
+      </div>
+    </div>`).join('');
+}
+
+function exportRenderMetTree() {
+  const wrap = document.getElementById('exportMetTree');
+  if (!wrap) return;
+  wrap.innerHTML = Object.entries(EXPORT_METS).map(([gk, g]) => {
+    const allChecked = g.items.every(i => EX.checkedMets.has(i.key));
+    return `
+    <div class="export-group">
+      <div class="export-group-label xopen" onclick="event.target.tagName!=='INPUT'&&(this.classList.toggle('xopen'),this.nextElementSibling.style.display=this.classList.contains('xopen')?'':'none')">
+        <span class="xcaret">▶</span>
+        <input type="checkbox" ${allChecked?'checked':''} onclick="event.stopPropagation();exportToggleGroup('${gk}',this.checked)" style="margin:0 3px;" />
+        ${g.label}
+      </div>
+      <div>${g.items.map(i => `
+        <label class="export-item">
+          <input type="checkbox" data-met="${i.key}" ${EX.checkedMets.has(i.key)?'checked':''} onchange="exportToggleMet('${i.key}',this.checked)" />
+          ${i.label}
+        </label>`).join('')}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function exportToggleDim(key, on) {
+  if (on) EX.checkedDims.add(key); else EX.checkedDims.delete(key);
+  // Time: only one at a time
+  if (on && ['stat_time_day','stat_time_week','stat_time_month'].includes(key)) {
+    ['stat_time_day','stat_time_week','stat_time_month'].filter(k=>k!==key).forEach(k => {
+      EX.checkedDims.delete(k);
+      const el = document.querySelector(`[data-dim="${k}"]`);
+      if (el) el.checked = false;
+    });
+  }
+}
+
+function exportToggleMet(key, on) {
+  if (on) EX.checkedMets.add(key); else EX.checkedMets.delete(key);
+}
+
+function exportToggleGroup(gk, on) {
+  EXPORT_METS[gk].items.forEach(i => {
+    if (on) EX.checkedMets.add(i.key); else EX.checkedMets.delete(i.key);
+    const el = document.querySelector(`[data-met="${i.key}"]`);
+    if (el) el.checked = on;
+  });
+}
+
+async function exportFetch() {
+  if (!S.accountId && !S.demo) { toast('warn', 'Chọn tài khoản trước'); return; }
+  const from = document.getElementById('exportFrom').value;
+  const to   = document.getElementById('exportTo').value;
+  if (!from || !to) { toast('warn', 'Chọn khoảng thời gian'); return; }
+  if (!EX.checkedMets.size) { toast('warn', 'Chọn ít nhất 1 chỉ số'); return; }
+
+  const selDims = [...EX.checkedDims];
+  const selMets = [...EX.checkedMets];
+
+  const hasAg = selDims.some(d => ['adgroup_name','adgroup_id','optimization_goal','bid_type'].includes(d));
+  const timeDim = selDims.find(d => ['stat_time_day','stat_time_week','stat_time_month'].includes(d));
+  const dataLevel = hasAg ? 'AUCTION_ADGROUP' : 'AUCTION_CAMPAIGN';
+  const idDim    = hasAg ? 'adgroup_id'   : 'campaign_id';
+  const apiDims  = [idDim, ...(timeDim ? [timeDim] : [])];
+
+  const today = new Date().toISOString().slice(0,10);
+  const capTo = to > today ? today : to;
+
+  const statusEl  = document.getElementById('exportStatus');
+  const fetchBtn  = document.getElementById('exportFetchBtn');
+  const aiBtn     = document.getElementById('exportAIBtn');
+  const csvBtn    = document.getElementById('exportCSVBtn');
+  if (statusEl)  statusEl.textContent = '⏳ Đang tải...';
+  if (fetchBtn)  fetchBtn.disabled = true;
+  if (aiBtn)     aiBtn.style.display  = 'none';
+  if (csvBtn)    csvBtn.style.display = 'none';
+  document.getElementById('exportTableWrap').innerHTML = `
+    <div style="padding:60px 20px;text-align:center;color:var(--text2);">
+      <div class="spinner" style="margin:0 auto 12px;"></div>Đang tải dữ liệu từ TikTok Ads...
+    </div>`;
+
+  try {
+    const aid = S.accountId;
+    let rptRows = [];
+
+    if (S.demo) {
+      rptRows = (S.campaigns || []).slice(0, 15).map(c => ({
+        dimensions: { campaign_id: c.campaign_id },
+        metrics: { spend: Math.random()*5000000, impressions: Math.random()*500000, reach: Math.random()*300000, frequency: 1+Math.random()*2, clicks: Math.random()*5000, ctr: (Math.random()*2).toFixed(2), cpm: 5000+Math.random()*15000, video_play_actions: Math.random()*200000, video_watched_2s: Math.random()*150000, video_watched_6s: Math.random()*80000, result: Math.floor(Math.random()*500), cost_per_result: 5000+Math.random()*50000 }
+      }));
+    } else {
+      const rptData = await apiGet('/report/integrated/get/', {
+        advertiser_id: aid, report_type: 'BASIC',
+        data_level: dataLevel, dimensions: apiDims,
+        metrics: selMets, start_date: from, end_date: capTo, page_size: 1000
+      });
+      console.log('[Export] API response:', rptData.code, rptData.message, 'rows:', rptData.list?.length);
+      if (rptData.code && rptData.code !== 0) throw new Error(`API lỗi ${rptData.code}: ${rptData.message}`);
+      rptRows = rptData.list || [];
+    }
+
+    // Enrich with adgroup/campaign info
+    let agInfoMap = {}, cpInfoMap = {};
+    if (!S.demo) {
+      (S.campaigns || []).forEach(c => { cpInfoMap[String(c.campaign_id)] = c; });
+      if (hasAg) {
+        const agList = await apiGet('/adgroup/get/', { advertiser_id: aid, page_size: 1000, fields: ['adgroup_id','adgroup_name','campaign_id','optimization_goal','bid_type'] });
+        (agList.list || []).forEach(a => { agInfoMap[String(a.adgroup_id)] = a; });
+      }
+    } else {
+      (S.campaigns || []).forEach(c => { cpInfoMap[String(c.campaign_id)] = c; });
+    }
+
+    // Build rows
+    EX.rows = rptRows.map(row => {
+      const dims = row.dimensions || {};
+      const mets = row.metrics   || {};
+      const agId = String(dims.adgroup_id || '');
+      const cpId = String(dims.campaign_id || agInfoMap[agId]?.campaign_id || '');
+      const agInfo = agInfoMap[agId] || {};
+      const cpInfo = cpInfoMap[cpId] || cpInfoMap[String(agInfo.campaign_id||'')] || {};
+      return {
+        campaign_name:  cpInfo.campaign_name  || dims.campaign_name  || cpId,
+        campaign_id:    cpId,
+        objective_type: cpInfo.objective_type || dims.objective_type || '',
+        primary_status: cpInfo.primary_status || dims.primary_status || '',
+        budget:         cpInfo.budget         || dims.budget         || '',
+        adgroup_name:   agInfo.adgroup_name   || dims.adgroup_name   || agId,
+        adgroup_id:     agId,
+        optimization_goal: agInfo.optimization_goal || dims.optimization_goal || '',
+        bid_type:          agInfo.bid_type          || dims.bid_type          || '',
+        stat_time_day:   dims.stat_time_day   || '',
+        stat_time_week:  dims.stat_time_week  || '',
+        stat_time_month: dims.stat_time_month || '',
+        ...Object.fromEntries(selMets.map(k => [k, parseFloat(mets[k] || 0)])),
+      };
+    });
+
+    // Build column defs
+    const allDimItems = Object.values(EXPORT_DIMS).flatMap(g=>g.items);
+    const allMetItems = Object.values(EXPORT_METS).flatMap(g=>g.items);
+    EX.cols = [
+      ...allDimItems.filter(i => selDims.includes(i.key)).map(i => ({ key:i.key, label:i.label, type:'dim' })),
+      ...allMetItems.filter(i => selMets.includes(i.key)).map(i => ({ key:i.key, label:i.label, type:'met', fmt:i.fmt })),
+    ];
+
+    exportRenderTable(EX.rows, EX.cols);
+    const rowCount = EX.rows.length;
+    if (statusEl) statusEl.textContent = `✅ ${rowCount} dòng · ${from} → ${capTo}`;
+    if (aiBtn)  aiBtn.style.display  = '';
+    if (csvBtn) csvBtn.style.display = '';
+
+  } catch(e) {
+    document.getElementById('exportTableWrap').innerHTML = `<div style="padding:16px;background:#FEF2F2;border:1px solid #FECACA;border-radius:8px;color:var(--danger);margin-top:4px;">⚠️ ${e.message}</div>`;
+    if (statusEl) statusEl.textContent = '';
+    toast('error', 'Lỗi: ' + e.message);
+  } finally {
+    if (fetchBtn) fetchBtn.disabled = false;
+  }
+}
+
+function exportFmtCell(v, fmt) {
+  if (fmt === '$') {
+    const n = parseFloat(v) || 0;
+    return S.convertCurrency ? Math.round(n * getRate()).toLocaleString('vi-VN') + ' đ' : n.toFixed(2);
+  }
+  if (fmt === 'N') return Math.round(parseFloat(v)||0).toLocaleString('vi-VN');
+  if (fmt === '%') return (parseFloat(v)||0).toFixed(2) + '%';
+  if (fmt === 'F') return (parseFloat(v)||0).toFixed(2);
+  return v != null && v !== '' ? String(v) : '—';
+}
+
+function exportRenderTable(rows, cols) {
+  if (!rows.length) {
+    document.getElementById('exportTableWrap').innerHTML = '<div style="padding:60px;text-align:center;color:var(--text2);">Không có dữ liệu trong khoảng thời gian này.</div>';
+    return;
+  }
+  const dimCols = cols.filter(c=>c.type==='dim');
+  const metCols = cols.filter(c=>c.type==='met');
+  const totals  = {};
+  metCols.forEach(c => { totals[c.key] = rows.reduce((s,r)=>s+(parseFloat(r[c.key])||0),0); });
+
+  const thead = `<tr>
+    ${dimCols.map(c=>`<th class="dim-col">${c.label}</th>`).join('')}
+    ${metCols.map(c=>`<th>${c.label}</th>`).join('')}
+  </tr>`;
+  const tbody = rows.map(r=>`<tr>
+    ${dimCols.map(c=>`<td class="dim-col" title="${r[c.key]||''}">${r[c.key]||'—'}</td>`).join('')}
+    ${metCols.map(c=>`<td>${exportFmtCell(r[c.key],c.fmt)}</td>`).join('')}
+  </tr>`).join('');
+  const tfoot = `<tr>
+    <td class="dim-col" colspan="${dimCols.length}" style="text-align:left;font-weight:700;">Tổng cộng (${rows.length} dòng)</td>
+    ${metCols.map(c=>`<td>${exportFmtCell(totals[c.key],c.fmt)}</td>`).join('')}
+  </tr>`;
+
+  document.getElementById('exportTableWrap').innerHTML = `
+    <div style="overflow-x:auto;">
+      <table class="export-data-table">
+        <thead>${thead}</thead>
+        <tbody>${tbody}</tbody>
+        <tfoot>${tfoot}</tfoot>
+      </table>
+    </div>`;
+}
+
+function exportToCSV() {
+  if (!EX.rows.length) { toast('warn', 'Chưa có dữ liệu'); return; }
+  const fmtRaw = (v, fmt) => {
+    if (fmt === '$' || fmt === 'N') return String(Math.round(parseFloat(v)||0));
+    if (fmt === '%' || fmt === 'F') return (parseFloat(v)||0).toFixed(2);
+    return v != null ? String(v) : '';
+  };
+  const headers = EX.cols.map(c => `"${c.label}"`).join(',');
+  const csvRows = EX.rows.map(r => EX.cols.map(c => {
+    const v = r[c.key];
+    if (c.type === 'met') return fmtRaw(v, c.fmt);
+    if (v == null || v === '') return '""';
+    return `"${String(v).replace(/"/g,'""')}"`;
+  }).join(','));
+  const csv  = '﻿' + [headers, ...csvRows].join('\n');
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href = url;
+  a.download = `tiktok-report-${document.getElementById('exportFrom').value}-${document.getElementById('exportTo').value}.csv`;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  toast('success', '✅ Đã xuất CSV');
+}
+
+function exportForAI() {
+  if (!EX.rows.length) { toast('warn', 'Tải dữ liệu trước'); return; }
+  const from    = document.getElementById('exportFrom').value;
+  const to      = document.getElementById('exportTo').value;
+  const dimCols = EX.cols.filter(c=>c.type==='dim');
+  const metCols = EX.cols.filter(c=>c.type==='met');
+
+  const fmtRaw = (v, fmt) => {
+    if (fmt === '$' || fmt === 'N') return String(Math.round(parseFloat(v)||0));
+    if (fmt === '%' || fmt === 'F') return (parseFloat(v)||0).toFixed(2);
+    return v != null ? String(v) : '—';
+  };
+
+  const header = EX.cols.map(c=>c.label).join('\t');
+  const dataRows = EX.rows.map(r => EX.cols.map(c =>
+    c.type === 'dim' ? (r[c.key]||'') : fmtRaw(r[c.key], c.fmt)
+  ).join('\t'));
+  const totals  = {};
+  metCols.forEach(c => { totals[c.key] = EX.rows.reduce((s,r)=>s+(parseFloat(r[c.key])||0),0); });
+  const totRow  = [...dimCols.map(()=>'TỔNG'), ...metCols.map(c=>fmtRaw(totals[c.key],c.fmt))].join('\t');
+  const currency = S.convertCurrency ? 'VND' : 'USD';
+
+  const text = [
+    '=== BÁO CÁO QUẢNG CÁO TIKTOK ===',
+    `Tài khoản: ${S.accountId || 'Demo'}`,
+    `Kỳ báo cáo: ${from} → ${to}`,
+    `Đơn vị tiền tệ: ${currency}`,
+    `Số dòng dữ liệu: ${EX.rows.length}`,
+    '',
+    '--- DỮ LIỆU CHI TIẾT ---',
+    header,
+    ...dataRows,
+    '',
+    '--- TỔNG CỘNG ---',
+    totRow,
+    '',
+    '--- YÊU CẦU PHÂN TÍCH ---',
+    'Hãy phân tích hiệu quả quảng cáo TikTok ở trên theo skill tiktok-ads-optimizer:',
+    '1. Đánh giá tổng quan KPI có đạt không',
+    '2. Phân tích chi tiết từng chiến dịch / nhóm QC',
+    '3. Đề xuất tối ưu cụ thể (làm ngay / theo dõi / thử nghiệm)',
+  ].join('\n');
+
+  document.getElementById('aiDataPre').textContent = text;
+  document.getElementById('aiModalOverlay').classList.add('open');
+}
+
+function copyAIData() {
+  const text = document.getElementById('aiDataPre').textContent;
+  navigator.clipboard.writeText(text).then(() => {
+    const btn = document.getElementById('copyAIBtn');
+    const orig = btn.textContent;
+    btn.textContent = '✅ Đã copy!';
+    setTimeout(() => { btn.textContent = orig; }, 2000);
+  }).catch(() => {
+    const pre = document.getElementById('aiDataPre');
+    const r = document.createRange(); r.selectNode(pre);
+    window.getSelection().removeAllRanges(); window.getSelection().addRange(r);
+    toast('info', 'Đã chọn text — nhấn Ctrl+C để copy');
+  });
 }
 
 /* ═══════════════════════════ INIT ═══════════════════════════ */
