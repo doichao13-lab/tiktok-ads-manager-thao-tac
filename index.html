@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="vi">
 <head>
   <meta charset="UTF-8" />
@@ -419,97 +419,6 @@
     .ag-level-head .select-wrap { flex: 1; min-width: 200px; max-width: 400px; }
     .ag-level-head .select-wrap select { width: 100%; }
 
-    /* ── KPI TRACKING ── */
-    .kpi-banner {
-      background: linear-gradient(135deg, #16A34A, #15803D);
-      color: #fff; padding: 18px 24px;
-    }
-    .kpi-banner input[type=text] {
-      background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.35);
-      color: #fff; border-radius: 8px; padding: 6px 12px;
-      font-size: 20px; font-weight: 700;
-    }
-    .kpi-banner input[type=text]::placeholder { color: rgba(255,255,255,0.5); }
-    .kpi-banner input[type=date] {
-      background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.35);
-      color: #fff; border-radius: 6px; padding: 5px 8px; font-size: 12px;
-    }
-    .kpi-rates-bar {
-      background: #F0FDF4; border-bottom: 1px solid #BBF7D0;
-      padding: 8px 20px; display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
-    }
-    .kpi-rates-bar label { font-size: 12px; color: #166534; display: flex; align-items: center; gap: 4px; }
-    .kpi-rates-bar input[type=number] {
-      width: 66px; padding: 3px 6px; border: 1px solid #BBF7D0;
-      border-radius: 4px; font-size: 12px; text-align: right;
-      background: #fff; color: var(--text);
-    }
-    #kpiTable { width: 100%; border-collapse: collapse; }
-    #kpiTable th {
-      padding: 9px 14px; font-size: 11px; font-weight: 700; letter-spacing: .04em;
-      text-transform: uppercase; border-bottom: 2px solid var(--border);
-      white-space: nowrap; text-align: right;
-    }
-    #kpiTable th:first-child { text-align: left; }
-    #kpiTable td {
-      padding: 10px 14px; border-bottom: 1px solid var(--border);
-      font-size: 13px; text-align: right; white-space: nowrap;
-    }
-    #kpiTable td:first-child { text-align: left; font-weight: 500; }
-    #kpiTable tbody tr:hover { background: var(--bg3); }
-    #kpiTable tfoot td { background: var(--bg3); font-weight: 700; }
-    .kpi-group-head { background: #E0F2FE !important; color: #0369A1; }
-    .kpi-group-head2 { background: #DCFCE7 !important; color: #166534; }
-    /* Sub-tabs */
-    .kpi-subtab-bar {
-      display: flex; background: var(--bg2); border-bottom: 2px solid var(--border);
-      padding: 0 16px; gap: 2px;
-    }
-    .kpi-subtab {
-      padding: 9px 16px; font-size: 13px; font-weight: 600; color: var(--text2);
-      background: transparent; border: none; border-bottom: 2px solid transparent;
-      margin-bottom: -2px; cursor: pointer; transition: .15s;
-    }
-    .kpi-subtab:hover { color: var(--text); }
-    .kpi-subtab.active { color: #16A34A; border-bottom-color: #16A34A; }
-    /* Report section */
-    .kpi-report-bar {
-      background: var(--bg3); border-bottom: 1px solid var(--border);
-      padding: 8px 16px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
-    }
-    .rpt-card {
-      background: var(--bg2); border-radius: 10px; border: 1px solid var(--border);
-      border-left: 4px solid #16A34A; overflow: hidden;
-    }
-    .rpt-card-head {
-      padding: 10px 14px; background: var(--bg3); border-bottom: 1px solid var(--border);
-      font-size: 13px; font-weight: 700;
-    }
-    .rpt-table { width: 100%; border-collapse: collapse; font-size: 12px; }
-    .rpt-table th {
-      padding: 7px 10px; text-align: right; font-size: 11px; font-weight: 700;
-      color: var(--text2); background: var(--bg3); border-bottom: 1px solid var(--border);
-      white-space: nowrap; text-transform: uppercase; letter-spacing: .03em;
-    }
-    .rpt-table th.left { text-align: left; }
-    .rpt-table td { padding: 7px 10px; text-align: right; border-bottom: 1px solid var(--bg3); white-space: nowrap; }
-    .rpt-table td.left { text-align: left; }
-    .rpt-table tbody tr:hover { background: var(--bg3); }
-    .rpt-table tfoot td { background: var(--bg3); font-weight: 700; }
-    .kpi-two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
-    @media (max-width: 900px) { .kpi-two-col { grid-template-columns: 1fr; } }
-    /* Progress bars */
-    .prog-bar-wrap { display: flex; align-items: center; gap: 7px; min-width: 140px; }
-    .prog-track { flex: 1; height: 7px; background: var(--border); border-radius: 4px; overflow: hidden; }
-    .prog-fill { height: 100%; border-radius: 4px; transition: width .5s ease; }
-    .prog-fill.green  { background: #16A34A; }
-    .prog-fill.yellow { background: #D97706; }
-    .prog-fill.red    { background: #DC2626; }
-    .prog-pct { font-size: 11px; font-weight: 700; min-width: 40px; text-align: right; }
-    .prog-pct.green  { color: #15803D; }
-    .prog-pct.yellow { color: #92400E; }
-    .prog-pct.red    { color: #991B1B; }
-
     /* ── EXPORT REPORT ── */
     .export-layout { display:flex; height:calc(100vh - 215px); min-height:400px; }
     .export-picker { width:260px; flex-shrink:0; border-right:1px solid var(--border); overflow-y:auto; background:var(--bg2); display:flex; flex-direction:column; }
@@ -619,7 +528,6 @@
 <div class="level-bar" id="levelBar" style="display:none;">
   <div class="level-tab active" id="ltabCampaign" onclick="switchLevel('campaign')">📊 Chiến dịch</div>
   <div class="level-tab" id="ltabAdgroup" onclick="switchLevel('adgroup')">👥 Nhóm QC</div>
-  <div class="level-tab" id="ltabKpi" onclick="switchLevel('kpi')">🎯 Theo dõi KPI</div>
   <div class="level-tab" id="ltabExport" onclick="switchLevel('export')">📋 Xuất báo cáo</div>
 </div>
 
@@ -699,88 +607,6 @@
       <div class="cards" id="cardGrid"></div>
     </div>
 
-    <!-- KPI Tracking -->
-    <div id="kpiSection" style="display:none; padding-bottom:40px;">
-      <!-- Banner -->
-      <div class="kpi-banner">
-        <div style="display:flex; align-items:center; gap:16px; flex-wrap:wrap;">
-          <input type="text" id="kpiClientName" placeholder="Tên khách hàng / dự án..."
-            style="min-width:200px; max-width:320px;" oninput="kpiSave()" />
-          <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
-            <input type="date" id="kpiStart" oninput="kpiSave(); kpiRenderBanner()" />
-            <span style="font-size:13px;">→</span>
-            <input type="date" id="kpiEnd" oninput="kpiSave(); kpiRenderBanner()" />
-            <span id="kpiDaysLeft" style="background:rgba(0,0,0,0.25); padding:4px 12px; border-radius:20px; font-size:12px;"></span>
-          </div>
-        </div>
-      </div>
-
-      <!-- Sub-tabs -->
-      <div class="kpi-subtab-bar">
-        <button id="kstab1" class="kpi-subtab active" onclick="kpiSubTab(1)">📋 Kế hoạch KPI</button>
-        <button id="kstab2" class="kpi-subtab" onclick="kpiSubTab(2)">📊 Báo cáo hiệu quả</button>
-        <button id="kstab3" class="kpi-subtab" onclick="kpiSubTab(3)">📅 Tiến độ &amp; Dự báo</button>
-      </div>
-
-      <!-- Tab 1: KPI Plan -->
-      <div id="kpiTab1">
-        <div class="kpi-rates-bar">
-          <span style="font-size:12px; font-weight:600; color:#166534;">💰 Đơn giá KPI:</span>
-          <label>Reach × <input type="number" id="kpiRateReach" value="8" min="1" step="1" oninput="kpiSave(); kpiRender()" /> đ</label>
-          <label>View 6s × <input type="number" id="kpiRateView" value="20" min="1" step="1" oninput="kpiSave(); kpiRender()" /> đ</label>
-          <div style="margin-left:auto; display:flex; gap:6px;">
-            <button class="btn btn-sm" onclick="kpiImportPreset('traphaco')"
-              style="background:#0369A1; border-color:#0369A1; color:#fff;">📥 Nhập Traphaco</button>
-            <button class="btn btn-sm" onclick="kpiAddRow()"
-              style="background:#16A34A; border-color:#16A34A; color:#fff;">+ Thêm KOC</button>
-          </div>
-        </div>
-        <div class="table-wrap">
-          <table id="kpiTable">
-            <thead>
-              <tr>
-                <th rowspan="2" style="text-align:left; min-width:160px;">TÊN KOC</th>
-                <th rowspan="2">THỜI GIAN AIR</th>
-                <th rowspan="2">BÁO GIÁ</th>
-                <th colspan="2" class="kpi-group-head" style="text-align:center; border-bottom:1px solid #BAE6FD;">KPI PHÂN BỔ</th>
-                <th colspan="2" class="kpi-group-head2" style="text-align:center; border-bottom:1px solid #BBF7D0;">NGÂN SÁCH DỰ KIẾN</th>
-                <th rowspan="2" style="width:72px;"></th>
-              </tr>
-              <tr>
-                <th class="kpi-group-head">REACH</th>
-                <th class="kpi-group-head">VIEW 6S</th>
-                <th class="kpi-group-head2" id="kpiHeadNsReach">REACH (×8đ)</th>
-                <th class="kpi-group-head2" id="kpiHeadNsView">VIEW 6S (×20đ)</th>
-              </tr>
-            </thead>
-            <tbody id="kpiBody"></tbody>
-            <tfoot id="kpiFoot"></tfoot>
-          </table>
-        </div>
-      </div>
-
-      <!-- Tab 2: Performance Report -->
-      <div id="kpiTab2" style="display:none;">
-        <div class="kpi-report-bar">
-          <span style="font-size:12px; color:var(--text2);">Kỳ báo cáo:</span>
-          <input type="date" id="kpiRptFrom" style="padding:5px 8px; border:1px solid var(--border); border-radius:6px; font-size:12px; background:var(--bg2);" />
-          <span style="font-size:12px; color:var(--text2);">→</span>
-          <input type="date" id="kpiRptTo" style="padding:5px 8px; border:1px solid var(--border); border-radius:6px; font-size:12px; background:var(--bg2);" />
-          <button class="btn btn-sm" onclick="kpiLoadReport()" style="background:var(--cyan); border-color:var(--cyan); color:#fff;">🔄 Tải báo cáo</button>
-          <span id="kpiRptStatus" style="font-size:12px; color:var(--text2);"></span>
-        </div>
-        <div id="kpiReportContent" style="padding:16px;">
-          <p style="color:var(--text2); font-size:13px;">Nhấn <strong>Tải báo cáo</strong> để lấy dữ liệu thực tế từ TikTok Ads.</p>
-        </div>
-      </div>
-
-      <!-- Tab 3: Progress & Forecast -->
-      <div id="kpiTab3" style="display:none;">
-        <div id="kpiProgressContent" style="padding:16px;">
-          <p style="color:var(--text2); font-size:13px;">Vào tab <strong>Báo cáo hiệu quả</strong> và nhấn Tải báo cáo trước.</p>
-        </div>
-      </div>
-    </div>
 
   </div>
 </div>
@@ -1239,58 +1065,6 @@ while ($listener.IsListening) {
   </div>
 </div>
 
-<!-- ===================== KPI ROW MODAL ===================== -->
-<div class="overlay" id="kpiRowOverlay">
-  <div class="modal" style="max-width:420px;">
-    <div class="modal-head">
-      <span id="kpiRowTitle">Thêm KOC</span>
-      <button class="modal-close" onclick="document.getElementById('kpiRowOverlay').classList.remove('open')">✕</button>
-    </div>
-    <div class="form-group">
-      <label class="form-label">Tên KOC / Creator</label>
-      <input type="text" id="kriName" class="form-input" placeholder="Nhập tên KOC..." />
-    </div>
-    <div class="form-group">
-      <label class="form-label">Thời gian air</label>
-      <input type="date" id="kriAirDate" class="form-input" />
-    </div>
-    <div class="form-group">
-      <label class="form-label">Báo giá (đ)</label>
-      <input type="number" id="kriQuote" class="form-input" placeholder="0" min="0" step="1000000" />
-    </div>
-    <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
-      <div class="form-group">
-        <label class="form-label">KPI Reach</label>
-        <input type="number" id="kriReach" class="form-input" placeholder="0" min="0" step="1000" />
-      </div>
-      <div class="form-group">
-        <label class="form-label">KPI View 6s</label>
-        <input type="number" id="kriView" class="form-input" placeholder="0" min="0" step="1000" />
-      </div>
-    </div>
-    <details style="margin-top:4px;">
-      <summary style="font-size:12px; color:var(--text2); cursor:pointer; padding:4px 0; user-select:none;">
-        ⚙ Adgroup ID (tùy chọn — để trống sẽ tự khớp theo tên)
-      </summary>
-      <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:8px;">
-        <div class="form-group">
-          <label class="form-label">Adgroup Reach ID</label>
-          <input type="text" id="kriAgReach" class="form-input" placeholder="186705376..." style="font-family:monospace; font-size:12px;" />
-        </div>
-        <div class="form-group">
-          <label class="form-label">Adgroup View 6s ID</label>
-          <input type="text" id="kriAgView" class="form-input" placeholder="186705398..." style="font-family:monospace; font-size:12px;" />
-        </div>
-      </div>
-    </details>
-    <input type="hidden" id="kriIndex" value="-1" />
-    <div class="form-actions">
-      <button class="btn" onclick="document.getElementById('kpiRowOverlay').classList.remove('open')">Hủy</button>
-      <button class="btn btn-primary" onclick="kpiRowSave()">Lưu</button>
-    </div>
-  </div>
-</div>
-
 <!-- ===================== TOASTS ===================== -->
 <div class="toasts" id="toasts"></div>
 
@@ -1338,7 +1112,7 @@ const S = {
   dateRange: '7',
   statusFilter: '',
   nameFilter: '',
-  level: 'campaign',           // 'campaign' | 'adgroup' | 'kpi'
+  level: 'campaign',           // 'campaign' | 'adgroup' | 'export'
   selectedCampaignId: null,    // current campaign shown in adgroup view
   selectedCampaignIds: new Set(), // checkbox multi-select
   activeCampaignId: null,      // campaign row currently clicked/highlighted (single select)
@@ -1346,7 +1120,6 @@ const S = {
   agCount: null,               // { total, active } from quick fetch
   budgetEdit: null,
   bidEdit: null,
-  kpiRows: [],
 };
 
 /* ═══════════════════════════ API ═══════════════════════════ */
@@ -2234,34 +2007,17 @@ function setActiveCampaign(cid) {
 function switchLevel(level, campaignId) {
   S.level = level;
 
-  const kpiSec    = document.getElementById('kpiSection');
   const exportSec = document.getElementById('exportSection');
   const vd = document.getElementById('viewDesktop');
   const vm = document.getElementById('viewMobile');
   const lt1 = document.getElementById('ltabCampaign');
   const lt2 = document.getElementById('ltabAdgroup');
-  const lt3 = document.getElementById('ltabKpi');
   const lt4 = document.getElementById('ltabExport');
   const agHead = document.getElementById('agLevelHead');
   const nfw    = document.getElementById('nameFilterWrap');
 
   // Hide all special sections first
-  if (kpiSec)    kpiSec.style.display    = 'none';
   if (exportSec) exportSec.style.display = 'none';
-
-  if (level === 'kpi') {
-    if (kpiSec) kpiSec.style.display = '';
-    if (vd) vd.style.display = 'none';
-    if (vm) vm.style.display = 'none';
-    if (lt1) lt1.classList.remove('active');
-    if (lt2) lt2.classList.remove('active');
-    if (lt3) lt3.classList.add('active');
-    if (lt4) lt4.classList.remove('active');
-    if (agHead) agHead.style.display = 'none';
-    if (nfw)    nfw.style.display    = 'none';
-    kpiLoad();
-    return;
-  }
 
   if (level === 'export') {
     if (exportSec) exportSec.style.display = '';
@@ -2341,11 +2097,11 @@ function setView(mode) {
   localStorage.setItem('tt_view', mode);
   document.getElementById('btnDesk').classList.toggle('active', mode === 'desktop');
   document.getElementById('btnMobi').classList.toggle('active', mode === 'mobile');
-  if (S.level !== 'kpi') {
+  if (S.level !== 'export') {
     document.getElementById('viewDesktop').style.display = mode === 'desktop' ? '' : 'none';
     document.getElementById('viewMobile').style.display  = mode === 'mobile'  ? '' : 'none';
   }
-  if (mode === 'mobile' && S.campaigns.length && S.level !== 'kpi') updateCards();
+  if (mode === 'mobile' && S.campaigns.length && S.level !== 'export') updateCards();
 }
 
 /* ═══════════════════════════ BUDGET MODAL ═══════════════════════════ */
@@ -3055,504 +2811,6 @@ function toast(type, msg) {
 /* ═══════════════════════════ OVERLAY CLOSE ═══════════════════════════ */
 document.querySelectorAll('.overlay').forEach(o => o.addEventListener('click', e => { if(e.target===o) o.classList.remove('open'); }));
 document.addEventListener('keydown', e => { if(e.key==='Escape') document.querySelectorAll('.overlay.open').forEach(o=>o.classList.remove('open')); });
-
-/* ═══════════════════════════ KPI PRESETS ═══════════════════════════ */
-const KPI_PRESETS = {
-  traphaco: {
-    client: 'Traphaco',
-    periodStart: '2026-06-01',
-    periodEnd:   '2026-06-30',
-    rateReach: 8, rateView: 20,
-    rows: [
-      { name: 'Tô Quang Nam',           airDate:'2026-06-03', quote:103000000, kpiReach:1340000, kpiView:144000, agReachId:'1867053769812193', agViewId:'1867053986969745' },
-      { name: 'Mai Tri Thức',            airDate:'2026-06-04', quote: 90000000, kpiReach:1005000, kpiView:108000, agReachId:'1867143718423697', agViewId:'1867144811102273' },
-      { name: 'ngan',                    airDate:'2026-05-29', quote: 54000000, kpiReach:1005000, kpiView:108000, agReachId:'1866763677568001', agViewId:'1866764530801858' },
-      { name: 'Phương Hà',               airDate:'2026-06-12', quote: 36000000, kpiReach: 670000, kpiView: 72000, agReachId:'', agViewId:'' },
-      { name: 'Hubert Cù',               airDate:'2026-06-08', quote: 19500000, kpiReach: 536000, kpiView: 57600, agReachId:'', agViewId:'' },
-      { name: 'Đổ nhiều chuyện',         airDate:'2026-06-04', quote: 15000000, kpiReach: 469000, kpiView: 50400, agReachId:'1867492976502897', agViewId:'1867493320642626' },
-      { name: 'Hoàng Tuyết',             airDate:'2026-06-07', quote:  8200000, kpiReach: 200000, kpiView: 21493, agReachId:'', agViewId:'' },
-      { name: 'Đan Tâm',                 airDate:'2026-06-06', quote:  7000000, kpiReach: 190000, kpiView: 20418, agReachId:'', agViewId:'' },
-      { name: 'Heidy & Kiwi',            airDate:'2026-06-07', quote:  7000000, kpiReach: 190000, kpiView: 20418, agReachId:'1867397280848385', agViewId:'1867397526285506' },
-      { name: 'Huỳnh nguyễn',            airDate:'2026-05-29', quote:  5250000, kpiReach: 182500, kpiView: 19612, agReachId:'1866763916180577', agViewId:'1866764737357970' },
-      { name: 'Link Konn',               airDate:'2026-06-09', quote:  5250000, kpiReach: 182500, kpiView: 19612, agReachId:'', agViewId:'' },
-      { name: 'hanhdung0602',            airDate:'2026-06-07', quote:  5000000, kpiReach: 182500, kpiView: 19612, agReachId:'', agViewId:'' },
-      { name: 'Leo tay bé ghét đi tập', airDate:'2026-06-05', quote:  4000000, kpiReach: 182500, kpiView: 19612, agReachId:'1867408806708322', agViewId:'1867409192923362' },
-      { name: 'Lan công sở',             airDate:'2026-06-22', quote:  4000000, kpiReach: 182500, kpiView: 19612, agReachId:'', agViewId:'' },
-      { name: 'Thái giản dị',            airDate:'2026-06-22', quote:  4000000, kpiReach: 182500, kpiView: 19612, agReachId:'', agViewId:'' },
-    ]
-  }
-};
-
-function kpiImportPreset(key) {
-  const p = KPI_PRESETS[key];
-  if (!p) return;
-  if (S.kpiRows && S.kpiRows.length > 0) {
-    if (!confirm('Nhập sẽ ghi đè dữ liệu KOC hiện tại. Tiếp tục?')) return;
-  }
-  S.kpiRows = p.rows.map(r => ({ ...r }));
-  const cn = document.getElementById('kpiClientName');
-  const ks = document.getElementById('kpiStart');
-  const ke = document.getElementById('kpiEnd');
-  const rr = document.getElementById('kpiRateReach');
-  const rv = document.getElementById('kpiRateView');
-  if (cn && !cn.value) cn.value = p.client;
-  if (ks && !ks.value) ks.value = p.periodStart;
-  if (ke && !ke.value) ke.value = p.periodEnd;
-  if (rr) rr.value = p.rateReach;
-  if (rv) rv.value = p.rateView;
-  kpiSave();
-  kpiRenderBanner();
-  kpiRender();
-  toast('success', '✅ Đã nhập ' + p.rows.length + ' KOC từ cấu hình ' + p.client);
-}
-
-/* ═══════════════════════════ KPI TRACKING ═══════════════════════════ */
-function kpiLoad() {
-  const saved = JSON.parse(localStorage.getItem('tt_kpi') || 'null');
-  if (saved) {
-    S.kpiRows = saved.rows || [];
-    const cn = document.getElementById('kpiClientName');
-    const ks = document.getElementById('kpiStart');
-    const ke = document.getElementById('kpiEnd');
-    const rr = document.getElementById('kpiRateReach');
-    const rv = document.getElementById('kpiRateView');
-    if (cn) cn.value = saved.client || '';
-    if (ks) ks.value = saved.periodStart || '';
-    if (ke) ke.value = saved.periodEnd || '';
-    if (rr) rr.value = saved.rateReach != null ? saved.rateReach : 8;
-    if (rv) rv.value = saved.rateView  != null ? saved.rateView  : 20;
-  }
-  kpiRenderBanner();
-  kpiRender();
-}
-
-function kpiSave() {
-  const data = {
-    client:      (document.getElementById('kpiClientName')?.value || ''),
-    periodStart: (document.getElementById('kpiStart')?.value || ''),
-    periodEnd:   (document.getElementById('kpiEnd')?.value || ''),
-    rateReach:   parseFloat(document.getElementById('kpiRateReach')?.value) || 8,
-    rateView:    parseFloat(document.getElementById('kpiRateView')?.value) || 20,
-    rows: S.kpiRows || [],
-  };
-  localStorage.setItem('tt_kpi', JSON.stringify(data));
-}
-
-function kpiRenderBanner() {
-  const start = document.getElementById('kpiStart')?.value;
-  const end   = document.getElementById('kpiEnd')?.value;
-  const el    = document.getElementById('kpiDaysLeft');
-  if (!el) return;
-  if (start && end) {
-    const today   = new Date(); today.setHours(0,0,0,0);
-    const endDate = new Date(end);
-    const diff    = Math.ceil((endDate - today) / 86400000);
-    el.textContent = diff > 0
-      ? `Còn lại ${diff} ngày (hết hạn ${end})`
-      : diff === 0 ? 'Hết hạn hôm nay'
-      : `Đã hết hạn ${-diff} ngày`;
-    el.style.background = diff <= 3 ? 'rgba(220,38,38,0.35)' : 'rgba(0,0,0,0.2)';
-  } else {
-    el.textContent = '';
-  }
-}
-
-function kpiRender() {
-  const rateReach = parseFloat(document.getElementById('kpiRateReach')?.value) || 8;
-  const rateView  = parseFloat(document.getElementById('kpiRateView')?.value)  || 20;
-  const hr = document.getElementById('kpiHeadNsReach');
-  const hv = document.getElementById('kpiHeadNsView');
-  if (hr) hr.textContent = `REACH (×${rateReach}đ)`;
-  if (hv) hv.textContent = `VIEW 6S (×${rateView}đ)`;
-
-  const body = document.getElementById('kpiBody');
-  const foot = document.getElementById('kpiFoot');
-  if (!body) return;
-  const rows = S.kpiRows || [];
-
-  body.innerHTML = rows.map((r, i) => {
-    const nsReach = (r.kpiReach || 0) * rateReach;
-    const nsView  = (r.kpiView  || 0) * rateView;
-    return `<tr>
-      <td>${esc(r.name || '')}</td>
-      <td>${r.airDate || '—'}</td>
-      <td>${(r.quote || 0).toLocaleString('vi-VN')} đ</td>
-      <td style="color:#0369A1;">${(r.kpiReach || 0).toLocaleString('vi-VN')}</td>
-      <td style="color:#0369A1;">${(r.kpiView  || 0).toLocaleString('vi-VN')}</td>
-      <td style="color:#16A34A;">${nsReach.toLocaleString('vi-VN')} đ</td>
-      <td style="color:#16A34A;">${nsView.toLocaleString('vi-VN')} đ</td>
-      <td style="text-align:center;">
-        <button class="btn btn-ghost btn-sm" onclick="kpiEditRow(${i})" style="padding:3px 7px;" title="Sửa">✏</button>
-        <button class="btn btn-ghost btn-sm" onclick="kpiDeleteRow(${i})" style="padding:3px 7px;color:var(--danger);" title="Xóa">✕</button>
-      </td>
-    </tr>`;
-  }).join('');
-
-  const totQuote = rows.reduce((s, r) => s + (r.quote    || 0), 0);
-  const totReach = rows.reduce((s, r) => s + (r.kpiReach || 0), 0);
-  const totView  = rows.reduce((s, r) => s + (r.kpiView  || 0), 0);
-  foot.innerHTML = `<tr>
-    <td colspan="2" style="padding:10px 14px;">TỔNG — ${rows.length} KOC</td>
-    <td>${totQuote.toLocaleString('vi-VN')} đ</td>
-    <td style="color:#0369A1;">${totReach.toLocaleString('vi-VN')}</td>
-    <td style="color:#0369A1;">${totView.toLocaleString('vi-VN')}</td>
-    <td style="color:#16A34A;">${(totReach * rateReach).toLocaleString('vi-VN')} đ</td>
-    <td style="color:#16A34A;">${(totView  * rateView ).toLocaleString('vi-VN')} đ</td>
-    <td></td>
-  </tr>`;
-}
-
-function kpiAddRow() {
-  document.getElementById('kpiRowTitle').textContent = 'Thêm KOC';
-  ['kriName','kriAirDate','kriQuote','kriReach','kriView','kriAgReach','kriAgView'].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) el.value = '';
-  });
-  document.getElementById('kriIndex').value = '-1';
-  document.getElementById('kpiRowOverlay').classList.add('open');
-  setTimeout(() => document.getElementById('kriName').focus(), 100);
-}
-
-/* ─ KPI SUB-TABS ─ */
-function kpiSubTab(n) {
-  [1, 2, 3].forEach(i => {
-    const tab = document.getElementById('kpiTab' + i);
-    const btn = document.getElementById('kstab' + i);
-    if (tab) tab.style.display = i === n ? '' : 'none';
-    if (btn) btn.classList.toggle('active', i === n);
-  });
-  // Pre-fill report dates — cap end date at today (API has no future data)
-  if (n === 2 || n === 3) {
-    const today = new Date().toISOString().slice(0, 10);
-    const from  = document.getElementById('kpiRptFrom');
-    const to    = document.getElementById('kpiRptTo');
-    if (from && !from.value) from.value = document.getElementById('kpiStart')?.value || '';
-    if (to   && !to.value) {
-      const campEnd = document.getElementById('kpiEnd')?.value || '';
-      to.value = campEnd && campEnd < today ? campEnd : today;
-    }
-  }
-}
-
-/* ─ KPI REPORT: fetch + render ─ */
-async function kpiLoadReport() {
-  if (!S.accountId && !S.demo) { toast('warn', 'Chọn tài khoản quảng cáo trước'); return; }
-  if (!S.kpiRows || !S.kpiRows.length) {
-    const msg = '<p style="color:var(--text2);font-size:13px;">Chưa có KOC nào. Vào tab <strong>Kế hoạch KPI</strong> để thêm.</p>';
-    document.getElementById('kpiReportContent').innerHTML = msg;
-    document.getElementById('kpiProgressContent').innerHTML = msg;
-    return;
-  }
-  const from = document.getElementById('kpiRptFrom').value;
-  const rawTo = document.getElementById('kpiRptTo').value;
-  if (!from || !rawTo) { toast('warn', 'Vui lòng chọn kỳ báo cáo'); return; }
-  // Cap end date at yesterday (TikTok API has ~1-day reporting lag for complete data)
-  const today = new Date().toISOString().slice(0, 10);
-  const to = rawTo > today ? today : rawTo;
-  if (to !== rawTo) document.getElementById('kpiRptTo').value = to;
-
-  const spin = '<div style="display:flex;align-items:center;gap:10px;padding:40px 20px;color:var(--text2);"><div class="spinner" style="width:18px;height:18px;border-width:2px;"></div> Đang tải từ TikTok Ads...</div>';
-  document.getElementById('kpiReportContent').innerHTML   = spin;
-  document.getElementById('kpiProgressContent').innerHTML = spin;
-  const statusEl = document.getElementById('kpiRptStatus');
-  if (statusEl) statusEl.textContent = '⏳';
-
-  try {
-    const aid = S.accountId;
-    console.log('[KPI Report] account:', aid, 'from:', from, 'to:', to);
-
-    // 1. Fetch all adgroups for name-matching (skip in demo mode)
-    let nameMap = {};
-    if (!S.demo) {
-      const agData = await apiGet('/adgroup/get/', {
-        advertiser_id: aid, page_size: 1000, page: 1,
-        fields: ['adgroup_id', 'adgroup_name']
-      });
-      console.log('[KPI Report] adgroups fetched:', agData.list?.length || 0);
-      const byKol = {};
-      for (const ag of (agData.list || [])) {
-        const parts = (ag.adgroup_name || '').split('|').map(p => p.trim());
-        if (parts.length < 3) continue;
-        const kolKey = parts[1].normalize('NFC').toLowerCase().trim();
-        const kpiNum = parseInt((parts[2] || '').replace(/\./g,'').replace(/,/g,''), 10) || 0;
-        if (!byKol[kolKey]) byKol[kolKey] = [];
-        byKol[kolKey].push({ id: String(ag.adgroup_id), kpi: kpiNum });
-      }
-      for (const [k, ags] of Object.entries(byKol)) {
-        ags.sort((a, b) => a.kpi - b.kpi);
-        nameMap[k] = {};
-        if (ags.length >= 1) nameMap[k].view6s = ags[0].id;
-        if (ags.length >= 2) nameMap[k].reach  = ags[ags.length - 1].id;
-      }
-    }
-
-    // 2. Fetch adgroup metrics for date range
-    let byId = {};
-    let rptRowCount = 0;
-    if (!S.demo) {
-      const rptData = await apiGet('/report/integrated/get/', {
-        advertiser_id: aid,
-        report_type: 'BASIC', data_level: 'AUCTION_ADGROUP',
-        dimensions: ['adgroup_id'],
-        metrics: ['spend','impressions','reach','frequency','video_watched_6s'],
-        start_date: from, end_date: to, page_size: 1000
-      });
-      rptRowCount = rptData.list?.length || 0;
-      console.log('[KPI Report] report rows:', rptRowCount, '| code:', rptData.code, '| msg:', rptData.message);
-      if (rptRowCount > 0) console.log('[KPI Report] sample id:', rptData.list[0]?.dimensions?.adgroup_id);
-      for (const row of (rptData.list || [])) {
-        const id = String(row.dimensions?.adgroup_id || '');
-        const m  = row.metrics || {};
-        byId[id] = {
-          spend:       parseFloat(m.spend            || 0),
-          impressions: parseFloat(m.impressions      || 0),
-          reach:       parseFloat(m.reach            || 0),
-          frequency:   parseFloat(m.frequency        || 0),
-          view6s:      parseFloat(m.video_watched_6s || 0),
-        };
-      }
-      console.log('[KPI Report] byId keys count:', Object.keys(byId).length);
-    }
-
-    // 3. Match each KOC to adgroups and sum metrics
-    const kocs = S.kpiRows.map(r => {
-      let adgIds = {};
-      if (r.agReachId || r.agViewId) {
-        adgIds = { reach: r.agReachId || '', view6s: r.agViewId || '' };
-      } else {
-        const key = (r.name || '').normalize('NFC').toLowerCase().trim();
-        adgIds = nameMap[key] || {};
-      }
-      const rM = (adgIds.reach  && byId[adgIds.reach])  || {};
-      const vM = (adgIds.view6s && byId[adgIds.view6s]) || {};
-      return {
-        name:     r.name,
-        airDate:  r.airDate,
-        kpiReach: r.kpiReach || 0,
-        kpiView:  r.kpiView  || 0,
-        matched:  !!(adgIds.reach || adgIds.view6s),
-        spendReach:        rM.spend       || 0,
-        spendView6s:       vM.spend       || 0,
-        impressionsReach:  rM.impressions || 0,
-        impressionsView6s: vM.impressions || 0,
-        actualReach:       rM.reach       || 0,
-        actualView6s:      vM.view6s      || 0,
-        reachView6s:       vM.reach       || 0,
-        freqReach:         rM.frequency   || 0,
-        freqView6s:        vM.frequency   || 0,
-      };
-    });
-
-    kpiRenderReport(kocs);
-    kpiRenderProgress(kocs);
-    const matched = kocs.filter(k => k.matched).length;
-    const hasData = kocs.filter(k => k.actualReach > 0 || k.actualView6s > 0).length;
-    if (statusEl) {
-      if (S.demo) {
-        statusEl.textContent = `✅ Demo: ${matched}/${kocs.length} KOC`;
-      } else {
-        statusEl.textContent = `✅ ${matched}/${kocs.length} khớp · ${hasData} có data · API: ${rptRowCount} rows`;
-      }
-    }
-
-  } catch(e) {
-    const err = `<div style="padding:16px;background:#FEF2F2;border:1px solid #FECACA;border-radius:8px;color:var(--danger);">⚠️ ${e.message}</div>`;
-    document.getElementById('kpiReportContent').innerHTML   = err;
-    document.getElementById('kpiProgressContent').innerHTML = err;
-    if (statusEl) statusEl.textContent = '';
-    toast('error', 'Lỗi tải báo cáo: ' + e.message);
-  }
-}
-
-function kpiRenderReport(kocs) {
-  const f$ = v => Math.round(v).toLocaleString('vi-VN') + ' đ';
-  const fN = v => Math.round(v).toLocaleString('vi-VN');
-  const fF = v => v > 0 ? parseFloat(v).toFixed(2) : '—';
-  const unmatched = k => !k.matched ? ' <span style="font-size:10px;color:var(--text3);">(chưa khớp)</span>' : '';
-
-  const reachRows = kocs.map(k => {
-    const cpr = k.actualReach > 0 ? k.spendReach / k.actualReach : 0;
-    return `<tr${!k.matched?' style="opacity:.6"':''}>
-      <td class="left">${esc(k.name)}${unmatched(k)}</td>
-      <td>${f$(k.spendReach)}</td><td>${fN(k.impressionsReach)}</td>
-      <td>${fN(k.actualReach)}</td><td>${fF(k.freqReach)}</td>
-      <td>${cpr>0?f$(cpr):'—'}</td></tr>`;
-  }).join('');
-  const tSR = kocs.reduce((s,k)=>s+k.spendReach,0), tIR = kocs.reduce((s,k)=>s+k.impressionsReach,0);
-  const tR  = kocs.reduce((s,k)=>s+k.actualReach,0), tCR = tR>0?tSR/tR:0, tFR = tIR>0&&tR>0?tIR/tR:0;
-
-  const viewRows = kocs.map(k => {
-    const cpv = k.actualView6s > 0 ? k.spendView6s / k.actualView6s : 0;
-    return `<tr${!k.matched?' style="opacity:.6"':''}>
-      <td class="left">${esc(k.name)}${unmatched(k)}</td>
-      <td>${f$(k.spendView6s)}</td><td>${fN(k.impressionsView6s)}</td>
-      <td>${fN(k.actualView6s)}</td><td>${fN(k.reachView6s)}</td>
-      <td>${fF(k.freqView6s)}</td><td>${cpv>0?f$(cpv):'—'}</td></tr>`;
-  }).join('');
-  const tSV = kocs.reduce((s,k)=>s+k.spendView6s,0), tIV = kocs.reduce((s,k)=>s+k.impressionsView6s,0);
-  const tV  = kocs.reduce((s,k)=>s+k.actualView6s,0), tCV = tV>0?tSV/tV:0, tFV = tIV>0&&tV>0?tIV/tV:0;
-  const tRV = kocs.reduce((s,k)=>s+k.reachView6s,0);
-
-  document.getElementById('kpiReportContent').innerHTML = `
-  <div class="kpi-two-col">
-    <div class="rpt-card">
-      <div class="rpt-card-head">👁 Hiệu quả Reach</div>
-      <div style="overflow-x:auto;"><table class="rpt-table">
-        <thead><tr>
-          <th class="left">TÊN KOC</th><th>CHI PHÍ</th><th>HIỂN THỊ</th>
-          <th>REACH</th><th>TẦN SUẤT</th><th>CPR</th>
-        </tr></thead>
-        <tbody>${reachRows}</tbody>
-        <tfoot><tr>
-          <td class="left">TỔNG</td><td>${f$(tSR)}</td><td>${fN(tIR)}</td>
-          <td>${fN(tR)}</td><td>${fF(tFR)}</td><td>${tCR>0?f$(tCR):'—'}</td>
-        </tr></tfoot>
-      </table></div>
-    </div>
-    <div class="rpt-card">
-      <div class="rpt-card-head">▶ Hiệu quả Video View 6s</div>
-      <div style="overflow-x:auto;"><table class="rpt-table">
-        <thead><tr>
-          <th class="left">TÊN KOC</th><th>CHI PHÍ</th><th>HIỂN THỊ</th>
-          <th>VIEW 6S</th><th>REACH T.TẾ</th><th>TẦN SUẤT</th><th>CPV</th>
-        </tr></thead>
-        <tbody>${viewRows}</tbody>
-        <tfoot><tr>
-          <td class="left">TỔNG</td><td>${f$(tSV)}</td><td>${fN(tIV)}</td>
-          <td>${fN(tV)}</td><td>${fN(tRV)}</td><td>${fF(tFV)}</td><td>${tCV>0?f$(tCV):'—'}</td>
-        </tr></tfoot>
-      </table></div>
-    </div>
-  </div>`;
-}
-
-function kpiRenderProgress(kocs) {
-  const fN = v => Math.round(v).toLocaleString('vi-VN');
-  const end = document.getElementById('kpiEnd')?.value;
-  const today = new Date(); today.setHours(0,0,0,0);
-  const daysLeft = end ? Math.max(0, Math.ceil((new Date(end) - today) / 86400000)) : 0;
-
-  const progCell = (actual, kpi) => {
-    if (!kpi) return `<td><span style="font-size:11px;color:var(--text3);">Chưa có KPI</span></td>`;
-    const pct = Math.min(100, actual / kpi * 100);
-    const cls = pct >= 80 ? 'green' : pct >= 50 ? 'yellow' : 'red';
-    return `<td><div class="prog-bar-wrap">
-      <div class="prog-track"><div class="prog-fill ${cls}" style="width:${pct.toFixed(1)}%"></div></div>
-      <span class="prog-pct ${cls}">${pct.toFixed(1)}%</span>
-    </div></td>`;
-  };
-
-  const dailyCell = (actual, kpi, dl) => {
-    const rem = Math.max(0, kpi - actual);
-    if (!kpi) return `<td>—</td><td>${dl}</td><td style="font-size:11px;color:var(--text3);">Chưa có KPI</td>`;
-    if (actual >= kpi) return `<td>0</td><td>${dl}</td><td><span style="background:#DCFCE7;color:#15803D;border-radius:10px;padding:2px 8px;font-size:11px;font-weight:700;">✓ Đạt KPI</span></td>`;
-    if (dl <= 0) return `<td>${fN(rem)}</td><td>0</td><td style="color:var(--danger);font-weight:700;">Hết hạn</td>`;
-    return `<td>${fN(rem)}</td><td>${dl}</td><td style="font-weight:600;">${fN(Math.ceil(rem/dl))}</td>`;
-  };
-
-  const thP = `<thead><tr style="background:var(--bg3);">
-    <th class="left">TÊN KOC</th><th>THỰC TẾ</th><th>KPI</th>
-    <th style="min-width:160px;">TIẾN ĐỘ</th></tr></thead>`;
-  const thD = `<thead><tr style="background:var(--bg3);">
-    <th class="left">TÊN KOC</th><th>CÒN LẠI</th><th>NGÀY CÒN</th>
-    <th>CẦN / NGÀY</th></tr></thead>`;
-
-  const tAR = kocs.reduce((s,k)=>s+k.actualReach,0), tKR = kocs.reduce((s,k)=>s+k.kpiReach,0);
-  const tAV = kocs.reduce((s,k)=>s+k.actualView6s,0), tKV = kocs.reduce((s,k)=>s+k.kpiView,0);
-
-  const rowsP = (metric) => kocs.map(k => {
-    const a = metric === 'reach' ? k.actualReach : k.actualView6s;
-    const t = metric === 'reach' ? k.kpiReach : k.kpiView;
-    return `<tr><td class="left" style="padding:7px 10px;">${esc(k.name)}</td>
-      <td style="padding:7px 10px;text-align:right;">${fN(a)}</td>
-      <td style="padding:7px 10px;text-align:right;">${t?fN(t):'—'}</td>
-      ${progCell(a, t)}</tr>`;
-  }).join('');
-
-  const rowsD = (metric) => kocs.map(k => {
-    const a = metric === 'reach' ? k.actualReach : k.actualView6s;
-    const t = metric === 'reach' ? k.kpiReach : k.kpiView;
-    return `<tr><td class="left" style="padding:7px 10px;">${esc(k.name)}</td>
-      ${dailyCell(a, t, daysLeft)
-        .replace(/<td>/g,'<td style="padding:7px 10px;text-align:right;">')
-        .replace(/<td style="color/g,'<td style="padding:7px 10px;text-align:right;color')
-        .replace(/<td style="font-weight/g,'<td style="padding:7px 10px;text-align:right;font-weight')
-        .replace(/<td><span/g,'<td style="padding:7px 10px;"><span')
-      }</tr>`;
-  }).join('');
-
-  document.getElementById('kpiProgressContent').innerHTML = `
-  <div class="kpi-two-col">
-    <div class="rpt-card"><div class="rpt-card-head">📈 Tiến độ Reach</div>
-      <div style="overflow-x:auto;"><table class="rpt-table">${thP}<tbody>${rowsP('reach')}
-        <tr style="background:var(--bg3);font-weight:700;">
-          <td class="left" style="padding:7px 10px;">TỔNG CỘNG</td>
-          <td style="padding:7px 10px;text-align:right;">${fN(tAR)}</td>
-          <td style="padding:7px 10px;text-align:right;">${fN(tKR)}</td>
-          ${progCell(tAR, tKR)}</tr>
-      </tbody></table></div>
-    </div>
-    <div class="rpt-card"><div class="rpt-card-head">📊 Tiến độ Video View 6s</div>
-      <div style="overflow-x:auto;"><table class="rpt-table">${thP}<tbody>${rowsP('view')}
-        <tr style="background:var(--bg3);font-weight:700;">
-          <td class="left" style="padding:7px 10px;">TỔNG CỘNG</td>
-          <td style="padding:7px 10px;text-align:right;">${fN(tAV)}</td>
-          <td style="padding:7px 10px;text-align:right;">${fN(tKV)}</td>
-          ${progCell(tAV, tKV)}</tr>
-      </tbody></table></div>
-    </div>
-  </div>
-  <div class="kpi-two-col">
-    <div class="rpt-card"><div class="rpt-card-head">📅 Dự báo theo ngày — Reach</div>
-      <div style="overflow-x:auto;"><table class="rpt-table">${thD}<tbody>${rowsD('reach')}</tbody></table></div>
-    </div>
-    <div class="rpt-card"><div class="rpt-card-head">📅 Dự báo theo ngày — View 6s</div>
-      <div style="overflow-x:auto;"><table class="rpt-table">${thD}<tbody>${rowsD('view')}</tbody></table></div>
-    </div>
-  </div>`;
-}
-
-function kpiEditRow(i) {
-  const r = (S.kpiRows || [])[i];
-  if (!r) return;
-  document.getElementById('kpiRowTitle').textContent = 'Sửa KOC';
-  document.getElementById('kriName').value    = r.name    || '';
-  document.getElementById('kriAirDate').value = r.airDate || '';
-  document.getElementById('kriQuote').value   = r.quote   || '';
-  document.getElementById('kriReach').value   = r.kpiReach || '';
-  document.getElementById('kriView').value    = r.kpiView  || '';
-  document.getElementById('kriAgReach').value = r.agReachId || '';
-  document.getElementById('kriAgView').value  = r.agViewId  || '';
-  document.getElementById('kriIndex').value   = i;
-  document.getElementById('kpiRowOverlay').classList.add('open');
-}
-
-function kpiDeleteRow(i) {
-  if (!confirm('Xóa KOC này?')) return;
-  S.kpiRows.splice(i, 1);
-  kpiSave(); kpiRender();
-}
-
-function kpiRowSave() {
-  if (!S.kpiRows) S.kpiRows = [];
-  const idx = parseInt(document.getElementById('kriIndex').value);
-  const name = document.getElementById('kriName').value.trim();
-  if (!name) { toast('warn', 'Vui lòng nhập tên KOC'); return; }
-  const row = {
-    name,
-    airDate:   document.getElementById('kriAirDate').value,
-    quote:     parseFloat(document.getElementById('kriQuote').value)  || 0,
-    kpiReach:  parseFloat(document.getElementById('kriReach').value)  || 0,
-    kpiView:   parseFloat(document.getElementById('kriView').value)   || 0,
-    agReachId: document.getElementById('kriAgReach').value.trim(),
-    agViewId:  document.getElementById('kriAgView').value.trim(),
-  };
-  if (idx >= 0) S.kpiRows[idx] = row;
-  else S.kpiRows.push(row);
-  kpiSave(); kpiRender();
-  document.getElementById('kpiRowOverlay').classList.remove('open');
-  toast('success', idx >= 0 ? '✅ Đã cập nhật KOC' : '✅ Đã thêm KOC');
-}
 
 /* ═══════════════════════════ EXPORT REPORT ═══════════════════════════ */
 
