@@ -1797,11 +1797,16 @@ async function fetchMetrics(aid, level, ids) {
     report_type: 'BASIC',
     data_level: level === 'campaign' ? 'AUCTION_CAMPAIGN' : 'AUCTION_ADGROUP',
     dimensions: [dim],
-    metrics: ['spend','reach','video_watched_2s','video_watched_6s','result','complete_payment','clicks','follows','impressions','frequency'],
+    metrics: ['spend','reach','video_watched_2s','video_watched_6s','result','cost_per_result','complete_payment','clicks','follows','impressions','frequency'],
     start_date: start, end_date: end, page_size: 1000,
   });
   const r = {};
   (d.list || []).forEach(item => { r[item.dimensions[dim]] = item.metrics; });
+  // Debug: log result metric values to console
+  if (d.list && d.list.length) {
+    const sample = d.list[0].metrics;
+    console.log('[TikTok Metrics] result:', sample.result, '| cost_per_result:', sample.cost_per_result, '| spend:', sample.spend);
+  }
   return r;
 }
 
@@ -4019,30 +4024,24 @@ function vdReset() {
   document.getElementById('vdLoading').style.display = 'none';
 }
 
-// CORS proxy list — try in order until one succeeds
-const VD_PROXIES = [
-  u => `https://corsproxy.io/?url=${encodeURIComponent(u)}`,
-  u => `https://api.allorigins.win/get?url=${encodeURIComponent(u)}`,
-];
-
 async function vdCallAPI(tikwmUrl) {
-  // Try direct first (works when served via HTTPS host)
-  try {
-    const res = await fetch(tikwmUrl, { signal: AbortSignal.timeout(6000) });
-    if (res.ok) return await res.json();
-  } catch {}
-  // Fallback: try CORS proxies
-  for (const makeProxy of VD_PROXIES) {
+  // Reuse the same PROXIES list the tool already uses for TikTok Business API
+  const proxies = S.config.proxy ? [S.config.proxy, ...PROXIES] : PROXIES;
+  let lastErr = '';
+  for (const p of proxies) {
     try {
-      const res = await fetch(makeProxy(tikwmUrl), { signal: AbortSignal.timeout(8000) });
-      if (!res.ok) continue;
-      const raw = await res.json();
-      // allorigins wraps response in { contents: "..." }
-      const json = raw.contents ? JSON.parse(raw.contents) : raw;
-      if (json && json.code === 0) return json;
-    } catch {}
+      const url = p + encodeURIComponent(tikwmUrl);
+      const r = await fetchWithTimeout(url, {}, 10000);
+      if (!r.ok) continue;
+      const text = await r.text();
+      let json;
+      try { json = JSON.parse(text); } catch { continue; }
+      // allorigins wraps in { contents: "..." }
+      if (json.contents) { try { json = JSON.parse(json.contents); } catch { continue; } }
+      if (json && json.code === 0 && json.data) return json;
+    } catch(e) { lastErr = e.message; }
   }
-  throw new Error('Không kết nối được API. Kiểm tra lại mạng hoặc link TikTok.');
+  throw new Error('Không kết nối được API qua các proxy. ' + (lastErr || 'Thử lại sau.'));
 }
 
 async function vdFetch() {
