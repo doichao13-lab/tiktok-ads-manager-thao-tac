@@ -529,6 +529,7 @@
   <div class="level-tab active" id="ltabCampaign" onclick="switchLevel('campaign')">📊 Chiến dịch</div>
   <div class="level-tab" id="ltabAdgroup" onclick="switchLevel('adgroup')">👥 Nhóm QC</div>
   <div class="level-tab" id="ltabExport" onclick="switchLevel('export')">📋 Xuất báo cáo</div>
+  <div class="level-tab" id="ltabAI" onclick="switchLevel('ai')">🤖 Trợ lý AI</div>
 </div>
 
 <!-- ===================== MAIN ===================== -->
@@ -1063,6 +1064,139 @@ while ($listener.IsListening) {
       <pre id="aiDataPre" class="ai-data-pre"></pre>
     </div>
   </div>
+</div>
+
+<!-- ===================== AI TOOLS SECTION ===================== -->
+<div id="aiSection" style="display:none;padding:20px;max-width:900px;margin:0 auto;">
+
+  <!-- Sub-tabs -->
+  <div style="display:flex;gap:4px;border-bottom:2px solid var(--border);margin-bottom:20px;">
+    <div class="level-tab active" id="aiTab1" onclick="aiSwitchTab(1)" style="border-bottom:2px solid transparent;margin-bottom:-2px;">📊 Phân tích báo cáo</div>
+    <div class="level-tab" id="aiTab2" onclick="aiSwitchTab(2)" style="border-bottom:2px solid transparent;margin-bottom:-2px;">✍️ Brief Content</div>
+  </div>
+
+  <!-- TOOL 1: Report Analyzer -->
+  <div id="aiTool1">
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:16px;">
+      <div style="font-size:13px;font-weight:700;margin-bottom:4px;">📊 Phân tích báo cáo TikTok Ads</div>
+      <div style="font-size:12px;color:var(--text2);">Dán dữ liệu CSV / bảng từ Ads Manager → nhận prompt phân tích theo ngành</div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
+      <div>
+        <label style="font-size:12px;font-weight:600;color:var(--text2);display:block;margin-bottom:6px;">Ngành hoạt động</label>
+        <select id="aiIndustry" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:6px;background:var(--surface);color:var(--text);font-size:13px;">
+          <option value="fmcg">FMCG — Hàng tiêu dùng nhanh</option>
+          <option value="cosmetic">Mỹ phẩm / Làm đẹp</option>
+          <option value="supplement">Thực phẩm chức năng / Sức khỏe</option>
+          <option value="bds">Bất động sản</option>
+          <option value="edu">Giáo dục / Đào tạo</option>
+        </select>
+      </div>
+      <div>
+        <label style="font-size:12px;font-weight:600;color:var(--text2);display:block;margin-bottom:6px;">Kỳ báo cáo (tùy chọn)</label>
+        <input type="text" id="aiReportPeriod" placeholder="VD: 01/06 – 30/06/2025" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:6px;background:var(--surface);color:var(--text);font-size:13px;box-sizing:border-box;">
+      </div>
+    </div>
+
+    <div style="margin-bottom:12px;">
+      <label style="font-size:12px;font-weight:600;color:var(--text2);display:block;margin-bottom:6px;">Dữ liệu báo cáo <span style="color:var(--red)">*</span></label>
+      <textarea id="aiReportData" rows="10" placeholder="Dán dữ liệu từ TikTok Ads Manager vào đây&#10;&#10;Có thể dán:&#10;• Bảng CSV (Campaign Name, Spend, Impressions, CTR, CPM, CPL...)&#10;• Số liệu copy từ bảng Excel&#10;• Text tổng hợp thủ công&#10;&#10;Hoặc nhấn 'Lấy từ tab Xuất báo cáo' nếu đã fetch dữ liệu bên đó →" style="width:100%;padding:10px;border:1px solid var(--border);border-radius:6px;background:var(--surface);color:var(--text);font-size:12px;font-family:monospace;resize:vertical;box-sizing:border-box;line-height:1.5;"></textarea>
+    </div>
+
+    <div style="display:flex;gap:8px;margin-bottom:16px;">
+      <button class="btn btn-sm btn-ghost" onclick="aiImportFromExport()">⬅ Lấy từ tab Xuất báo cáo</button>
+      <button class="btn btn-sm btn-primary" onclick="aiGenerateReportPrompt()" style="margin-left:auto;">🤖 Tạo prompt phân tích</button>
+    </div>
+
+    <div id="aiReportPromptBox" style="display:none;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+        <span style="font-size:12px;font-weight:600;color:var(--text2);">Prompt đã tạo — copy và dán vào Claude.ai</span>
+        <button class="btn btn-sm" onclick="aiCopyPrompt('aiReportPromptPre')">📋 Copy</button>
+      </div>
+      <div style="background:#0d47a1;border-radius:6px;padding:10px 12px;margin-bottom:8px;font-size:12px;color:#e3f2fd;">
+        💡 Mở <strong>claude.ai</strong> → paste prompt vào → Claude sẽ phân tích theo chuẩn TikTok Report Analyzer
+      </div>
+      <pre id="aiReportPromptPre" style="background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:12px;font-size:11px;font-family:monospace;white-space:pre-wrap;word-break:break-word;max-height:400px;overflow-y:auto;color:var(--text);margin:0;"></pre>
+    </div>
+  </div>
+
+  <!-- TOOL 2: Content Brief Generator -->
+  <div id="aiTool2" style="display:none;">
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:16px;">
+      <div style="font-size:13px;font-weight:700;margin-bottom:4px;">✍️ Tạo Brief Content TikTok</div>
+      <div style="font-size:12px;color:var(--text2);">Nhập thông tin sản phẩm → nhận creative brief chuẩn để gửi cho đội content</div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
+      <div>
+        <label style="font-size:12px;font-weight:600;color:var(--text2);display:block;margin-bottom:6px;">Tên sản phẩm / Thương hiệu <span style="color:var(--red)">*</span></label>
+        <input type="text" id="bfProduct" placeholder="VD: Sữa rửa mặt La Roche-Posay" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:6px;background:var(--surface);color:var(--text);font-size:13px;box-sizing:border-box;">
+      </div>
+      <div>
+        <label style="font-size:12px;font-weight:600;color:var(--text2);display:block;margin-bottom:6px;">Ngành hàng <span style="color:var(--red)">*</span></label>
+        <select id="bfIndustry" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:6px;background:var(--surface);color:var(--text);font-size:13px;">
+          <option value="cosmetic">Mỹ phẩm / Skincare</option>
+          <option value="fmcg">FMCG / Thực phẩm</option>
+          <option value="supplement">Thực phẩm chức năng</option>
+          <option value="fashion">Thời trang</option>
+          <option value="edu">Giáo dục / Khóa học</option>
+          <option value="bds">Bất động sản</option>
+          <option value="other">Khác</option>
+        </select>
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
+      <div>
+        <label style="font-size:12px;font-weight:600;color:var(--text2);display:block;margin-bottom:6px;">Mục tiêu chiến dịch <span style="color:var(--red)">*</span></label>
+        <select id="bfGoal" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:6px;background:var(--surface);color:var(--text);font-size:13px;">
+          <option value="awareness">Brand Awareness — Nhận diện thương hiệu</option>
+          <option value="conversion">Conversion / TikTok Shop — Bán hàng trực tiếp</option>
+          <option value="lead">Lead Form — Thu thập khách hàng tiềm năng</option>
+        </select>
+      </div>
+      <div>
+        <label style="font-size:12px;font-weight:600;color:var(--text2);display:block;margin-bottom:6px;">Độ dài video mục tiêu</label>
+        <select id="bfDuration" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:6px;background:var(--surface);color:var(--text);font-size:13px;">
+          <option value="15-30">15–30 giây</option>
+          <option value="30-45" selected>30–45 giây</option>
+          <option value="45-60">45–60 giây</option>
+        </select>
+      </div>
+    </div>
+
+    <div style="margin-bottom:12px;">
+      <label style="font-size:12px;font-weight:600;color:var(--text2);display:block;margin-bottom:6px;">Đối tượng mục tiêu <span style="color:var(--red)">*</span></label>
+      <input type="text" id="bfAudience" placeholder="VD: Nữ 18–35 tuổi, quan tâm skincare, có vấn đề về da dầu/mụn" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:6px;background:var(--surface);color:var(--text);font-size:13px;box-sizing:border-box;">
+    </div>
+
+    <div style="margin-bottom:12px;">
+      <label style="font-size:12px;font-weight:600;color:var(--text2);display:block;margin-bottom:6px;">USP / Điểm khác biệt của sản phẩm</label>
+      <input type="text" id="bfUSP" placeholder="VD: Không chứa cồn, dịu nhẹ cho da nhạy cảm, bác sĩ da liễu khuyên dùng" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:6px;background:var(--surface);color:var(--text);font-size:13px;box-sizing:border-box;">
+    </div>
+
+    <div style="margin-bottom:16px;">
+      <label style="font-size:12px;font-weight:600;color:var(--text2);display:block;margin-bottom:6px;">Insight / Điểm đau của khách hàng (tùy chọn)</label>
+      <textarea id="bfInsight" rows="3" placeholder="VD: Khách hàng đang loay hoay chọn sữa rửa mặt phù hợp, sợ mua phải sản phẩm gây kích ứng da" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:6px;background:var(--surface);color:var(--text);font-size:12px;resize:vertical;box-sizing:border-box;"></textarea>
+    </div>
+
+    <div style="display:flex;justify-content:flex-end;margin-bottom:16px;">
+      <button class="btn btn-sm btn-primary" onclick="aiGenerateBriefPrompt()">🤖 Tạo Brief prompt</button>
+    </div>
+
+    <div id="aiBriefPromptBox" style="display:none;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+        <span style="font-size:12px;font-weight:600;color:var(--text2);">Prompt đã tạo — copy và dán vào Claude.ai</span>
+        <button class="btn btn-sm" onclick="aiCopyPrompt('aiBriefPromptPre')">📋 Copy</button>
+      </div>
+      <div style="background:#1b5e20;border-radius:6px;padding:10px 12px;margin-bottom:8px;font-size:12px;color:#e8f5e9;">
+        💡 Mở <strong>claude.ai</strong> → paste prompt vào → Claude sẽ tạo creative brief chuẩn TikTok Content Brief Generator
+      </div>
+      <pre id="aiBriefPromptPre" style="background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:12px;font-size:11px;font-family:monospace;white-space:pre-wrap;word-break:break-word;max-height:400px;overflow-y:auto;color:var(--text);margin:0;"></pre>
+    </div>
+  </div>
+
 </div>
 
 <!-- ===================== TOASTS ===================== -->
@@ -2008,16 +2142,19 @@ function switchLevel(level, campaignId) {
   S.level = level;
 
   const exportSec = document.getElementById('exportSection');
+  const aiSec    = document.getElementById('aiSection');
   const vd = document.getElementById('viewDesktop');
   const vm = document.getElementById('viewMobile');
   const lt1 = document.getElementById('ltabCampaign');
   const lt2 = document.getElementById('ltabAdgroup');
   const lt4 = document.getElementById('ltabExport');
+  const lt5 = document.getElementById('ltabAI');
   const agHead = document.getElementById('agLevelHead');
   const nfw    = document.getElementById('nameFilterWrap');
 
   // Hide all special sections first
   if (exportSec) exportSec.style.display = 'none';
+  if (aiSec)    aiSec.style.display    = 'none';
 
   if (level === 'export') {
     if (exportSec) exportSec.style.display = '';
@@ -2025,11 +2162,24 @@ function switchLevel(level, campaignId) {
     if (vm) vm.style.display = 'none';
     if (lt1) lt1.classList.remove('active');
     if (lt2) lt2.classList.remove('active');
-    if (lt3) lt3.classList.remove('active');
     if (lt4) lt4.classList.add('active');
+    if (lt5) lt5.classList.remove('active');
     if (agHead) agHead.style.display = 'none';
     if (nfw)    nfw.style.display    = 'none';
     exportInit();
+    return;
+  }
+
+  if (level === 'ai') {
+    if (aiSec) aiSec.style.display = '';
+    if (vd) vd.style.display = 'none';
+    if (vm) vm.style.display = 'none';
+    if (lt1) lt1.classList.remove('active');
+    if (lt2) lt2.classList.remove('active');
+    if (lt4) lt4.classList.remove('active');
+    if (lt5) lt5.classList.add('active');
+    if (agHead) agHead.style.display = 'none';
+    if (nfw)    nfw.style.display    = 'none';
     return;
   }
 
@@ -2056,8 +2206,8 @@ function switchLevel(level, campaignId) {
   }
   if (lt1) lt1.classList.toggle('active', level === 'campaign');
   if (lt2) lt2.classList.toggle('active', level === 'adgroup');
-  if (lt3) lt3.classList.remove('active');
   if (lt4) lt4.classList.remove('active');
+  if (lt5) lt5.classList.remove('active');
   if (agHead) agHead.style.display = level === 'adgroup' ? '' : 'none';
   if (nfw) nfw.style.display = level === 'campaign' ? '' : 'none';
   if (S.campaigns.length) render();
@@ -2811,6 +2961,181 @@ function toast(type, msg) {
 /* ═══════════════════════════ OVERLAY CLOSE ═══════════════════════════ */
 document.querySelectorAll('.overlay').forEach(o => o.addEventListener('click', e => { if(e.target===o) o.classList.remove('open'); }));
 document.addEventListener('keydown', e => { if(e.key==='Escape') document.querySelectorAll('.overlay.open').forEach(o=>o.classList.remove('open')); });
+
+/* ═══════════════════════════ AI TOOLS ═══════════════════════════ */
+
+function aiSwitchTab(n) {
+  document.getElementById('aiTool1').style.display = n === 1 ? '' : 'none';
+  document.getElementById('aiTool2').style.display = n === 2 ? '' : 'none';
+  document.getElementById('aiTab1').classList.toggle('active', n === 1);
+  document.getElementById('aiTab2').classList.toggle('active', n === 2);
+}
+
+function aiCopyPrompt(preId) {
+  const text = document.getElementById(preId).textContent;
+  navigator.clipboard.writeText(text).then(() => toast('success', '✅ Đã copy prompt — paste vào Claude.ai'));
+}
+
+function aiImportFromExport() {
+  const pre = document.getElementById('aiDataPre');
+  if (!pre || !pre.textContent.trim()) {
+    toast('warn', '⚠️ Chưa có dữ liệu — vào tab Xuất báo cáo để fetch trước');
+    return;
+  }
+  document.getElementById('aiReportData').value = pre.textContent;
+  toast('success', '✅ Đã lấy dữ liệu từ tab Xuất báo cáo');
+}
+
+const AI_INDUSTRY_LABELS = {
+  fmcg: 'FMCG — Hàng tiêu dùng nhanh',
+  cosmetic: 'Mỹ phẩm / Làm đẹp',
+  supplement: 'Thực phẩm chức năng / Sức khỏe',
+  bds: 'Bất động sản',
+  edu: 'Giáo dục / Đào tạo'
+};
+
+const AI_INDUSTRY_BENCHMARKS = {
+  fmcg:       { cpm: '45.000–80.000đ', ctr: '1,2–2,5%', cpl: 'N/A (dùng ROAS)', freq: '≤ 3/tuần' },
+  cosmetic:   { cpm: '50.000–90.000đ', ctr: '1,5–3,0%', cpl: '80.000–200.000đ', freq: '≤ 3/tuần' },
+  supplement: { cpm: '60.000–100.000đ', ctr: '1,0–2,0%', cpl: '150.000–400.000đ', freq: '≤ 4/tuần' },
+  bds:        { cpm: '80.000–150.000đ', ctr: '0,8–1,5%', cpl: '500.000–2.000.000đ', freq: '≤ 5/tuần' },
+  edu:        { cpm: '55.000–95.000đ', ctr: '1,0–2,5%', cpl: '100.000–350.000đ', freq: '≤ 3/tuần' }
+};
+
+function aiGenerateReportPrompt() {
+  const data = document.getElementById('aiReportData').value.trim();
+  if (!data) { toast('warn', '⚠️ Vui lòng dán dữ liệu báo cáo vào ô trên'); return; }
+
+  const industry = document.getElementById('aiIndustry').value;
+  const period   = document.getElementById('aiReportPeriod').value.trim();
+  const label    = AI_INDUSTRY_LABELS[industry] || industry;
+  const bench    = AI_INDUSTRY_BENCHMARKS[industry] || {};
+
+  const prompt = `Bạn là chuyên gia phân tích TikTok Ads. Hãy phân tích báo cáo quảng cáo sau theo đúng quy trình TikTok Report Analyzer.
+
+## Thông tin chiến dịch
+- Ngành: ${label}
+${period ? `- Kỳ báo cáo: ${period}` : ''}
+- Benchmark ngành áp dụng:
+  • CPM: ${bench.cpm || 'N/A'}
+  • CTR: ${bench.ctr || 'N/A'}
+  • CPL/CPA: ${bench.cpl || 'N/A'}
+  • Frequency: ${bench.freq || '≤ 3/tuần'}
+
+## Dữ liệu báo cáo
+\`\`\`
+${data}
+\`\`\`
+
+## Yêu cầu phân tích
+
+Hãy trả lời theo đúng cấu trúc sau:
+
+### 📁 Tổng quan file
+- Kỳ báo cáo, ngành, số campaign/ad group được phân tích
+- Tổng chi phí | Tổng kết quả | Benchmark áp dụng
+
+### 📊 Bảng so sánh benchmark
+Bảng so sánh từng chỉ số (CPM, CTR, CPL/CPA, Frequency) với benchmark ngành — đánh giá ✅ Đạt / ⚠️ Cần theo dõi / ❌ Không đạt
+
+### 🔍 Phân tích chi tiết theo campaign/ad group
+Với mỗi campaign: hiệu quả tổng thể, điểm mạnh, điểm yếu, bất thường
+
+Tự động kiểm tra các dấu hiệu sau:
+- Frequency > 3 trong 7 ngày → nguy cơ banner blindness
+- CPM tăng > 40% → audience saturation
+- CTR > 3% nhưng CVR < 1% → vấn đề landing page
+- 1 ad group chiếm > 60% budget → mất cân đối
+- Campaign có spend nhưng 0 result sau 3 ngày → lỗi setup
+
+### 🎯 Khuyến nghị tối ưu
+- 🔴 **Làm ngay (trong 24h)**: hành động cụ thể + lý do
+- 🟡 **Theo dõi (3–5 ngày)**: những gì cần quan sát thêm
+- 🟢 **Thử nghiệm (tuần tới)**: đề xuất test mới
+
+### 📝 Tóm tắt điều hành
+5–8 dòng: điểm then chốt, rủi ro lớn nhất, 1–2 action có ROI cao nhất`;
+
+  document.getElementById('aiReportPromptPre').textContent = prompt;
+  document.getElementById('aiReportPromptBox').style.display = '';
+  document.getElementById('aiReportPromptBox').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+const AI_BRIEF_INDUSTRY_TONE = {
+  cosmetic:   'Fresh, Glow, Empowering',
+  fmcg:       'Warm, Craving, Familiar',
+  supplement: 'Trustworthy, Transformative, Scientific',
+  bds:        'Aspirational, Premium, Belonging',
+  edu:        'Inspiring, Credible, Breakthrough',
+  fashion:    'Trendy, Bold, Youthful',
+  other:      'Authentic, Engaging, Relatable'
+};
+
+const AI_BRIEF_GOAL_LABELS = {
+  awareness:  'Brand Awareness — Nhận diện thương hiệu',
+  conversion: 'Conversion / TikTok Shop — Bán hàng trực tiếp',
+  lead:       'Lead Form — Thu thập khách hàng tiềm năng'
+};
+
+function aiGenerateBriefPrompt() {
+  const product  = document.getElementById('bfProduct').value.trim();
+  const audience = document.getElementById('bfAudience').value.trim();
+  if (!product || !audience) {
+    toast('warn', '⚠️ Vui lòng điền Tên sản phẩm và Đối tượng mục tiêu');
+    return;
+  }
+
+  const industry = document.getElementById('bfIndustry').value;
+  const goal     = document.getElementById('bfGoal').value;
+  const duration = document.getElementById('bfDuration').value;
+  const usp      = document.getElementById('bfUSP').value.trim();
+  const insight  = document.getElementById('bfInsight').value.trim();
+  const tone     = AI_BRIEF_INDUSTRY_TONE[industry] || 'Authentic, Engaging';
+  const goalLabel = AI_BRIEF_GOAL_LABELS[goal] || goal;
+
+  const prompt = `Bạn là creative strategist chuyên về TikTok. Hãy tạo creative brief chuyên nghiệp cho sản phẩm sau theo đúng quy trình TikTok Content Brief Generator.
+
+## Thông tin sản phẩm
+- **Sản phẩm / Thương hiệu**: ${product}
+- **Ngành hàng**: ${industry}
+- **Mục tiêu chiến dịch**: ${goalLabel}
+- **Độ dài video mục tiêu**: ${duration} giây
+- **Đối tượng mục tiêu**: ${audience}
+${usp ? `- **USP / Điểm khác biệt**: ${usp}` : ''}
+${insight ? `- **Insight / Điểm đau khách hàng**: ${insight}` : ''}
+- **Tone & Mood gợi ý**: ${tone}
+
+## Yêu cầu tạo brief
+
+Hãy tạo creative brief đầy đủ theo cấu trúc sau:
+
+### 1. Big Idea
+1 câu duy nhất thể hiện góc độ khai thác cốt lõi của video
+
+### 2. Hook 3 giây đầu
+Đề xuất 3 hook khác nhau (câu hỏi / hình ảnh bất ngờ / tuyên bố gây tranh luận). Hook KHÔNG được giới thiệu thương hiệu ngay.
+
+### 3. Cấu trúc kịch bản theo timeline
+Chi tiết từng đoạn video theo mốc thời gian (giây 0–3, 3–10, 10–20, v.v.)
+
+### 4. Tone & Mood
+2–3 từ + mô tả cảm giác cần truyền tải, màu sắc, nhịp cut gợi ý
+
+### 5. CTA (Call to Action)
+CTA phù hợp với mục tiêu ${goalLabel}
+
+### 6. Hashtag & Trend
+8–12 hashtag theo công thức: 3 niche + 3 trend đang lên + 2 brand + 2 viral TikTok VN
+
+### 7. Lưu ý cho đội quay/dựng
+Các điểm cần chú ý về góc quay, ánh sáng, text overlay, nhạc nền
+
+Sau khi tạo xong brief, hỏi: "Bạn muốn tôi tạo thêm 2–3 biến thể hook khác nhau không?"`;
+
+  document.getElementById('aiBriefPromptPre').textContent = prompt;
+  document.getElementById('aiBriefPromptBox').style.display = '';
+  document.getElementById('aiBriefPromptBox').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
 
 /* ═══════════════════════════ EXPORT REPORT ═══════════════════════════ */
 
