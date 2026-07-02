@@ -550,6 +550,7 @@
 <div class="filter-bar">
   <span class="filter-label">Cột hiển thị (tối đa 3):</span>
   <div class="chips" id="chips"></div>
+  <span id="conversionNote" style="display:none;font-size:11px;color:#e07b00;margin-left:8px;" title="TikTok Reporting API có độ trễ 3-4 giờ cho chỉ số Lead/Chuyển đổi. Chọn 'Hôm qua' hoặc '7 ngày' để xem số chính xác.">⚠ Lead/Kết quả hôm nay có thể chậm — đổi sang Hôm qua để xem đúng</span>
 </div>
 
 <!-- ===================== LEVEL BAR ===================== -->
@@ -1417,7 +1418,7 @@ const COLS = {
   reach:        { label: 'Reach',       metric: 'reach',                  icon: '👁' },
   video_2s:     { label: 'View 2s',     metric: 'video_watched_2s',  icon: '▶' },
   video_6s:     { label: 'View 6s',     metric: 'video_watched_6s',  icon: '▶▶' },
-  conversion:   { label: 'Chuyển đổi',  metric: 'result',  metricFallback: 'real_time_result', icon: '✅' },
+  conversion:   { label: 'Lead / Kết quả',  metric: 'result',  metricFallback: 'on_web_lead', icon: '✅' },
   purchase:     { label: 'Mua hàng',    metric: 'complete_payment',  icon: '🛒' },
   click_to_web: { label: 'Click Web',   metric: 'clicks',                 icon: '🖱' },
   follow:       { label: 'Follow',      metric: 'follows',                icon: '➕' },
@@ -1718,7 +1719,7 @@ async function fetchMetrics(aid, level, ids) {
     report_type: 'BASIC',
     data_level: level === 'campaign' ? 'AUCTION_CAMPAIGN' : 'AUCTION_ADGROUP',
     dimensions: [dim],
-    metrics: ['spend','reach','video_watched_2s','video_watched_6s','result','real_time_result','complete_payment','clicks','follows','impressions','frequency'],
+    metrics: ['spend','reach','video_watched_2s','video_watched_6s','result','on_web_lead','complete_payment','clicks','follows','impressions','frequency'],
     start_date: start, end_date: end, page_size: 1000,
   });
   const r = {};
@@ -2299,6 +2300,9 @@ function renderChips() {
     };
     el.appendChild(chip);
   });
+  // Show delay warning when "conversion" col is active and date = today
+  const note = document.getElementById('conversionNote');
+  if (note) note.style.display = (S.columns.includes('conversion') && S.dateRange === 'today') ? 'inline' : 'none';
 }
 
 /* ═══════════════════════════ ACCOUNT / DATE SELECTS ═══════════════════════════ */
@@ -2319,6 +2323,7 @@ function onAccountChange(v) {
 function onDateChange(v) {
   S.dateRange = v;
   S.metrics = {};
+  renderChips(); // update conversion delay note
   if (S.accountId) loadCampaigns(S.accountId);
 }
 
