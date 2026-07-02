@@ -1067,25 +1067,128 @@ while ($listener.IsListening) {
 </div>
 
 <!-- ===================== AI TOOLS SECTION ===================== -->
-<div id="aiSection" style="display:none;padding:20px;max-width:900px;margin:0 auto;">
+<style>
+.ai-section { display:none; height:calc(100vh - 140px); overflow:hidden; }
+.ai-tool-wrap { display:flex; height:100%; }
+.ai-sidebar {
+  width:340px; min-width:300px; max-width:380px; flex-shrink:0;
+  border-right:1px solid var(--border);
+  display:flex; flex-direction:column; overflow:hidden;
+}
+.ai-sidebar-tabs {
+  display:flex; border-bottom:1px solid var(--border); background:var(--surface);
+}
+.ai-sidebar-tab {
+  flex:1; padding:14px 10px; text-align:center; font-size:13px; font-weight:600;
+  cursor:pointer; color:var(--text2); border-bottom:2px solid transparent;
+  transition:all .15s; user-select:none;
+}
+.ai-sidebar-tab.active { color:var(--red); border-bottom-color:var(--red); background:var(--bg); }
+.ai-sidebar-tab:hover:not(.active) { color:var(--text); background:var(--border); }
+.ai-sidebar-body { flex:1; overflow-y:auto; padding:16px; }
+.ai-main { flex:1; display:flex; flex-direction:column; overflow:hidden; background:var(--bg); }
+.ai-main-body { flex:1; overflow-y:auto; padding:20px 24px; }
 
-  <!-- Sub-tabs -->
-  <div style="display:flex;gap:4px;border-bottom:2px solid var(--border);margin-bottom:20px;">
-    <div class="level-tab active" id="aiTab1" onclick="aiSwitchTab(1)" style="border-bottom:2px solid transparent;margin-bottom:-2px;">📊 Phân tích báo cáo</div>
-    <div class="level-tab" id="aiTab2" onclick="aiSwitchTab(2)" style="border-bottom:2px solid transparent;margin-bottom:-2px;">✍️ Brief Content</div>
-  </div>
+.ai-field { margin-bottom:14px; }
+.ai-field label {
+  display:flex; align-items:center; gap:6px;
+  font-size:12px; font-weight:600; color:var(--text2); margin-bottom:7px;
+}
+.ai-field label .req { color:var(--red); font-size:11px; }
+.ai-field label .opt { color:var(--text2); font-size:11px; font-weight:400; }
+.ai-input {
+  width:100%; padding:9px 12px; border:1px solid var(--border); border-radius:7px;
+  background:var(--surface); color:var(--text); font-size:13px; box-sizing:border-box;
+  transition:border-color .15s;
+}
+.ai-input:focus { outline:none; border-color:var(--red); }
+.ai-textarea {
+  width:100%; padding:10px 12px; border:1px solid var(--border); border-radius:7px;
+  background:var(--surface); color:var(--text); font-size:12px; font-family:monospace;
+  resize:vertical; box-sizing:border-box; line-height:1.6; min-height:120px;
+  transition:border-color .15s;
+}
+.ai-textarea:focus { outline:none; border-color:var(--red); }
+.ai-section-head {
+  padding:14px 16px; border-bottom:1px solid var(--border);
+  background:var(--surface); flex-shrink:0;
+}
+.ai-section-head-title { font-size:14px; font-weight:700; margin-bottom:3px; }
+.ai-section-head-sub { font-size:12px; color:var(--text2); }
 
-  <!-- TOOL 1: Report Analyzer -->
-  <div id="aiTool1">
-    <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:16px;">
-      <div style="font-size:13px;font-weight:700;margin-bottom:4px;">📊 Phân tích báo cáo TikTok Ads</div>
-      <div style="font-size:12px;color:var(--text2);">Dán dữ liệu CSV / bảng từ Ads Manager → nhận prompt phân tích theo ngành</div>
+/* Image upload zone */
+.ai-img-zone {
+  border:2px dashed var(--border); border-radius:8px; padding:20px;
+  text-align:center; cursor:pointer; transition:all .2s; position:relative;
+  background:var(--bg); margin-bottom:10px;
+}
+.ai-img-zone:hover, .ai-img-zone.drag-over { border-color:var(--red); background:rgba(233,30,99,.04); }
+.ai-img-zone input[type=file] { position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%; }
+.ai-img-zone-icon { font-size:28px; margin-bottom:6px; }
+.ai-img-zone-text { font-size:12px; color:var(--text2); line-height:1.5; }
+.ai-img-zone-text strong { color:var(--red); }
+.ai-img-previews { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:10px; }
+.ai-img-thumb {
+  position:relative; width:70px; height:70px; border-radius:6px; overflow:hidden;
+  border:1px solid var(--border); flex-shrink:0;
+}
+.ai-img-thumb img { width:100%; height:100%; object-fit:cover; display:block; }
+.ai-img-thumb .rm { position:absolute;top:2px;right:2px;width:18px;height:18px;
+  background:rgba(0,0,0,.6);border-radius:50%;color:#fff;font-size:10px;
+  display:flex;align-items:center;justify-content:center;cursor:pointer; }
+.ai-img-count { font-size:11px; color:var(--text2); margin-bottom:8px; }
+
+/* Prompt output area */
+.ai-prompt-out { display:none; }
+.ai-prompt-header {
+  display:flex; align-items:center; justify-content:space-between;
+  padding:12px 24px; border-bottom:1px solid var(--border);
+  background:var(--surface); flex-shrink:0;
+}
+.ai-prompt-header-left { font-size:13px; font-weight:700; }
+.ai-prompt-header-sub { font-size:11px; color:var(--text2); margin-top:2px; }
+.ai-hint-bar {
+  margin:16px 24px 0; padding:12px 16px; border-radius:8px;
+  font-size:12px; display:flex; gap:10px; align-items:flex-start;
+}
+.ai-hint-bar.blue { background:rgba(33,150,243,.12); color:#1565c0; border:1px solid rgba(33,150,243,.25); }
+.ai-hint-bar.green { background:rgba(76,175,80,.1); color:#2e7d32; border:1px solid rgba(76,175,80,.2); }
+.dark .ai-hint-bar.blue { color:#90caf9; }
+.dark .ai-hint-bar.green { color:#a5d6a7; }
+.ai-prompt-pre {
+  margin:12px 24px 24px; padding:16px; border:1px solid var(--border); border-radius:8px;
+  background:var(--surface); font-size:11.5px; font-family:monospace;
+  white-space:pre-wrap; word-break:break-word; line-height:1.7; color:var(--text);
+  max-height:calc(100vh - 380px); overflow-y:auto;
+}
+.ai-prompt-empty {
+  flex:1; display:flex; flex-direction:column; align-items:center;
+  justify-content:center; color:var(--text2); padding:40px;
+}
+.ai-prompt-empty-icon { font-size:48px; margin-bottom:12px; opacity:.4; }
+.ai-prompt-empty-text { font-size:13px; text-align:center; line-height:1.6; opacity:.7; }
+.ai-divider { font-size:11px; font-weight:700; color:var(--text2); text-transform:uppercase;
+  letter-spacing:.5px; margin:16px 0 10px; padding-bottom:6px; border-bottom:1px solid var(--border); }
+</style>
+
+<div id="aiSection" class="ai-section">
+<div class="ai-tool-wrap">
+
+  <!-- LEFT SIDEBAR: inputs -->
+  <div class="ai-sidebar">
+    <div class="ai-sidebar-tabs">
+      <div class="ai-sidebar-tab active" id="aiTab1" onclick="aiSwitchTab(1)">📊 Phân tích báo cáo</div>
+      <div class="ai-sidebar-tab" id="aiTab2" onclick="aiSwitchTab(2)">✍️ Brief Content</div>
     </div>
 
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
-      <div>
-        <label style="font-size:12px;font-weight:600;color:var(--text2);display:block;margin-bottom:6px;">Ngành hoạt động</label>
-        <select id="aiIndustry" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:6px;background:var(--surface);color:var(--text);font-size:13px;">
+    <!-- TOOL 1 inputs -->
+    <div id="aiTool1" class="ai-sidebar-body">
+
+      <div class="ai-divider">Thông tin báo cáo</div>
+
+      <div class="ai-field">
+        <label>🏭 Ngành hoạt động <span class="req">*</span></label>
+        <select id="aiIndustry" class="ai-input">
           <option value="fmcg">FMCG — Hàng tiêu dùng nhanh</option>
           <option value="cosmetic">Mỹ phẩm / Làm đẹp</option>
           <option value="supplement">Thực phẩm chức năng / Sức khỏe</option>
@@ -1093,49 +1196,60 @@ while ($listener.IsListening) {
           <option value="edu">Giáo dục / Đào tạo</option>
         </select>
       </div>
-      <div>
-        <label style="font-size:12px;font-weight:600;color:var(--text2);display:block;margin-bottom:6px;">Kỳ báo cáo (tùy chọn)</label>
-        <input type="text" id="aiReportPeriod" placeholder="VD: 01/06 – 30/06/2025" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:6px;background:var(--surface);color:var(--text);font-size:13px;box-sizing:border-box;">
+
+      <div class="ai-field">
+        <label>📅 Kỳ báo cáo <span class="opt">(tùy chọn)</span></label>
+        <input type="text" id="aiReportPeriod" class="ai-input" placeholder="VD: 01/06 – 30/06/2025">
       </div>
-    </div>
 
-    <div style="margin-bottom:12px;">
-      <label style="font-size:12px;font-weight:600;color:var(--text2);display:block;margin-bottom:6px;">Dữ liệu báo cáo <span style="color:var(--red)">*</span></label>
-      <textarea id="aiReportData" rows="10" placeholder="Dán dữ liệu từ TikTok Ads Manager vào đây&#10;&#10;Có thể dán:&#10;• Bảng CSV (Campaign Name, Spend, Impressions, CTR, CPM, CPL...)&#10;• Số liệu copy từ bảng Excel&#10;• Text tổng hợp thủ công&#10;&#10;Hoặc nhấn 'Lấy từ tab Xuất báo cáo' nếu đã fetch dữ liệu bên đó →" style="width:100%;padding:10px;border:1px solid var(--border);border-radius:6px;background:var(--surface);color:var(--text);font-size:12px;font-family:monospace;resize:vertical;box-sizing:border-box;line-height:1.5;"></textarea>
-    </div>
+      <div class="ai-divider">Dữ liệu đầu vào</div>
 
-    <div style="display:flex;gap:8px;margin-bottom:16px;">
-      <button class="btn btn-sm btn-ghost" onclick="aiImportFromExport()">⬅ Lấy từ tab Xuất báo cáo</button>
-      <button class="btn btn-sm btn-primary" onclick="aiGenerateReportPrompt()" style="margin-left:auto;">🤖 Tạo prompt phân tích</button>
-    </div>
-
-    <div id="aiReportPromptBox" style="display:none;">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-        <span style="font-size:12px;font-weight:600;color:var(--text2);">Prompt đã tạo — copy và dán vào Claude.ai</span>
-        <button class="btn btn-sm" onclick="aiCopyPrompt('aiReportPromptPre')">📋 Copy</button>
+      <div class="ai-field">
+        <label>📋 Dữ liệu báo cáo <span class="req">*</span></label>
+        <textarea id="aiReportData" class="ai-textarea" rows="7"
+          placeholder="Dán dữ liệu từ TikTok Ads Manager&#10;&#10;Có thể dán:&#10;• Bảng CSV từ Ads Manager&#10;• Số liệu copy từ Excel&#10;• Text tổng hợp thủ công"></textarea>
+        <button class="btn btn-sm btn-ghost" style="width:100%;margin-top:6px;" onclick="aiImportFromExport()">⬅ Lấy từ tab Xuất báo cáo</button>
       </div>
-      <div style="background:#0d47a1;border-radius:6px;padding:10px 12px;margin-bottom:8px;font-size:12px;color:#e3f2fd;">
-        💡 Mở <strong>claude.ai</strong> → paste prompt vào → Claude sẽ phân tích theo chuẩn TikTok Report Analyzer
-      </div>
-      <pre id="aiReportPromptPre" style="background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:12px;font-size:11px;font-family:monospace;white-space:pre-wrap;word-break:break-word;max-height:400px;overflow-y:auto;color:var(--text);margin:0;"></pre>
-    </div>
-  </div>
 
-  <!-- TOOL 2: Content Brief Generator -->
-  <div id="aiTool2" style="display:none;">
-    <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:16px;">
-      <div style="font-size:13px;font-weight:700;margin-bottom:4px;">✍️ Tạo Brief Content TikTok</div>
-      <div style="font-size:12px;color:var(--text2);">Nhập thông tin sản phẩm → nhận creative brief chuẩn để gửi cho đội content</div>
+      <div class="ai-field">
+        <label>🖼 Đính kèm ảnh <span class="opt">(tùy chọn)</span></label>
+        <div class="ai-img-zone" id="aiImgZone"
+          ondragover="event.preventDefault();this.classList.add('drag-over')"
+          ondragleave="this.classList.remove('drag-over')"
+          ondrop="aiHandleDrop(event)">
+          <input type="file" accept="image/*" multiple onchange="aiHandleFiles(this.files)">
+          <div class="ai-img-zone-icon">📸</div>
+          <div class="ai-img-zone-text">
+            <strong>Click hoặc kéo ảnh vào đây</strong><br>
+            Screenshot dashboard, ảnh quảng cáo<br>
+            <span style="font-size:10px;opacity:.7;">PNG, JPG, WEBP — tối đa 10 ảnh</span>
+          </div>
+        </div>
+        <div id="aiImgPreviews" class="ai-img-previews" style="display:none;"></div>
+        <div id="aiImgCount" class="ai-img-count" style="display:none;"></div>
+        <textarea id="aiImgNote" class="ai-textarea" rows="2" style="display:none;"
+          placeholder="Ghi chú về ảnh (tùy chọn): VD: Ảnh 1 là dashboard tổng, ảnh 2-3 là campaign A/B..."></textarea>
+      </div>
+
+      <button class="btn btn-primary" style="width:100%;padding:11px;font-size:13px;" onclick="aiGenerateReportPrompt()">
+        🤖 Tạo prompt phân tích
+      </button>
+
     </div>
 
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
-      <div>
-        <label style="font-size:12px;font-weight:600;color:var(--text2);display:block;margin-bottom:6px;">Tên sản phẩm / Thương hiệu <span style="color:var(--red)">*</span></label>
-        <input type="text" id="bfProduct" placeholder="VD: Sữa rửa mặt La Roche-Posay" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:6px;background:var(--surface);color:var(--text);font-size:13px;box-sizing:border-box;">
+    <!-- TOOL 2 inputs -->
+    <div id="aiTool2" class="ai-sidebar-body" style="display:none;">
+
+      <div class="ai-divider">Thông tin sản phẩm</div>
+
+      <div class="ai-field">
+        <label>🏷 Tên sản phẩm / Thương hiệu <span class="req">*</span></label>
+        <input type="text" id="bfProduct" class="ai-input" placeholder="VD: Sữa rửa mặt La Roche-Posay">
       </div>
-      <div>
-        <label style="font-size:12px;font-weight:600;color:var(--text2);display:block;margin-bottom:6px;">Ngành hàng <span style="color:var(--red)">*</span></label>
-        <select id="bfIndustry" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:6px;background:var(--surface);color:var(--text);font-size:13px;">
+
+      <div class="ai-field">
+        <label>🏭 Ngành hàng <span class="req">*</span></label>
+        <select id="bfIndustry" class="ai-input">
           <option value="cosmetic">Mỹ phẩm / Skincare</option>
           <option value="fmcg">FMCG / Thực phẩm</option>
           <option value="supplement">Thực phẩm chức năng</option>
@@ -1145,58 +1259,122 @@ while ($listener.IsListening) {
           <option value="other">Khác</option>
         </select>
       </div>
-    </div>
 
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
-      <div>
-        <label style="font-size:12px;font-weight:600;color:var(--text2);display:block;margin-bottom:6px;">Mục tiêu chiến dịch <span style="color:var(--red)">*</span></label>
-        <select id="bfGoal" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:6px;background:var(--surface);color:var(--text);font-size:13px;">
+      <div class="ai-divider">Chiến dịch</div>
+
+      <div class="ai-field">
+        <label>🎯 Mục tiêu chiến dịch <span class="req">*</span></label>
+        <select id="bfGoal" class="ai-input">
           <option value="awareness">Brand Awareness — Nhận diện thương hiệu</option>
-          <option value="conversion">Conversion / TikTok Shop — Bán hàng trực tiếp</option>
-          <option value="lead">Lead Form — Thu thập khách hàng tiềm năng</option>
+          <option value="conversion">Conversion / TikTok Shop — Bán hàng</option>
+          <option value="lead">Lead Form — Thu khách hàng tiềm năng</option>
         </select>
       </div>
-      <div>
-        <label style="font-size:12px;font-weight:600;color:var(--text2);display:block;margin-bottom:6px;">Độ dài video mục tiêu</label>
-        <select id="bfDuration" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:6px;background:var(--surface);color:var(--text);font-size:13px;">
+
+      <div class="ai-field">
+        <label>⏱ Độ dài video mục tiêu</label>
+        <select id="bfDuration" class="ai-input">
           <option value="15-30">15–30 giây</option>
           <option value="30-45" selected>30–45 giây</option>
           <option value="45-60">45–60 giây</option>
         </select>
       </div>
-    </div>
 
-    <div style="margin-bottom:12px;">
-      <label style="font-size:12px;font-weight:600;color:var(--text2);display:block;margin-bottom:6px;">Đối tượng mục tiêu <span style="color:var(--red)">*</span></label>
-      <input type="text" id="bfAudience" placeholder="VD: Nữ 18–35 tuổi, quan tâm skincare, có vấn đề về da dầu/mụn" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:6px;background:var(--surface);color:var(--text);font-size:13px;box-sizing:border-box;">
-    </div>
+      <div class="ai-divider">Đối tượng & Insight</div>
 
-    <div style="margin-bottom:12px;">
-      <label style="font-size:12px;font-weight:600;color:var(--text2);display:block;margin-bottom:6px;">USP / Điểm khác biệt của sản phẩm</label>
-      <input type="text" id="bfUSP" placeholder="VD: Không chứa cồn, dịu nhẹ cho da nhạy cảm, bác sĩ da liễu khuyên dùng" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:6px;background:var(--surface);color:var(--text);font-size:13px;box-sizing:border-box;">
-    </div>
-
-    <div style="margin-bottom:16px;">
-      <label style="font-size:12px;font-weight:600;color:var(--text2);display:block;margin-bottom:6px;">Insight / Điểm đau của khách hàng (tùy chọn)</label>
-      <textarea id="bfInsight" rows="3" placeholder="VD: Khách hàng đang loay hoay chọn sữa rửa mặt phù hợp, sợ mua phải sản phẩm gây kích ứng da" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:6px;background:var(--surface);color:var(--text);font-size:12px;resize:vertical;box-sizing:border-box;"></textarea>
-    </div>
-
-    <div style="display:flex;justify-content:flex-end;margin-bottom:16px;">
-      <button class="btn btn-sm btn-primary" onclick="aiGenerateBriefPrompt()">🤖 Tạo Brief prompt</button>
-    </div>
-
-    <div id="aiBriefPromptBox" style="display:none;">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-        <span style="font-size:12px;font-weight:600;color:var(--text2);">Prompt đã tạo — copy và dán vào Claude.ai</span>
-        <button class="btn btn-sm" onclick="aiCopyPrompt('aiBriefPromptPre')">📋 Copy</button>
+      <div class="ai-field">
+        <label>👥 Đối tượng mục tiêu <span class="req">*</span></label>
+        <input type="text" id="bfAudience" class="ai-input" placeholder="VD: Nữ 18–35, quan tâm skincare, da dầu/mụn">
       </div>
-      <div style="background:#1b5e20;border-radius:6px;padding:10px 12px;margin-bottom:8px;font-size:12px;color:#e8f5e9;">
-        💡 Mở <strong>claude.ai</strong> → paste prompt vào → Claude sẽ tạo creative brief chuẩn TikTok Content Brief Generator
+
+      <div class="ai-field">
+        <label>⭐ USP / Điểm khác biệt <span class="opt">(tùy chọn)</span></label>
+        <input type="text" id="bfUSP" class="ai-input" placeholder="VD: Không cồn, dịu nhẹ, bác sĩ da liễu khuyên dùng">
       </div>
-      <pre id="aiBriefPromptPre" style="background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:12px;font-size:11px;font-family:monospace;white-space:pre-wrap;word-break:break-word;max-height:400px;overflow-y:auto;color:var(--text);margin:0;"></pre>
+
+      <div class="ai-field">
+        <label>💡 Insight / Điểm đau khách hàng <span class="opt">(tùy chọn)</span></label>
+        <textarea id="bfInsight" class="ai-textarea" rows="3"
+          placeholder="VD: Khách hàng loay hoay chọn sữa rửa mặt, sợ kích ứng da"></textarea>
+      </div>
+
+      <div class="ai-field">
+        <label>🖼 Ảnh tham khảo <span class="opt">(tùy chọn)</span></label>
+        <div class="ai-img-zone" id="aiBriefImgZone"
+          ondragover="event.preventDefault();this.classList.add('drag-over')"
+          ondragleave="this.classList.remove('drag-over')"
+          ondrop="aiBriefHandleDrop(event)">
+          <input type="file" accept="image/*" multiple onchange="aiBriefHandleFiles(this.files)">
+          <div class="ai-img-zone-icon">🎨</div>
+          <div class="ai-img-zone-text">
+            <strong>Ảnh sản phẩm, ref video</strong><br>
+            <span style="font-size:10px;opacity:.7;">Để Claude hiểu visual direction</span>
+          </div>
+        </div>
+        <div id="aiBriefImgPreviews" class="ai-img-previews" style="display:none;"></div>
+        <div id="aiBriefImgCount" class="ai-img-count" style="display:none;"></div>
+      </div>
+
+      <button class="btn btn-primary" style="width:100%;padding:11px;font-size:13px;" onclick="aiGenerateBriefPrompt()">
+        🤖 Tạo Brief prompt
+      </button>
+
     </div>
   </div>
 
+  <!-- RIGHT: output panel -->
+  <div class="ai-main">
+
+    <!-- Empty state -->
+    <div class="ai-prompt-empty" id="aiEmptyState">
+      <div class="ai-prompt-empty-icon">🤖</div>
+      <div class="ai-prompt-empty-text">
+        Điền thông tin bên trái<br>rồi nhấn <strong>Tạo prompt</strong><br><br>
+        Copy prompt → paste vào <strong>claude.ai</strong><br>để nhận phân tích chi tiết
+      </div>
+    </div>
+
+    <!-- Report prompt output -->
+    <div id="aiReportPromptBox" class="ai-prompt-out">
+      <div class="ai-prompt-header">
+        <div>
+          <div class="ai-prompt-header-left">📊 Prompt phân tích báo cáo</div>
+          <div class="ai-prompt-header-sub">Copy toàn bộ → paste vào Claude.ai để phân tích</div>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <div id="aiImgAttachNote" style="display:none;font-size:11px;color:var(--text2);"></div>
+          <button class="btn btn-sm" onclick="aiCopyPrompt('aiReportPromptPre')">📋 Copy prompt</button>
+        </div>
+      </div>
+      <div class="ai-hint-bar blue">
+        <span style="font-size:16px;">💡</span>
+        <div>Mở <strong>claude.ai</strong> → tạo chat mới → paste prompt<span id="aiImgHintExtra"></span> → Claude sẽ phân tích theo chuẩn <strong>TikTok Report Analyzer</strong></div>
+      </div>
+      <pre id="aiReportPromptPre" class="ai-prompt-pre"></pre>
+    </div>
+
+    <!-- Brief prompt output -->
+    <div id="aiBriefPromptBox" class="ai-prompt-out">
+      <div class="ai-prompt-header">
+        <div>
+          <div class="ai-prompt-header-left">✍️ Prompt tạo Brief Content</div>
+          <div class="ai-prompt-header-sub">Copy toàn bộ → paste vào Claude.ai để nhận creative brief</div>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <div id="aiBriefImgAttachNote" style="display:none;font-size:11px;color:var(--text2);"></div>
+          <button class="btn btn-sm" onclick="aiCopyPrompt('aiBriefPromptPre')">📋 Copy prompt</button>
+        </div>
+      </div>
+      <div class="ai-hint-bar green">
+        <span style="font-size:16px;">💡</span>
+        <div>Mở <strong>claude.ai</strong> → tạo chat mới → paste prompt<span id="aiBriefImgHintExtra"></span> → Claude sẽ tạo <strong>creative brief đầy đủ</strong> cho đội content</div>
+      </div>
+      <pre id="aiBriefPromptPre" class="ai-prompt-pre"></pre>
+    </div>
+
+  </div>
+
+</div>
 </div>
 
 <!-- ===================== TOASTS ===================== -->
@@ -2964,11 +3142,18 @@ document.addEventListener('keydown', e => { if(e.key==='Escape') document.queryS
 
 /* ═══════════════════════════ AI TOOLS ═══════════════════════════ */
 
+// Image state
+const AI_IMGS = { report: [], brief: [] };
+
 function aiSwitchTab(n) {
   document.getElementById('aiTool1').style.display = n === 1 ? '' : 'none';
   document.getElementById('aiTool2').style.display = n === 2 ? '' : 'none';
   document.getElementById('aiTab1').classList.toggle('active', n === 1);
   document.getElementById('aiTab2').classList.toggle('active', n === 2);
+  // Reset output panel to empty state when switching
+  document.getElementById('aiEmptyState').style.display = '';
+  document.getElementById('aiReportPromptBox').style.display = 'none';
+  document.getElementById('aiBriefPromptBox').style.display = 'none';
 }
 
 function aiCopyPrompt(preId) {
@@ -2986,6 +3171,71 @@ function aiImportFromExport() {
   toast('success', '✅ Đã lấy dữ liệu từ tab Xuất báo cáo');
 }
 
+// ── Image upload handlers ──
+function aiRenderPreviews(key, previewsId, countId, noteId) {
+  const imgs = AI_IMGS[key];
+  const wrap = document.getElementById(previewsId);
+  const cnt  = document.getElementById(countId);
+  const note = noteId ? document.getElementById(noteId) : null;
+  if (!imgs.length) {
+    wrap.style.display = 'none'; cnt.style.display = 'none';
+    if (note) note.style.display = 'none';
+    return;
+  }
+  wrap.style.display = 'flex'; cnt.style.display = '';
+  if (note) note.style.display = '';
+  cnt.textContent = `${imgs.length} ảnh đã chọn — paste ảnh vào Claude.ai cùng với prompt`;
+  wrap.innerHTML = imgs.map((img, i) =>
+    `<div class="ai-img-thumb">
+      <img src="${img.url}" alt="img${i+1}">
+      <div class="rm" onclick="aiRemoveImg('${key}','${previewsId}','${countId}','${noteId||''}',${i})">✕</div>
+    </div>`
+  ).join('');
+}
+
+function aiRemoveImg(key, previewsId, countId, noteId, idx) {
+  URL.revokeObjectURL(AI_IMGS[key][idx].url);
+  AI_IMGS[key].splice(idx, 1);
+  aiRenderPreviews(key, previewsId, countId, noteId || null);
+}
+
+function aiAddFiles(key, files, previewsId, countId, noteId) {
+  const remaining = 10 - AI_IMGS[key].length;
+  const toAdd = [...files].slice(0, remaining);
+  toAdd.forEach(f => {
+    if (f.type.startsWith('image/')) AI_IMGS[key].push({ file: f, url: URL.createObjectURL(f), name: f.name });
+  });
+  aiRenderPreviews(key, previewsId, countId, noteId);
+  document.getElementById(previewsId.replace('Previews','ImgZone') || 'aiImgZone')
+    ?.classList.remove('drag-over');
+}
+
+function aiHandleFiles(files) {
+  aiAddFiles('report', files, 'aiImgPreviews', 'aiImgCount', 'aiImgNote');
+}
+function aiHandleDrop(e) {
+  e.preventDefault();
+  document.getElementById('aiImgZone').classList.remove('drag-over');
+  aiAddFiles('report', e.dataTransfer.files, 'aiImgPreviews', 'aiImgCount', 'aiImgNote');
+}
+function aiBriefHandleFiles(files) {
+  aiAddFiles('brief', files, 'aiBriefImgPreviews', 'aiBriefImgCount', null);
+}
+function aiBriefHandleDrop(e) {
+  e.preventDefault();
+  document.getElementById('aiBriefImgZone').classList.remove('drag-over');
+  aiAddFiles('brief', e.dataTransfer.files, 'aiBriefImgPreviews', 'aiBriefImgCount', null);
+}
+
+// ── Show output panel ──
+function aiShowOutput(boxId) {
+  document.getElementById('aiEmptyState').style.display = 'none';
+  document.getElementById('aiReportPromptBox').style.display = 'none';
+  document.getElementById('aiBriefPromptBox').style.display = 'none';
+  document.getElementById(boxId).style.display = '';
+}
+
+// ── Constants ──
 const AI_INDUSTRY_LABELS = {
   fmcg: 'FMCG — Hàng tiêu dùng nhanh',
   cosmetic: 'Mỹ phẩm / Làm đẹp',
@@ -2993,7 +3243,6 @@ const AI_INDUSTRY_LABELS = {
   bds: 'Bất động sản',
   edu: 'Giáo dục / Đào tạo'
 };
-
 const AI_INDUSTRY_BENCHMARKS = {
   fmcg:       { cpm: '45.000–80.000đ', ctr: '1,2–2,5%', cpl: 'N/A (dùng ROAS)', freq: '≤ 3/tuần' },
   cosmetic:   { cpm: '50.000–90.000đ', ctr: '1,5–3,0%', cpl: '80.000–200.000đ', freq: '≤ 3/tuần' },
@@ -3001,27 +3250,44 @@ const AI_INDUSTRY_BENCHMARKS = {
   bds:        { cpm: '80.000–150.000đ', ctr: '0,8–1,5%', cpl: '500.000–2.000.000đ', freq: '≤ 5/tuần' },
   edu:        { cpm: '55.000–95.000đ', ctr: '1,0–2,5%', cpl: '100.000–350.000đ', freq: '≤ 3/tuần' }
 };
+const AI_BRIEF_INDUSTRY_TONE = {
+  cosmetic: 'Fresh, Glow, Empowering', fmcg: 'Warm, Craving, Familiar',
+  supplement: 'Trustworthy, Transformative, Scientific', bds: 'Aspirational, Premium, Belonging',
+  edu: 'Inspiring, Credible, Breakthrough', fashion: 'Trendy, Bold, Youthful',
+  other: 'Authentic, Engaging, Relatable'
+};
+const AI_BRIEF_GOAL_LABELS = {
+  awareness: 'Brand Awareness — Nhận diện thương hiệu',
+  conversion: 'Conversion / TikTok Shop — Bán hàng trực tiếp',
+  lead: 'Lead Form — Thu thập khách hàng tiềm năng'
+};
 
+// ── Generate report prompt ──
 function aiGenerateReportPrompt() {
   const data = document.getElementById('aiReportData').value.trim();
   if (!data) { toast('warn', '⚠️ Vui lòng dán dữ liệu báo cáo vào ô trên'); return; }
 
   const industry = document.getElementById('aiIndustry').value;
   const period   = document.getElementById('aiReportPeriod').value.trim();
+  const imgNote  = document.getElementById('aiImgNote').value.trim();
+  const imgCount = AI_IMGS.report.length;
   const label    = AI_INDUSTRY_LABELS[industry] || industry;
   const bench    = AI_INDUSTRY_BENCHMARKS[industry] || {};
+
+  const imgSection = imgCount
+    ? `\n## Hình ảnh đính kèm\n${imgCount} ảnh đã được paste vào chat (xem ảnh phía trên prompt này)${imgNote ? `\nGhi chú: ${imgNote}` : ''}\n`
+    : '';
 
   const prompt = `Bạn là chuyên gia phân tích TikTok Ads. Hãy phân tích báo cáo quảng cáo sau theo đúng quy trình TikTok Report Analyzer.
 
 ## Thông tin chiến dịch
-- Ngành: ${label}
-${period ? `- Kỳ báo cáo: ${period}` : ''}
+- Ngành: ${label}${period ? `\n- Kỳ báo cáo: ${period}` : ''}
 - Benchmark ngành áp dụng:
   • CPM: ${bench.cpm || 'N/A'}
   • CTR: ${bench.ctr || 'N/A'}
   • CPL/CPA: ${bench.cpl || 'N/A'}
   • Frequency: ${bench.freq || '≤ 3/tuần'}
-
+${imgSection}
 ## Dữ liệu báo cáo
 \`\`\`
 ${data}
@@ -3040,101 +3306,98 @@ Bảng so sánh từng chỉ số (CPM, CTR, CPL/CPA, Frequency) với benchmark
 
 ### 🔍 Phân tích chi tiết theo campaign/ad group
 Với mỗi campaign: hiệu quả tổng thể, điểm mạnh, điểm yếu, bất thường
-
-Tự động kiểm tra các dấu hiệu sau:
-- Frequency > 3 trong 7 ngày → nguy cơ banner blindness
-- CPM tăng > 40% → audience saturation
-- CTR > 3% nhưng CVR < 1% → vấn đề landing page
-- 1 ad group chiếm > 60% budget → mất cân đối
-- Campaign có spend nhưng 0 result sau 3 ngày → lỗi setup
+Tự động kiểm tra: Frequency > 3 → banner blindness | CPM tăng > 40% → saturation | CTR > 3% mà CVR < 1% → vấn đề landing page | Ad group chiếm > 60% budget → mất cân đối
 
 ### 🎯 Khuyến nghị tối ưu
-- 🔴 **Làm ngay (trong 24h)**: hành động cụ thể + lý do
-- 🟡 **Theo dõi (3–5 ngày)**: những gì cần quan sát thêm
+- 🔴 **Làm ngay (trong 24h)**: hành động + lý do
+- 🟡 **Theo dõi (3–5 ngày)**: điều gì cần quan sát thêm
 - 🟢 **Thử nghiệm (tuần tới)**: đề xuất test mới
 
 ### 📝 Tóm tắt điều hành
 5–8 dòng: điểm then chốt, rủi ro lớn nhất, 1–2 action có ROI cao nhất`;
 
   document.getElementById('aiReportPromptPre').textContent = prompt;
-  document.getElementById('aiReportPromptBox').style.display = '';
-  document.getElementById('aiReportPromptBox').scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+  const attachNote = document.getElementById('aiImgAttachNote');
+  const hintExtra  = document.getElementById('aiImgHintExtra');
+  if (imgCount) {
+    attachNote.style.display = '';
+    attachNote.textContent = `📸 ${imgCount} ảnh — paste vào Claude.ai trước`;
+    hintExtra.textContent = ` + paste ${imgCount} ảnh`;
+  } else {
+    attachNote.style.display = 'none';
+    hintExtra.textContent = '';
+  }
+  aiShowOutput('aiReportPromptBox');
 }
 
-const AI_BRIEF_INDUSTRY_TONE = {
-  cosmetic:   'Fresh, Glow, Empowering',
-  fmcg:       'Warm, Craving, Familiar',
-  supplement: 'Trustworthy, Transformative, Scientific',
-  bds:        'Aspirational, Premium, Belonging',
-  edu:        'Inspiring, Credible, Breakthrough',
-  fashion:    'Trendy, Bold, Youthful',
-  other:      'Authentic, Engaging, Relatable'
-};
-
-const AI_BRIEF_GOAL_LABELS = {
-  awareness:  'Brand Awareness — Nhận diện thương hiệu',
-  conversion: 'Conversion / TikTok Shop — Bán hàng trực tiếp',
-  lead:       'Lead Form — Thu thập khách hàng tiềm năng'
-};
-
+// ── Generate brief prompt ──
 function aiGenerateBriefPrompt() {
   const product  = document.getElementById('bfProduct').value.trim();
   const audience = document.getElementById('bfAudience').value.trim();
-  if (!product || !audience) {
-    toast('warn', '⚠️ Vui lòng điền Tên sản phẩm và Đối tượng mục tiêu');
-    return;
-  }
+  if (!product || !audience) { toast('warn', '⚠️ Vui lòng điền Tên sản phẩm và Đối tượng mục tiêu'); return; }
 
-  const industry = document.getElementById('bfIndustry').value;
-  const goal     = document.getElementById('bfGoal').value;
-  const duration = document.getElementById('bfDuration').value;
-  const usp      = document.getElementById('bfUSP').value.trim();
-  const insight  = document.getElementById('bfInsight').value.trim();
-  const tone     = AI_BRIEF_INDUSTRY_TONE[industry] || 'Authentic, Engaging';
+  const industry  = document.getElementById('bfIndustry').value;
+  const goal      = document.getElementById('bfGoal').value;
+  const duration  = document.getElementById('bfDuration').value;
+  const usp       = document.getElementById('bfUSP').value.trim();
+  const insight   = document.getElementById('bfInsight').value.trim();
+  const tone      = AI_BRIEF_INDUSTRY_TONE[industry] || 'Authentic, Engaging';
   const goalLabel = AI_BRIEF_GOAL_LABELS[goal] || goal;
+  const imgCount  = AI_IMGS.brief.length;
 
-  const prompt = `Bạn là creative strategist chuyên về TikTok. Hãy tạo creative brief chuyên nghiệp cho sản phẩm sau theo đúng quy trình TikTok Content Brief Generator.
+  const imgSection = imgCount
+    ? `\n## Ảnh tham khảo\n${imgCount} ảnh đã paste vào chat — phân tích visual style và tone từ ảnh để định hướng brief\n`
+    : '';
+
+  const prompt = `Bạn là creative strategist chuyên về TikTok. Hãy tạo creative brief chuyên nghiệp theo đúng quy trình TikTok Content Brief Generator.
 
 ## Thông tin sản phẩm
 - **Sản phẩm / Thương hiệu**: ${product}
 - **Ngành hàng**: ${industry}
 - **Mục tiêu chiến dịch**: ${goalLabel}
 - **Độ dài video mục tiêu**: ${duration} giây
-- **Đối tượng mục tiêu**: ${audience}
-${usp ? `- **USP / Điểm khác biệt**: ${usp}` : ''}
-${insight ? `- **Insight / Điểm đau khách hàng**: ${insight}` : ''}
+- **Đối tượng mục tiêu**: ${audience}${usp ? `\n- **USP / Điểm khác biệt**: ${usp}` : ''}${insight ? `\n- **Insight / Điểm đau**: ${insight}` : ''}
 - **Tone & Mood gợi ý**: ${tone}
-
+${imgSection}
 ## Yêu cầu tạo brief
-
-Hãy tạo creative brief đầy đủ theo cấu trúc sau:
 
 ### 1. Big Idea
 1 câu duy nhất thể hiện góc độ khai thác cốt lõi của video
 
 ### 2. Hook 3 giây đầu
-Đề xuất 3 hook khác nhau (câu hỏi / hình ảnh bất ngờ / tuyên bố gây tranh luận). Hook KHÔNG được giới thiệu thương hiệu ngay.
+3 hook khác nhau (câu hỏi / bất ngờ / tranh luận) — KHÔNG giới thiệu thương hiệu ngay
 
 ### 3. Cấu trúc kịch bản theo timeline
-Chi tiết từng đoạn video theo mốc thời gian (giây 0–3, 3–10, 10–20, v.v.)
+Từng đoạn: giây 0–3, 3–10, 10–20, 20–30${duration !== '15-30' ? ', 30–45' : ''}${duration === '45-60' ? ', 45–60' : ''}
 
 ### 4. Tone & Mood
-2–3 từ + mô tả cảm giác cần truyền tải, màu sắc, nhịp cut gợi ý
+2–3 từ + cảm giác cần truyền tải, màu sắc chủ đạo, nhịp cut gợi ý
 
-### 5. CTA (Call to Action)
-CTA phù hợp với mục tiêu ${goalLabel}
+### 5. CTA
+CTA cụ thể phù hợp với mục tiêu ${goalLabel}
 
 ### 6. Hashtag & Trend
-8–12 hashtag theo công thức: 3 niche + 3 trend đang lên + 2 brand + 2 viral TikTok VN
+8–12 hashtag: 3 niche + 3 trend đang lên + 2 brand + 2 viral TikTok VN
 
 ### 7. Lưu ý cho đội quay/dựng
-Các điểm cần chú ý về góc quay, ánh sáng, text overlay, nhạc nền
+Góc quay, ánh sáng, text overlay, nhạc nền phù hợp
 
-Sau khi tạo xong brief, hỏi: "Bạn muốn tôi tạo thêm 2–3 biến thể hook khác nhau không?"`;
+Sau khi xong, hỏi: "Bạn muốn tôi tạo thêm 2–3 biến thể hook khác nhau không?"`;
 
   document.getElementById('aiBriefPromptPre').textContent = prompt;
-  document.getElementById('aiBriefPromptBox').style.display = '';
-  document.getElementById('aiBriefPromptBox').scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+  const attachNote = document.getElementById('aiBriefImgAttachNote');
+  const hintExtra  = document.getElementById('aiBriefImgHintExtra');
+  if (imgCount) {
+    attachNote.style.display = '';
+    attachNote.textContent = `📸 ${imgCount} ảnh — paste vào Claude.ai trước`;
+    hintExtra.textContent = ` + paste ${imgCount} ảnh`;
+  } else {
+    attachNote.style.display = 'none';
+    hintExtra.textContent = '';
+  }
+  aiShowOutput('aiBriefPromptBox');
 }
 
 /* ═══════════════════════════ EXPORT REPORT ═══════════════════════════ */
