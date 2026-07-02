@@ -1417,7 +1417,7 @@ const COLS = {
   reach:        { label: 'Reach',       metric: 'reach',                  icon: '👁' },
   video_2s:     { label: 'View 2s',     metric: 'video_watched_2s',  icon: '▶' },
   video_6s:     { label: 'View 6s',     metric: 'video_watched_6s',  icon: '▶▶' },
-  conversion:   { label: 'Chuyển đổi',  metric: 'result',            icon: '✅' },
+  conversion:   { label: 'Chuyển đổi',  metric: 'result',  metricFallback: 'real_time_result', icon: '✅' },
   purchase:     { label: 'Mua hàng',    metric: 'complete_payment',  icon: '🛒' },
   click_to_web: { label: 'Click Web',   metric: 'clicks',                 icon: '🖱' },
   follow:       { label: 'Follow',      metric: 'follows',                icon: '➕' },
@@ -1718,7 +1718,7 @@ async function fetchMetrics(aid, level, ids) {
     report_type: 'BASIC',
     data_level: level === 'campaign' ? 'AUCTION_CAMPAIGN' : 'AUCTION_ADGROUP',
     dimensions: [dim],
-    metrics: ['spend','reach','video_watched_2s','video_watched_6s','result','complete_payment','clicks','follows','impressions','frequency'],
+    metrics: ['spend','reach','video_watched_2s','video_watched_6s','result','real_time_result','complete_payment','clicks','follows','impressions','frequency'],
     start_date: start, end_date: end, page_size: 1000,
   });
   const r = {};
@@ -1995,7 +1995,7 @@ function makeCampaignRow(c) {
       </div>
     </td>
     <td><span class="spend-val">${fmtCur(m.spend||0)}</span></td>
-    ${cols.map(cl=>`<td class="metric-num">${fmtN(m[cl.metric],cl.metric)}</td>`).join('')}
+    ${cols.map(cl=>`<td class="metric-num">${fmtN(getMetricVal(m,cl),cl.metric)}</td>`).join('')}
     <td onclick="event.stopPropagation()">
       <button class="btn btn-sm btn-ghost" onclick="switchLevel('adgroup','${c.campaign_id}')">
         👥 Tab riêng
@@ -2041,7 +2041,7 @@ function makeAGRow(ag) {
       </div>
     </td>
     <td><span class="spend-val">${fmtCur(m.spend||0)}</span></td>
-    ${cols.map(cl=>`<td class="metric-num">${fmtN(m[cl.metric],cl.metric)}</td>`).join('')}
+    ${cols.map(cl=>`<td class="metric-num">${fmtN(getMetricVal(m,cl),cl.metric)}</td>`).join('')}
     <td>
       <button class="btn btn-sm btn-ghost" onclick="openBid('${ag.adgroup_id}','${esc(ag.adgroup_name)}',${ag.bid_price||0})">
         🎯 Bid
@@ -3149,9 +3149,19 @@ function fmtCurFull(v) {
 }
 
 function fmtN(v, metric) { // full number — for metric cells
-  if (v === undefined || v === null || v === '') return '—';
+  if (v === undefined || v === null || v === '' || v === '-') return '—';
   if (metric === 'frequency') return parseFloat(v).toFixed(2);
-  return (parseFloat(v) || 0).toLocaleString('vi-VN');
+  const n = parseFloat(v);
+  if (isNaN(n)) return '—';
+  return n.toLocaleString('vi-VN');
+}
+// Returns metric value, falling back to metricFallback when primary is missing/dash
+function getMetricVal(m, cl) {
+  const v = m[cl.metric];
+  if ((v === undefined || v === null || v === '' || v === '-') && cl.metricFallback) {
+    return m[cl.metricFallback];
+  }
+  return v;
 }
 
 /* ═══════════════════════════ TOAST ═══════════════════════════ */
