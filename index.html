@@ -4019,6 +4019,32 @@ function vdReset() {
   document.getElementById('vdLoading').style.display = 'none';
 }
 
+// CORS proxy list — try in order until one succeeds
+const VD_PROXIES = [
+  u => `https://corsproxy.io/?url=${encodeURIComponent(u)}`,
+  u => `https://api.allorigins.win/get?url=${encodeURIComponent(u)}`,
+];
+
+async function vdCallAPI(tikwmUrl) {
+  // Try direct first (works when served via HTTPS host)
+  try {
+    const res = await fetch(tikwmUrl, { signal: AbortSignal.timeout(6000) });
+    if (res.ok) return await res.json();
+  } catch {}
+  // Fallback: try CORS proxies
+  for (const makeProxy of VD_PROXIES) {
+    try {
+      const res = await fetch(makeProxy(tikwmUrl), { signal: AbortSignal.timeout(8000) });
+      if (!res.ok) continue;
+      const raw = await res.json();
+      // allorigins wraps response in { contents: "..." }
+      const json = raw.contents ? JSON.parse(raw.contents) : raw;
+      if (json && json.code === 0) return json;
+    } catch {}
+  }
+  throw new Error('Không kết nối được API. Kiểm tra lại mạng hoặc link TikTok.');
+}
+
 async function vdFetch() {
   const url = document.getElementById('vdUrlInput').value.trim();
   if (!url) return;
@@ -4026,14 +4052,13 @@ async function vdFetch() {
   document.getElementById('vdFetchBtn').disabled = true;
   document.getElementById('vdLoading').style.display = 'block';
   try {
-    const api = `https://api.tikwm.com/?url=${encodeURIComponent(url)}&hd=1`;
-    const res = await fetch(api);
-    const json = await res.json();
-    if (!json || json.code !== 0 || !json.data) throw new Error(json.msg || 'Không lấy được thông tin video');
+    const tikwmUrl = `https://api.tikwm.com/?url=${encodeURIComponent(url)}&hd=1`;
+    const json = await vdCallAPI(tikwmUrl);
+    if (!json || json.code !== 0 || !json.data) throw new Error(json?.msg || 'Không lấy được thông tin video');
     VD.data = json.data;
     vdRenderCard(json.data);
   } catch(e) {
-    document.getElementById('vdErr').textContent = '⚠ ' + (e.message || 'Lỗi kết nối. Kiểm tra lại link TikTok.');
+    document.getElementById('vdErr').textContent = '⚠ ' + (e.message || 'Lỗi kết nối.');
     document.getElementById('vdErr').style.display = 'block';
   } finally {
     document.getElementById('vdLoading').style.display = 'none';
