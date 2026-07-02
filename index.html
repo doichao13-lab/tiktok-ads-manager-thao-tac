@@ -559,6 +559,7 @@
   <div class="level-tab" id="ltabAdgroup" onclick="switchLevel('adgroup')">👥 Nhóm QC</div>
   <div class="level-tab" id="ltabExport" onclick="switchLevel('export')">📋 Xuất báo cáo</div>
   <div class="level-tab" id="ltabAI" onclick="switchLevel('ai')">🤖 Trợ lý AI</div>
+  <div class="level-tab" id="ltabVideo" onclick="switchLevel('video')">⬇ Tải Video</div>
 </div>
 
 <!-- ===================== MAIN ===================== -->
@@ -1026,6 +1027,83 @@ while ($listener.IsListening) {
     <div class="form-actions">
       <button class="btn" onclick="closeBid()">Hủy</button>
       <button class="btn btn-primary" onclick="saveBid()">Cập nhật</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== VIDEO DOWNLOADER SECTION ===================== -->
+<style>
+.vd-section { display:none; padding:32px; max-width:780px; margin:0 auto; }
+.vd-title { font-size:18px; font-weight:700; color:var(--text); margin-bottom:6px; }
+.vd-sub { font-size:13px; color:var(--text2); margin-bottom:24px; }
+.vd-url-row { display:flex; gap:8px; margin-bottom:20px; }
+.vd-url-row input { flex:1; padding:10px 14px; border:1.5px solid var(--border); border-radius:8px;
+  font-size:14px; background:var(--bg); color:var(--text); outline:none; }
+.vd-url-row input:focus { border-color:var(--primary); box-shadow:0 0 0 3px rgba(23,71,234,.08); }
+.vd-url-row button { padding:10px 20px; background:var(--primary); color:#fff; border:none;
+  border-radius:8px; font-size:14px; font-weight:600; cursor:pointer; white-space:nowrap; }
+.vd-url-row button:hover { background:var(--primary-hover); }
+.vd-url-row button:disabled { opacity:.5; cursor:not-allowed; }
+.vd-card { display:none; background:var(--bg); border:1.5px solid var(--border); border-radius:12px;
+  overflow:hidden; margin-bottom:24px; }
+.vd-card-inner { display:flex; gap:0; }
+.vd-thumb { width:160px; min-height:200px; background:#111; flex-shrink:0; position:relative; overflow:hidden; }
+.vd-thumb img { width:100%; height:100%; object-fit:cover; }
+.vd-info { flex:1; padding:20px; }
+.vd-author { font-size:12px; color:var(--primary); font-weight:600; margin-bottom:6px; }
+.vd-desc { font-size:13px; color:var(--text); line-height:1.5; margin-bottom:14px;
+  display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden; }
+.vd-meta { display:flex; gap:16px; font-size:12px; color:var(--text2); margin-bottom:18px; }
+.vd-dl-label { font-size:12px; font-weight:600; color:var(--text2); margin-bottom:8px; }
+.vd-btns { display:flex; flex-wrap:wrap; gap:8px; }
+.vd-btn { display:flex; align-items:center; gap:6px; padding:9px 16px; border-radius:8px;
+  font-size:13px; font-weight:600; cursor:pointer; border:1.5px solid transparent; }
+.vd-btn-hd   { background:var(--primary); color:#fff; border-color:var(--primary); }
+.vd-btn-hd:hover { background:var(--primary-hover); }
+.vd-btn-wm   { background:transparent; color:var(--primary); border-color:var(--primary); }
+.vd-btn-wm:hover { background:rgba(23,71,234,.06); }
+.vd-btn-mp3  { background:transparent; color:#1a8a52; border-color:#3AE890; }
+.vd-btn-mp3:hover { background:rgba(58,232,144,.08); }
+.vd-btn:disabled { opacity:.45; cursor:not-allowed; }
+.vd-note { font-size:12px; color:var(--text2); margin-top:12px; }
+.vd-note a { color:var(--primary); }
+.vd-err { display:none; background:#fff0f0; border:1px solid #fcc; border-radius:8px;
+  padding:12px 16px; color:#c00; font-size:13px; margin-bottom:16px; }
+.vd-loading { display:none; color:var(--text2); font-size:13px; padding:12px 0; }
+</style>
+
+<div id="videoSection" class="vd-section">
+  <div class="vd-title">Tải Video TikTok</div>
+  <div class="vd-sub">Dán link video TikTok → chọn chất lượng → tải về máy. Hỗ trợ video không watermark, có watermark, hoặc chỉ lấy âm thanh.</div>
+
+  <div class="vd-url-row">
+    <input id="vdUrlInput" type="text" placeholder="https://www.tiktok.com/@user/video/..." oninput="vdOnInput()" />
+    <button id="vdFetchBtn" onclick="vdFetch()" disabled>Lấy thông tin</button>
+  </div>
+
+  <div class="vd-err" id="vdErr"></div>
+  <div class="vd-loading" id="vdLoading">Đang lấy thông tin video...</div>
+
+  <div class="vd-card" id="vdCard">
+    <div class="vd-card-inner">
+      <div class="vd-thumb">
+        <img id="vdThumb" src="" alt="thumbnail" />
+      </div>
+      <div class="vd-info">
+        <div class="vd-author" id="vdAuthor"></div>
+        <div class="vd-desc" id="vdDesc"></div>
+        <div class="vd-meta">
+          <span id="vdDuration"></span>
+          <span id="vdSize"></span>
+        </div>
+        <div class="vd-dl-label">Chọn định dạng tải:</div>
+        <div class="vd-btns">
+          <button class="vd-btn vd-btn-hd"  id="vdBtnHD"  onclick="vdDownload('hd')" >⬇ HD — Không watermark</button>
+          <button class="vd-btn vd-btn-wm"  id="vdBtnWM"  onclick="vdDownload('wm')" >⬇ Thường — Có watermark</button>
+          <button class="vd-btn vd-btn-mp3" id="vdBtnMP3" onclick="vdDownload('mp3')">🎵 Chỉ tải âm thanh (MP3)</button>
+        </div>
+        <div class="vd-note">Nguồn: tikwm.com API · Video được lấy trực tiếp từ máy chủ TikTok</div>
+      </div>
     </div>
   </div>
 </div>
@@ -2352,18 +2430,21 @@ function switchLevel(level, campaignId) {
 
   const exportSec = document.getElementById('exportSection');
   const aiSec    = document.getElementById('aiSection');
+  const videoSec = document.getElementById('videoSection');
   const vd = document.getElementById('viewDesktop');
   const vm = document.getElementById('viewMobile');
   const lt1 = document.getElementById('ltabCampaign');
   const lt2 = document.getElementById('ltabAdgroup');
   const lt4 = document.getElementById('ltabExport');
   const lt5 = document.getElementById('ltabAI');
+  const lt6 = document.getElementById('ltabVideo');
   const agHead = document.getElementById('agLevelHead');
   const nfw    = document.getElementById('nameFilterWrap');
 
   // Hide all special sections first
   if (exportSec) exportSec.style.display = 'none';
   if (aiSec)    aiSec.style.display    = 'none';
+  if (videoSec) videoSec.style.display = 'none';
 
   if (level === 'export') {
     if (exportSec) exportSec.style.display = '';
@@ -2373,6 +2454,7 @@ function switchLevel(level, campaignId) {
     if (lt2) lt2.classList.remove('active');
     if (lt4) lt4.classList.add('active');
     if (lt5) lt5.classList.remove('active');
+    if (lt6) lt6.classList.remove('active');
     if (agHead) agHead.style.display = 'none';
     if (nfw)    nfw.style.display    = 'none';
     exportInit();
@@ -2387,6 +2469,21 @@ function switchLevel(level, campaignId) {
     if (lt2) lt2.classList.remove('active');
     if (lt4) lt4.classList.remove('active');
     if (lt5) lt5.classList.add('active');
+    if (lt6) lt6.classList.remove('active');
+    if (agHead) agHead.style.display = 'none';
+    if (nfw)    nfw.style.display    = 'none';
+    return;
+  }
+
+  if (level === 'video') {
+    if (videoSec) videoSec.style.display = 'block';
+    if (vd) vd.style.display = 'none';
+    if (vm) vm.style.display = 'none';
+    if (lt1) lt1.classList.remove('active');
+    if (lt2) lt2.classList.remove('active');
+    if (lt4) lt4.classList.remove('active');
+    if (lt5) lt5.classList.remove('active');
+    if (lt6) lt6.classList.add('active');
     if (agHead) agHead.style.display = 'none';
     if (nfw)    nfw.style.display    = 'none';
     return;
@@ -2417,6 +2514,7 @@ function switchLevel(level, campaignId) {
   if (lt2) lt2.classList.toggle('active', level === 'adgroup');
   if (lt4) lt4.classList.remove('active');
   if (lt5) lt5.classList.remove('active');
+  if (lt6) lt6.classList.remove('active');
   if (agHead) agHead.style.display = level === 'adgroup' ? '' : 'none';
   if (nfw) nfw.style.display = level === 'campaign' ? '' : 'none';
   if (S.campaigns.length) render();
@@ -3903,6 +4001,83 @@ function init() {
   document.getElementById('demoBadge').style.display = S.demo ? '' : 'none';
   if (S.demo) { showDashboard(); loadAccounts(); }
   else if (S.config.token) { showDashboard(); loadAccounts(); }
+}
+
+/* ═══════════════════════════ VIDEO DOWNLOADER ═══════════════════════════ */
+const VD = { data: null };
+
+function vdOnInput() {
+  const v = document.getElementById('vdUrlInput').value.trim();
+  document.getElementById('vdFetchBtn').disabled = !v || !v.includes('tiktok.com');
+  if (!v) { vdReset(); }
+}
+
+function vdReset() {
+  VD.data = null;
+  document.getElementById('vdCard').style.display = 'none';
+  document.getElementById('vdErr').style.display = 'none';
+  document.getElementById('vdLoading').style.display = 'none';
+}
+
+async function vdFetch() {
+  const url = document.getElementById('vdUrlInput').value.trim();
+  if (!url) return;
+  vdReset();
+  document.getElementById('vdFetchBtn').disabled = true;
+  document.getElementById('vdLoading').style.display = 'block';
+  try {
+    const api = `https://api.tikwm.com/?url=${encodeURIComponent(url)}&hd=1`;
+    const res = await fetch(api);
+    const json = await res.json();
+    if (!json || json.code !== 0 || !json.data) throw new Error(json.msg || 'Không lấy được thông tin video');
+    VD.data = json.data;
+    vdRenderCard(json.data);
+  } catch(e) {
+    document.getElementById('vdErr').textContent = '⚠ ' + (e.message || 'Lỗi kết nối. Kiểm tra lại link TikTok.');
+    document.getElementById('vdErr').style.display = 'block';
+  } finally {
+    document.getElementById('vdLoading').style.display = 'none';
+    document.getElementById('vdFetchBtn').disabled = false;
+  }
+}
+
+function vdRenderCard(d) {
+  document.getElementById('vdThumb').src = d.cover || d.origin_cover || '';
+  document.getElementById('vdAuthor').textContent = '@' + (d.author?.unique_id || d.author?.nickname || '');
+  document.getElementById('vdDesc').textContent = d.title || '(Không có mô tả)';
+  const dur = d.duration ? Math.floor(d.duration / 60) + ':' + String(d.duration % 60).padStart(2,'0') : '';
+  document.getElementById('vdDuration').textContent = dur ? '⏱ ' + dur : '';
+  const sz = d.size ? (d.size / 1024 / 1024).toFixed(1) + ' MB' : '';
+  document.getElementById('vdSize').textContent = sz ? '💾 ' + sz : '';
+  document.getElementById('vdBtnHD').disabled  = !d.play && !d.hdplay;
+  document.getElementById('vdBtnWM').disabled  = !d.wmplay;
+  document.getElementById('vdBtnMP3').disabled = !d.music;
+  document.getElementById('vdCard').style.display = 'block';
+}
+
+async function vdDownload(type) {
+  if (!VD.data) return;
+  const d = VD.data;
+  let fileUrl, filename;
+  const safeTitle = (d.title || 'tiktok').replace(/[^\w\s\-áàảãạăắằẳẵặâấầẩẫậéèẻẽẹêếềểễệíìỉĩịóòỏõọôốồổỗộơớờởỡợúùủũụưứừửữựýỳỷỹỵđ]/gi, '').trim().slice(0,50) || 'tiktok';
+  if (type === 'hd')  { fileUrl = d.hdplay || d.play; filename = safeTitle + '_HD.mp4'; }
+  if (type === 'wm')  { fileUrl = d.wmplay;            filename = safeTitle + '_wm.mp4'; }
+  if (type === 'mp3') { fileUrl = d.music;             filename = safeTitle + '.mp3'; }
+  if (!fileUrl) { toast('warn', 'Không có link tải cho định dạng này'); return; }
+  toast('info', 'Đang chuẩn bị tải...');
+  try {
+    const resp = await fetch(fileUrl);
+    if (!resp.ok) throw new Error('fetch failed');
+    const blob = await resp.blob();
+    const a = Object.assign(document.createElement('a'), { href: URL.createObjectURL(blob), download: filename });
+    a.click();
+    URL.revokeObjectURL(a.href);
+    toast('success', '✅ Đã tải: ' + filename);
+  } catch {
+    // CORS fallback: open in new tab so browser can save natively
+    window.open(fileUrl, '_blank');
+    toast('info', 'Mở tab mới — nhấn chuột phải → Lưu video để tải về');
+  }
 }
 
 document.addEventListener('DOMContentLoaded', init);
