@@ -483,10 +483,31 @@
 
 <!-- ===================== TOOLBAR ===================== -->
 <div class="toolbar">
-  <div class="select-wrap">
-    <select id="accountSel" onchange="onAccountChange(this.value)">
-      <option value="">— Chọn tài khoản QC —</option>
-    </select>
+  <div style="display:flex;align-items:center;gap:4px;">
+    <div class="select-wrap">
+      <select id="accountSel" onchange="onAccountChange(this.value)">
+        <option value="">— Chọn tài khoản QC —</option>
+      </select>
+    </div>
+    <button class="btn btn-sm btn-ghost" onclick="openRenameAccounts()" title="Đặt tên hiển thị cho tài khoản" style="padding:6px 8px;font-size:13px;">✏️</button>
+  </div>
+
+  <!-- Rename Accounts Overlay -->
+  <div id="renameOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:9000;align-items:center;justify-content:center;">
+    <div style="background:var(--bg2);border-radius:12px;padding:0;width:420px;max-width:95vw;box-shadow:0 8px 32px rgba(0,0,0,.2);overflow:hidden;">
+      <div style="padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;">
+        <div>
+          <div style="font-size:14px;font-weight:700;">✏️ Đặt tên tài khoản</div>
+          <div style="font-size:11px;color:var(--text2);margin-top:2px;">Tên hiển thị thay thế cho ID trong dropdown</div>
+        </div>
+        <button class="btn btn-sm btn-ghost" onclick="closeRenameAccounts()">✕</button>
+      </div>
+      <div id="renameList" style="padding:16px 20px;display:flex;flex-direction:column;gap:10px;max-height:60vh;overflow-y:auto;"></div>
+      <div style="padding:12px 20px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px;">
+        <button class="btn btn-sm btn-ghost" onclick="closeRenameAccounts()">Hủy</button>
+        <button class="btn btn-sm btn-primary" onclick="saveRenameAccounts()">💾 Lưu tên</button>
+      </div>
+    </div>
   </div>
   <div class="select-wrap">
     <select id="dateSel" onchange="onDateChange(this.value)">
@@ -1623,11 +1644,20 @@ function mockMetrics(ids) {
 }
 
 /* ═══════════════════════════ FETCH WRAPPERS ═══════════════════════════ */
+const SEONGON_NAMES = {
+  '7624044757360672775': 'SEONGON x TMU 02 | TK2',
+  '7642171524153229320': 'SEONGON x Yamaha Music',
+  '7621114385427726344': 'SEONGON x Capital Land - The Fullton | TK3',
+  '7642172495075950610': 'SEONGON x Traphaco',
+  '7537920079049490448': 'SEONGON x Nguyễn Đình Tân',
+  '7642253062719029255': 'SEONGON x Vietlux',
+};
+
 async function fetchAccounts() {
   if (S.demo) return mockAccounts();
   const ids = S.config.advIds || [];
   if (!ids.length) return [];
-  const customNames = S.config.advNames || {};
+  const customNames = { ...SEONGON_NAMES, ...(S.config.advNames || {}) };
 
   // Try to get names from API
   let apiNames = {};
@@ -2272,17 +2302,6 @@ function renderChips() {
 }
 
 /* ═══════════════════════════ ACCOUNT / DATE SELECTS ═══════════════════════════ */
-function renderAccountSel() {
-  const sel = document.getElementById('accountSel');
-  sel.innerHTML = '<option value="">— Chọn tài khoản QC —</option>';
-  S.accounts.forEach(a => {
-    const o = document.createElement('option');
-    o.value = a.advertiser_id;
-    o.textContent = a.advertiser_name || a.advertiser_id;
-    sel.appendChild(o);
-  });
-  if (S.accountId) sel.value = S.accountId;
-}
 
 function onAccountChange(v) {
   S.accountId = v;
@@ -3146,6 +3165,65 @@ function toast(type, msg) {
 /* ═══════════════════════════ OVERLAY CLOSE ═══════════════════════════ */
 document.querySelectorAll('.overlay').forEach(o => o.addEventListener('click', e => { if(e.target===o) o.classList.remove('open'); }));
 document.addEventListener('keydown', e => { if(e.key==='Escape') document.querySelectorAll('.overlay.open').forEach(o=>o.classList.remove('open')); });
+
+/* ═══════════════════════════ RENAME ACCOUNTS ═══════════════════════════ */
+
+function openRenameAccounts() {
+  if (!S.accounts.length) { toast('warn', '⚠️ Chưa có tài khoản nào được tải'); return; }
+  const saved = S.config.advNames || {};
+  const list  = document.getElementById('renameList');
+  list.innerHTML = S.accounts.map(a => {
+    const id   = a.advertiser_id;
+    const cur  = saved[id] || '';
+    const auto = a.advertiser_name || id;
+    return `<div style="display:flex;flex-direction:column;gap:4px;">
+      <label style="font-size:11px;font-weight:600;color:var(--text2);">
+        ID: <code style="background:var(--bg3);padding:1px 6px;border-radius:4px;font-size:11px;">${id}</code>
+        <span style="font-weight:400;margin-left:6px;color:var(--text3);">(hiện tại: ${auto})</span>
+      </label>
+      <input type="text" class="rename-inp" data-id="${id}" value="${esc(cur)}"
+        placeholder="Nhập tên hiển thị... VD: SEONGON x Traphaco"
+        style="padding:8px 10px;border:1px solid var(--border);border-radius:7px;font-size:13px;background:var(--bg2);color:var(--text);width:100%;box-sizing:border-box;"
+        onfocus="this.style.borderColor='var(--primary)'" onblur="this.style.borderColor='var(--border)'">
+    </div>`;
+  }).join('');
+  const ov = document.getElementById('renameOverlay');
+  ov.style.display = 'flex';
+}
+
+function closeRenameAccounts() {
+  document.getElementById('renameOverlay').style.display = 'none';
+}
+
+function saveRenameAccounts() {
+  const names = {};
+  document.querySelectorAll('.rename-inp').forEach(inp => {
+    const v = inp.value.trim();
+    if (v) names[inp.dataset.id] = v;
+  });
+  S.config.advNames = names;
+  localStorage.setItem('tt_cfg', JSON.stringify(S.config));
+  // Update the displayed names in accounts list and dropdown
+  S.accounts.forEach(a => {
+    const id = a.advertiser_id;
+    if (names[id]) a.advertiser_name = names[id];
+  });
+  renderAccountSel();
+  closeRenameAccounts();
+  toast('success', '✅ Đã lưu tên tài khoản');
+}
+
+function renderAccountSel() {
+  const sel = document.getElementById('accountSel');
+  sel.innerHTML = '<option value="">— Chọn tài khoản QC —</option>';
+  S.accounts.forEach(a => {
+    const o = document.createElement('option');
+    o.value = a.advertiser_id;
+    o.textContent = a.advertiser_name || a.advertiser_id;
+    sel.appendChild(o);
+  });
+  if (S.accountId) sel.value = S.accountId;
+}
 
 /* ═══════════════════════════ AI TOOLS ═══════════════════════════ */
 
