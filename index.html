@@ -3,7 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Tối ưu quảng cáo TikTok - Hưng</title>
+  <title>SEONGON — TikTok Ads Manager</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
     :root {
       --bg:     #F0F2F5;
@@ -14,16 +16,19 @@
       --text:   #111827;
       --text2:  #6B7280;
       --text3:  #9CA3AF;
-      --red:    #FE2C55;
+      --red:    #1747EA;
+      --primary:#1747EA;
+      --primary-hover: #1036c9;
+      --accent: #3AE890;
       --cyan:   #0EA5A0;
       --green:  #16A34A;
       --yellow: #D97706;
       --danger: #DC2626;
-      --blue:   #2563EB;
+      --blue:   #1747EA;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
       background: var(--bg); color: var(--text); font-size: 14px; min-height: 100vh;
     }
 
@@ -60,8 +65,8 @@
       transition: background .15s, border-color .15s; white-space: nowrap;
     }
     .btn:hover { background: var(--bg4); border-color: #444; }
-    .btn-primary { background: var(--red); border-color: var(--red); }
-    .btn-primary:hover { background: #e0193f; border-color: #e0193f; }
+    .btn-primary { background: var(--primary); border-color: var(--primary); color:#fff; }
+    .btn-primary:hover { background: var(--primary-hover); border-color: var(--primary-hover); }
     .btn-sm { padding: 5px 10px; font-size: 12px; border-radius: 6px; }
     .btn-ghost { background: transparent; border-color: transparent; }
     .btn-ghost:hover { background: var(--bg3); border-color: var(--border); }
@@ -117,7 +122,7 @@
       background: var(--bg3); color: var(--text2); font-size: 12px;
       cursor: pointer; transition: all .15s; user-select: none; white-space: nowrap;
     }
-    .chip.active { background: rgba(254,44,85,.15); border-color: var(--red); color: var(--red); }
+    .chip.active { background: rgba(23,71,234,.12); border-color: var(--primary); color: var(--primary); }
     .chip:hover:not(.active):not(.disabled) { border-color: #555; color: var(--text); }
     .chip.disabled { opacity: .4; cursor: not-allowed; }
 
@@ -200,14 +205,14 @@
 
     /* Campaign row */
     .campaign-row { cursor: pointer; }
-    .campaign-row.active-row > td { background: rgba(254,44,85,.07) !important; }
-    .campaign-row.active-row > td:first-child { background: rgba(254,44,85,.07) !important; }
-    .campaign-row.active-row > td:nth-child(2) { background: rgba(254,44,85,.07) !important; }
+    .campaign-row.active-row > td { background: rgba(23,71,234,.06) !important; }
+    .campaign-row.active-row > td:first-child { background: rgba(23,71,234,.06) !important; }
+    .campaign-row.active-row > td:nth-child(2) { background: rgba(23,71,234,.06) !important; }
     .campaign-row.active-row > td:nth-child(2)::before {
       content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: var(--red);
     }
-    .campaign-row.expanded > td:nth-child(2) { background: rgba(254,44,85,.04) !important; }
-    .campaign-row.expanded > td:first-child { background: rgba(254,44,85,.04) !important; }
+    .campaign-row.expanded > td:nth-child(2) { background: rgba(23,71,234,.03) !important; }
+    .campaign-row.expanded > td:first-child { background: rgba(23,71,234,.03) !important; }
     .adgroup-row td { background: #FAFBFC !important; }
     .adgroup-row:hover td { background: #F0F2F5 !important; }
     .adgroup-row td:first-child { background: #FAFBFC !important; }
@@ -458,13 +463,15 @@
 <!-- ===================== HEADER ===================== -->
 <header class="header">
   <div class="logo">
-    <div class="logo-icon">
-      <svg viewBox="0 0 24 24" fill="none">
-        <path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-2.88 2.5 2.89 2.89 0 01-2.89-2.89 2.89 2.89 0 012.89-2.89c.28 0 .54.04.79.1V9.01a6.28 6.28 0 00-.79-.05 6.34 6.34 0 00-6.34 6.34 6.34 6.34 0 006.34 6.34 6.34 6.34 0 006.33-6.34V8.85a8.18 8.18 0 004.78 1.52V6.9a4.85 4.85 0 01-1.01-.21z" fill="#FE2C55"/>
-        <path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-2.88 2.5 2.89 2.89 0 01-2.89-2.89 2.89 2.89 0 012.89-2.89c.28 0 .54.04.79.1V9.01a6.28 6.28 0 00-.79-.05 6.34 6.34 0 00-6.34 6.34 6.34 6.34 0 006.34 6.34 6.34 6.34 0 006.33-6.34V8.85a8.18 8.18 0 004.78 1.52V6.9a4.85 4.85 0 01-1.01-.21z" fill="#25F4EE" opacity=".35"/>
-      </svg>
+    <div class="logo-icon" style="background:var(--primary);border:none;border-radius:8px;">
+      <span style="color:#fff;font-size:13px;font-weight:800;letter-spacing:-.5px;font-family:Inter,sans-serif;">SG</span>
     </div>
-    <div class="logo-title">Tối ưu quảng cáo <span>TikTok</span> <span class="sub">- Hưng</span></div>
+    <div class="logo-title" style="display:flex;flex-direction:column;gap:0;">
+      <span style="font-size:15px;font-weight:800;letter-spacing:-.3px;color:var(--text);">SEONGON</span>
+      <span style="font-size:10px;font-weight:500;color:var(--text2);letter-spacing:.3px;">TikTok Ads Manager</span>
+    </div>
+    <div style="height:20px;width:1px;background:var(--border);margin:0 4px;"></div>
+    <div style="font-size:11px;color:var(--text2);">AI-First <span style="color:var(--accent);font-weight:600;">✦</span> Search Marketing Growth Partner</div>
     <div id="demoBadge" class="demo-badge" style="display:none;">⚡ Demo</div>
   </div>
   <div class="header-actions">
@@ -1079,36 +1086,37 @@ while ($listener.IsListening) {
   display:flex; border-bottom:1px solid var(--border); background:var(--surface);
 }
 .ai-sidebar-tab {
-  flex:1; padding:14px 10px; text-align:center; font-size:13px; font-weight:600;
+  flex:1; padding:13px 10px; text-align:center; font-size:12px; font-weight:600;
   cursor:pointer; color:var(--text2); border-bottom:2px solid transparent;
-  transition:all .15s; user-select:none;
+  transition:all .15s; user-select:none; letter-spacing:.1px;
 }
-.ai-sidebar-tab.active { color:var(--red); border-bottom-color:var(--red); background:var(--bg); }
-.ai-sidebar-tab:hover:not(.active) { color:var(--text); background:var(--border); }
+.ai-sidebar-tab.active { color:var(--primary); border-bottom-color:var(--primary); background:var(--bg); }
+.ai-sidebar-tab:hover:not(.active) { color:var(--text); background:var(--bg4); }
 .ai-sidebar-body { flex:1; overflow-y:auto; padding:16px; }
 .ai-main { flex:1; display:flex; flex-direction:column; overflow:hidden; background:var(--bg); }
 .ai-main-body { flex:1; overflow-y:auto; padding:20px 24px; }
 
-.ai-field { margin-bottom:14px; }
+.ai-field { margin-bottom:16px; }
 .ai-field label {
-  display:flex; align-items:center; gap:6px;
-  font-size:12px; font-weight:600; color:var(--text2); margin-bottom:7px;
+  display:block;
+  font-size:12px; font-weight:600; color:var(--text2); margin-bottom:6px;
+  letter-spacing:.1px;
 }
-.ai-field label .req { color:var(--red); font-size:11px; }
-.ai-field label .opt { color:var(--text2); font-size:11px; font-weight:400; }
+.ai-field label .req { color:var(--primary); font-size:11px; margin-left:2px; }
+.ai-field label .opt { color:var(--text3); font-size:11px; font-weight:400; margin-left:2px; }
 .ai-input {
   width:100%; padding:9px 12px; border:1px solid var(--border); border-radius:7px;
-  background:var(--surface); color:var(--text); font-size:13px; box-sizing:border-box;
-  transition:border-color .15s;
+  background:var(--bg2); color:var(--text); font-size:13px; box-sizing:border-box;
+  font-family:inherit; transition:border-color .15s, box-shadow .15s;
 }
-.ai-input:focus { outline:none; border-color:var(--red); }
+.ai-input:focus { outline:none; border-color:var(--primary); box-shadow:0 0 0 3px rgba(23,71,234,.08); }
 .ai-textarea {
   width:100%; padding:10px 12px; border:1px solid var(--border); border-radius:7px;
-  background:var(--surface); color:var(--text); font-size:12px; font-family:monospace;
-  resize:vertical; box-sizing:border-box; line-height:1.6; min-height:120px;
-  transition:border-color .15s;
+  background:var(--bg2); color:var(--text); font-size:13px; font-family:inherit;
+  resize:vertical; box-sizing:border-box; line-height:1.6; min-height:100px;
+  transition:border-color .15s, box-shadow .15s;
 }
-.ai-textarea:focus { outline:none; border-color:var(--red); }
+.ai-textarea:focus { outline:none; border-color:var(--primary); box-shadow:0 0 0 3px rgba(23,71,234,.08); }
 .ai-section-head {
   padding:14px 16px; border-bottom:1px solid var(--border);
   background:var(--surface); flex-shrink:0;
@@ -1122,7 +1130,7 @@ while ($listener.IsListening) {
   text-align:center; cursor:pointer; transition:all .2s; position:relative;
   background:var(--bg); margin-bottom:10px;
 }
-.ai-img-zone:hover, .ai-img-zone.drag-over { border-color:var(--red); background:rgba(233,30,99,.04); }
+.ai-img-zone:hover, .ai-img-zone.drag-over { border-color:var(--primary); background:rgba(23,71,234,.04); }
 .ai-img-zone input[type=file] { position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%; }
 .ai-img-zone-icon { font-size:28px; margin-bottom:6px; }
 .ai-img-zone-text { font-size:12px; color:var(--text2); line-height:1.5; }
@@ -1151,10 +1159,9 @@ while ($listener.IsListening) {
   margin:16px 24px 0; padding:12px 16px; border-radius:8px;
   font-size:12px; display:flex; gap:10px; align-items:flex-start;
 }
-.ai-hint-bar.blue { background:rgba(33,150,243,.12); color:#1565c0; border:1px solid rgba(33,150,243,.25); }
-.ai-hint-bar.green { background:rgba(76,175,80,.1); color:#2e7d32; border:1px solid rgba(76,175,80,.2); }
-.dark .ai-hint-bar.blue { color:#90caf9; }
-.dark .ai-hint-bar.green { color:#a5d6a7; }
+.ai-hint-bar.blue { background:rgba(23,71,234,.08); color:var(--primary); border:1px solid rgba(23,71,234,.2); }
+.ai-hint-bar.green { background:rgba(58,232,144,.12); color:#1a8a52; border:1px solid rgba(58,232,144,.3); }
+
 .ai-prompt-pre {
   margin:12px 24px 24px; padding:16px; border:1px solid var(--border); border-radius:8px;
   background:var(--surface); font-size:11.5px; font-family:monospace;
@@ -1167,8 +1174,8 @@ while ($listener.IsListening) {
 }
 .ai-prompt-empty-icon { font-size:48px; margin-bottom:12px; opacity:.4; }
 .ai-prompt-empty-text { font-size:13px; text-align:center; line-height:1.6; opacity:.7; }
-.ai-divider { font-size:11px; font-weight:700; color:var(--text2); text-transform:uppercase;
-  letter-spacing:.5px; margin:16px 0 10px; padding-bottom:6px; border-bottom:1px solid var(--border); }
+.ai-divider { font-size:10px; font-weight:700; color:var(--primary); text-transform:uppercase;
+  letter-spacing:1px; margin:18px 0 12px; padding-bottom:6px; border-bottom:2px solid rgba(23,71,234,.15); }
 </style>
 
 <div id="aiSection" class="ai-section">
@@ -1187,7 +1194,7 @@ while ($listener.IsListening) {
       <div class="ai-divider">Thông tin báo cáo</div>
 
       <div class="ai-field">
-        <label>🏭 Ngành hoạt động <span class="req">*</span></label>
+        <label>Ngành hoạt động <span class="req">*</span></label>
         <select id="aiIndustry" class="ai-input">
           <option value="fmcg">FMCG — Hàng tiêu dùng nhanh</option>
           <option value="cosmetic">Mỹ phẩm / Làm đẹp</option>
@@ -1198,21 +1205,21 @@ while ($listener.IsListening) {
       </div>
 
       <div class="ai-field">
-        <label>📅 Kỳ báo cáo <span class="opt">(tùy chọn)</span></label>
+        <label>Kỳ báo cáo <span class="opt">(tùy chọn)</span></label>
         <input type="text" id="aiReportPeriod" class="ai-input" placeholder="VD: 01/06 – 30/06/2025">
       </div>
 
       <div class="ai-divider">Dữ liệu đầu vào</div>
 
       <div class="ai-field">
-        <label>📋 Dữ liệu báo cáo <span class="req">*</span></label>
+        <label>Dữ liệu báo cáo <span class="req">*</span></label>
         <textarea id="aiReportData" class="ai-textarea" rows="7"
           placeholder="Dán dữ liệu từ TikTok Ads Manager&#10;&#10;Có thể dán:&#10;• Bảng CSV từ Ads Manager&#10;• Số liệu copy từ Excel&#10;• Text tổng hợp thủ công"></textarea>
         <button class="btn btn-sm btn-ghost" style="width:100%;margin-top:6px;" onclick="aiImportFromExport()">⬅ Lấy từ tab Xuất báo cáo</button>
       </div>
 
       <div class="ai-field">
-        <label>🖼 Đính kèm ảnh <span class="opt">(tùy chọn)</span></label>
+        <label>Đính kèm ảnh <span class="opt">(tùy chọn)</span></label>
         <div class="ai-img-zone" id="aiImgZone"
           ondragover="event.preventDefault();this.classList.add('drag-over')"
           ondragleave="this.classList.remove('drag-over')"
@@ -1220,7 +1227,7 @@ while ($listener.IsListening) {
           <input type="file" accept="image/*" multiple onchange="aiHandleFiles(this.files)">
           <div class="ai-img-zone-icon">📸</div>
           <div class="ai-img-zone-text">
-            <strong>Click hoặc kéo ảnh vào đây</strong><br>
+            Click hoặc kéo ảnh vào đây<br>
             Screenshot dashboard, ảnh quảng cáo<br>
             <span style="font-size:10px;opacity:.7;">PNG, JPG, WEBP — tối đa 10 ảnh</span>
           </div>
@@ -1243,12 +1250,12 @@ while ($listener.IsListening) {
       <div class="ai-divider">Thông tin sản phẩm</div>
 
       <div class="ai-field">
-        <label>🏷 Tên sản phẩm / Thương hiệu <span class="req">*</span></label>
+        <label>Tên sản phẩm / Thương hiệu <span class="req">*</span></label>
         <input type="text" id="bfProduct" class="ai-input" placeholder="VD: Sữa rửa mặt La Roche-Posay">
       </div>
 
       <div class="ai-field">
-        <label>🏭 Ngành hàng <span class="req">*</span></label>
+        <label>Ngành hàng <span class="req">*</span></label>
         <select id="bfIndustry" class="ai-input">
           <option value="cosmetic">Mỹ phẩm / Skincare</option>
           <option value="fmcg">FMCG / Thực phẩm</option>
@@ -1263,7 +1270,7 @@ while ($listener.IsListening) {
       <div class="ai-divider">Chiến dịch</div>
 
       <div class="ai-field">
-        <label>🎯 Mục tiêu chiến dịch <span class="req">*</span></label>
+        <label>Mục tiêu chiến dịch <span class="req">*</span></label>
         <select id="bfGoal" class="ai-input">
           <option value="awareness">Brand Awareness — Nhận diện thương hiệu</option>
           <option value="conversion">Conversion / TikTok Shop — Bán hàng</option>
@@ -1272,7 +1279,7 @@ while ($listener.IsListening) {
       </div>
 
       <div class="ai-field">
-        <label>⏱ Độ dài video mục tiêu</label>
+        <label>Độ dài video mục tiêu</label>
         <select id="bfDuration" class="ai-input">
           <option value="15-30">15–30 giây</option>
           <option value="30-45" selected>30–45 giây</option>
@@ -1283,23 +1290,23 @@ while ($listener.IsListening) {
       <div class="ai-divider">Đối tượng & Insight</div>
 
       <div class="ai-field">
-        <label>👥 Đối tượng mục tiêu <span class="req">*</span></label>
+        <label>Đối tượng mục tiêu <span class="req">*</span></label>
         <input type="text" id="bfAudience" class="ai-input" placeholder="VD: Nữ 18–35, quan tâm skincare, da dầu/mụn">
       </div>
 
       <div class="ai-field">
-        <label>⭐ USP / Điểm khác biệt <span class="opt">(tùy chọn)</span></label>
+        <label>USP / Điểm khác biệt <span class="opt">(tùy chọn)</span></label>
         <input type="text" id="bfUSP" class="ai-input" placeholder="VD: Không cồn, dịu nhẹ, bác sĩ da liễu khuyên dùng">
       </div>
 
       <div class="ai-field">
-        <label>💡 Insight / Điểm đau khách hàng <span class="opt">(tùy chọn)</span></label>
+        <label>Insight / Điểm đau khách hàng <span class="opt">(tùy chọn)</span></label>
         <textarea id="bfInsight" class="ai-textarea" rows="3"
           placeholder="VD: Khách hàng loay hoay chọn sữa rửa mặt, sợ kích ứng da"></textarea>
       </div>
 
       <div class="ai-field">
-        <label>🖼 Ảnh tham khảo <span class="opt">(tùy chọn)</span></label>
+        <label>Ảnh tham khảo <span class="opt">(tùy chọn)</span></label>
         <div class="ai-img-zone" id="aiBriefImgZone"
           ondragover="event.preventDefault();this.classList.add('drag-over')"
           ondragleave="this.classList.remove('drag-over')"
@@ -1307,7 +1314,7 @@ while ($listener.IsListening) {
           <input type="file" accept="image/*" multiple onchange="aiBriefHandleFiles(this.files)">
           <div class="ai-img-zone-icon">🎨</div>
           <div class="ai-img-zone-text">
-            <strong>Ảnh sản phẩm, ref video</strong><br>
+            Ảnh sản phẩm, ref video<br>
             <span style="font-size:10px;opacity:.7;">Để Claude hiểu visual direction</span>
           </div>
         </div>
@@ -3809,3 +3816,4 @@ document.addEventListener('DOMContentLoaded', init);
 </script>
 </body>
 </html>
+
