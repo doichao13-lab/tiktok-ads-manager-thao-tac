@@ -4021,24 +4021,34 @@ function vdReset() {
   document.getElementById('vdLoading').style.display = 'none';
 }
 
-async function vdCallAPI(tikwmUrl) {
-  // Reuse the same PROXIES list the tool already uses for TikTok Business API
-  const proxies = S.config.proxy ? [S.config.proxy, ...PROXIES] : PROXIES;
+// Try Cloudflare Worker /tikwm endpoint (no CORS issues, no rate limits)
+async function vdCallWorker(videoUrl) {
+  const workerBase = 'https://tiktok-proxy.doichao13.workers.dev';
+  const u = `${workerBase}/tikwm?url=${encodeURIComponent(videoUrl)}&hd=1`;
+  const r = await fetchWithTimeout(u, {}, 12000);
+  if (!r.ok) throw new Error(`Worker HTTP ${r.status}`);
+  const json = JSON.parse(await r.text());
+  if (!json || json.code !== 0 || !json.data) throw new Error(json?.msg || 'Worker: không lấy được data');
+  return json;
+}
+
+// Fallback: public CORS proxies → tikwm.com (có thể bị chặn)
+async function vdCallProxy(videoUrl) {
+  const tikwmUrl = `https://tikwm.com/api/?url=${encodeURIComponent(videoUrl)}&hd=1`;
   let lastErr = '';
-  for (const p of proxies) {
+  for (const p of PROXIES) {
     try {
       const url = p + encodeURIComponent(tikwmUrl);
-      const r = await fetchWithTimeout(url, {}, 10000);
+      const r = await fetchWithTimeout(url, {}, 12000);
       if (!r.ok) continue;
       const text = await r.text();
       let json;
       try { json = JSON.parse(text); } catch { continue; }
-      // allorigins wraps in { contents: "..." }
-      if (json.contents) { try { json = JSON.parse(json.contents); } catch { continue; } }
-      if (json && json.code === 0 && json.data) return json;
+      if (json?.contents) { try { json = JSON.parse(json.contents); } catch { continue; } }
+      if (json?.code === 0 && json?.data) return json;
     } catch(e) { lastErr = e.message; }
   }
-  throw new Error('Không kết nối được API qua các proxy. ' + (lastErr || 'Thử lại sau.'));
+  throw new Error('Không kết nối được qua proxy. ' + (lastErr || 'Worker chưa có endpoint /tikwm — xem hướng dẫn.'));
 }
 
 async function vdFetch() {
@@ -4048,9 +4058,13 @@ async function vdFetch() {
   document.getElementById('vdFetchBtn').disabled = true;
   document.getElementById('vdLoading').style.display = 'block';
   try {
-    const tikwmUrl = `https://api.tikwm.com/?url=${encodeURIComponent(url)}&hd=1`;
-    const json = await vdCallAPI(tikwmUrl);
-    if (!json || json.code !== 0 || !json.data) throw new Error(json?.msg || 'Không lấy được thông tin video');
+    let json;
+    // 1. Worker trước (đáng tin cậy nhất — cần thêm endpoint /tikwm vào Worker)
+    try { json = await vdCallWorker(url); }
+    catch(e) {
+      // 2. Fallback public CORS proxies
+      json = await vdCallProxy(url);
+    }
     VD.data = json.data;
     vdRenderCard(json.data);
   } catch(e) {
