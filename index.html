@@ -551,7 +551,7 @@
 <div class="filter-bar">
   <span class="filter-label">Cột hiển thị (tối đa 3):</span>
   <div class="chips" id="chips"></div>
-  <span id="conversionNote" style="display:none;font-size:11px;color:#e07b00;margin-left:8px;" title="Lead Form Instant: TikTok Public API không cung cấp số lead — hiển thị 'Xem TT Ads'. Conversion website (Pixel): API trả về số liệu bình thường.">⚠ Lead Form: xem TikTok Ads Manager để có số liệu lead thực tế · Conversion website (Pixel): API hoạt động bình thường</span>
+  <span id="conversionNote" style="display:none;font-size:11px;color:#e07b00;margin-left:8px;" title="Dùng real_time_result (số liệu trong ngày) + fallback về result (attribution). Nếu cả hai đều 0 → TikTok không cung cấp qua Public API — xem trực tiếp trong TikTok Ads Manager.">⚠ Nếu Lead / KQ = 0 dù có chạy: xem TikTok Ads Manager để biết số liệu thực tế</span>
 </div>
 
 <!-- ===================== LEVEL BAR ===================== -->
@@ -1497,7 +1497,7 @@ const COLS = {
   reach:        { label: 'Reach',       metric: 'reach',                  icon: '👁' },
   video_2s:     { label: 'View 2s',     metric: 'video_watched_2s',  icon: '▶' },
   video_6s:     { label: 'View 6s',     metric: 'video_watched_6s',  icon: '▶▶' },
-  conversion:   { label: 'Lead / KQ', metric: 'result', icon: '✅', note: 'Lead Form: API công khai không có số lead → hiện "Xem TT Ads". Conversion Pixel website: API trả số liệu bình thường.' },
+  conversion:   { label: 'Lead / KQ', metric: 'real_time_result', metricFallback: 'result', icon: '✅', note: 'Dùng real_time_result (thực tế trong ngày). Nếu trống sẽ fallback về result (attribution window). Cả hai = 0 → xem TikTok Ads Manager.' },
   purchase:     { label: 'Mua hàng',    metric: 'complete_payment',  icon: '🛒' },
   click_to_web: { label: 'Click Web',   metric: 'clicks',                 icon: '🖱' },
   follow:       { label: 'Follow',      metric: 'follows',                icon: '➕' },
@@ -1798,7 +1798,7 @@ async function fetchMetrics(aid, level, ids) {
     report_type: 'BASIC',
     data_level: level === 'campaign' ? 'AUCTION_CAMPAIGN' : 'AUCTION_ADGROUP',
     dimensions: [dim],
-    metrics: ['spend','reach','video_watched_2s','video_watched_6s','result','cost_per_result','complete_payment','clicks','follows','impressions','frequency'],
+    metrics: ['spend','reach','video_watched_2s','video_watched_6s','real_time_result','result','cost_per_result','complete_payment','clicks','follows','impressions','frequency'],
     start_date: start, end_date: end, page_size: 1000,
   });
   const r = {};
@@ -2075,12 +2075,7 @@ function makeCampaignRow(c) {
       </div>
     </td>
     <td><span class="spend-val">${fmtCur(m.spend||0)}</span></td>
-    ${cols.map(cl => {
-      if (cl.metric === 'result' && c.objective_type === 'LEAD_GENERATION') {
-        return `<td class="metric-num"><span class="na-cell" title="Lead Form Instant: TikTok không cung cấp số lead qua Public API. Xem số liệu thực tế trong TikTok Ads Manager.">Xem TT Ads</span></td>`;
-      }
-      return `<td class="metric-num">${fmtN(getMetricVal(m,cl),cl.metric)}</td>`;
-    }).join('')}
+    ${cols.map(cl=>`<td class="metric-num">${fmtN(getMetricVal(m,cl),cl.metric)}</td>`).join('')}
     <td onclick="event.stopPropagation()">
       <button class="btn btn-sm btn-ghost" onclick="switchLevel('adgroup','${c.campaign_id}')">
         👥 Tab riêng
@@ -2103,7 +2098,6 @@ function makeAGRow(ag) {
   // Show parent campaign name when in flat adgroup tab view
   const parentCamp = S.campaigns.find(c => c.campaign_id === ag.campaign_id) || null;
   const parentLabel = (S.level === 'adgroup' && parentCamp) ? `<span style="color:var(--text3);font-size:10px;display:block;margin-top:1px;">📊 ${esc(parentCamp.campaign_name)}</span>` : '';
-  const parentObjType = parentCamp ? parentCamp.objective_type : null;
   tr.innerHTML = `
     <td>
       <div class="adgroup-indent">
@@ -2127,12 +2121,7 @@ function makeAGRow(ag) {
       </div>
     </td>
     <td><span class="spend-val">${fmtCur(m.spend||0)}</span></td>
-    ${cols.map(cl => {
-      if (cl.metric === 'result' && parentObjType === 'LEAD_GENERATION') {
-        return `<td class="metric-num"><span class="na-cell" title="Lead Form Instant: TikTok không cung cấp số lead qua Public API. Xem số liệu thực tế trong TikTok Ads Manager.">Xem TT Ads</span></td>`;
-      }
-      return `<td class="metric-num">${fmtN(getMetricVal(m,cl),cl.metric)}</td>`;
-    }).join('')}
+    ${cols.map(cl=>`<td class="metric-num">${fmtN(getMetricVal(m,cl),cl.metric)}</td>`).join('')}
     <td>
       <button class="btn btn-sm btn-ghost" onclick="openBid('${ag.adgroup_id}','${esc(ag.adgroup_name)}',${ag.bid_price||0})">
         🎯 Bid
