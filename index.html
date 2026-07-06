@@ -270,6 +270,20 @@
     .metric-num { font-weight: 500; }
     .spend-val { color: var(--red); font-weight: 600; }
     .na-cell { color: var(--text3); font-size: 11px; font-style: italic; cursor: help; border-bottom: 1px dashed var(--text3); }
+    .rename-btn {
+      width: 18px; height: 18px; border: none; border-radius: 4px;
+      background: transparent; color: var(--text3); cursor: pointer;
+      font-size: 11px; opacity: 0; transition: opacity .15s; flex-shrink: 0;
+      padding: 0; display: inline-flex; align-items: center; justify-content: center;
+    }
+    tr:hover .rename-btn { opacity: 1; }
+    .rename-btn:hover { background: var(--bg3); color: var(--text); }
+    .name-title-row { display: flex; align-items: center; gap: 3px; }
+    .rename-inline-inp {
+      font-size: 13px; font-weight: 500; color: var(--text); background: var(--bg2);
+      border: 1.5px solid var(--accent); border-radius: 5px; padding: 2px 7px;
+      outline: none; min-width: 150px; max-width: 280px;
+    }
 
     /* ── MOBILE CARD VIEW ── */
     .cards { display: grid; gap: 12px; }
@@ -2051,6 +2065,7 @@ function makeCampaignRow(c) {
   const cols       = colDefs();
   const agLoaded   = S.adgroups[c.campaign_id];
   const agCount    = agLoaded ? agLoaded.length : '?';
+  const campDispName = (S.config.campNames||{})[c.campaign_id] || c.campaign_name;
   tr.innerHTML = `
     <td class="row-check" onclick="event.stopPropagation()">
       <input type="checkbox" ${selected?'checked':''} onchange="toggleCampaignSelect('${c.campaign_id}',this.checked)" />
@@ -2059,7 +2074,10 @@ function makeCampaignRow(c) {
       <div class="name-cell">
         <div class="expand-btn ${isExpanded?'open':''}" title="${isExpanded?'Thu gọn nhóm QC':'Xem nhóm QC'}">▶</div>
         <div class="name-info">
-          <div class="name-main" title="${esc(c.campaign_name)}">${esc(c.campaign_name)}</div>
+          <div class="name-title-row">
+            <div class="name-main" id="cname-${c.campaign_id}" title="${esc(c.campaign_name)}">${esc(campDispName)}</div>
+            <button class="rename-btn" onclick="startRename('campaign','${c.campaign_id}',event)" title="Đổi tên hiển thị">✏</button>
+          </div>
           <div class="name-sub">${OBJ_MAP[c.objective_type]||c.objective_type||'—'} ${agLoaded ? `• ${agCount} nhóm QC` : ''}</div>
         </div>
       </div>
@@ -2100,12 +2118,16 @@ function makeAGRow(ag) {
   // Show parent campaign name when in flat adgroup tab view
   const parentCamp = S.campaigns.find(c => c.campaign_id === ag.campaign_id) || null;
   const parentLabel = (S.level === 'adgroup' && parentCamp) ? `<span style="color:var(--text3);font-size:10px;display:block;margin-top:1px;">📊 ${esc(parentCamp.campaign_name)}</span>` : '';
+  const agDispName = (S.config.agNames||{})[ag.adgroup_id] || ag.adgroup_name;
   tr.innerHTML = `
     <td>
       <div class="adgroup-indent">
         <div class="adgroup-bar"></div>
         <div class="name-info">
-          <div class="name-main" title="${esc(ag.adgroup_name)}" style="font-weight:400;">${esc(ag.adgroup_name)}</div>
+          <div class="name-title-row">
+            <div class="name-main" id="agname-${ag.adgroup_id}" title="${esc(ag.adgroup_name)}" style="font-weight:400;">${esc(agDispName)}</div>
+            <button class="rename-btn" onclick="startRename('adgroup','${ag.adgroup_id}',event)" title="Đổi tên hiển thị">✏</button>
+          </div>
           <div class="name-sub">Bid: ${bidLabel}${parentLabel}</div>
         </div>
       </div>
@@ -2131,6 +2153,52 @@ function makeAGRow(ag) {
     </td>
   `;
   return tr;
+}
+
+/* ── INLINE RENAME (campaign / adgroup) ── */
+function startRename(type, id, event) {
+  event.stopPropagation();
+  const prefix  = type === 'campaign' ? 'cname-' : 'agname-';
+  const nameDiv = document.getElementById(prefix + id);
+  if (!nameDiv) return;
+  const btn = nameDiv.nextElementSibling;
+  const origName = nameDiv.textContent.trim();
+
+  const inp = document.createElement('input');
+  inp.className = 'rename-inline-inp';
+  inp.value = origName;
+  nameDiv.style.display = 'none';
+  if (btn) btn.style.display = 'none';
+  nameDiv.insertAdjacentElement('beforebegin', inp);
+  inp.focus(); inp.select();
+
+  const commit = () => {
+    const val = inp.value.trim();
+    inp.remove();
+    nameDiv.style.display = '';
+    if (btn) btn.style.display = '';
+    if (val && val !== origName) {
+      saveRename(type, id, val);
+      nameDiv.textContent = val;
+    }
+  };
+  inp.addEventListener('keydown', e => {
+    if (e.key === 'Enter')  { e.preventDefault(); commit(); }
+    if (e.key === 'Escape') { inp.remove(); nameDiv.style.display = ''; if (btn) btn.style.display = ''; }
+  });
+  inp.addEventListener('blur', commit);
+}
+
+function saveRename(type, id, newName) {
+  if (type === 'campaign') {
+    if (!S.config.campNames) S.config.campNames = {};
+    S.config.campNames[id] = newName;
+  } else {
+    if (!S.config.agNames) S.config.agNames = {};
+    S.config.agNames[id] = newName;
+  }
+  localStorage.setItem('tt_cfg', JSON.stringify(S.config));
+  toast('ok', '✏ Đã đổi tên');
 }
 
 function renderAGRows(cid) {
