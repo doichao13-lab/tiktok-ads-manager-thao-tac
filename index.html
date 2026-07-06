@@ -4578,6 +4578,8 @@ async function loadAnalytics() {
     return;
   }
   const metric = S_analMetric;
+  const ANAL_METRIC_LABELS = { spend: 'Chi phí', impressions: 'Lượt hiển thị', clicks: 'Lượt click', reach: 'Reach' };
+  const metricLabel = ANAL_METRIC_LABELS[metric] || metric;
   document.getElementById('analContent').innerHTML = '';
   document.getElementById('analLoading').style.display = 'block';
 
@@ -4594,62 +4596,68 @@ async function loadAnalytics() {
 
   document.getElementById('analLoading').style.display = 'none';
 
-  // Parse helpers
-  const parseList = (raw, dimKey, labelFn) =>
-    raw.map(r => ({ label: labelFn(r.dimensions[dimKey]||''), v: parseFloat(r.metrics[metric])||0 }))
-       .filter(d => d.v > 0)
-       .sort((a,b) => b.v - a.v);
+  try {
+    // Parse helpers
+    const parseList = (raw, dimKey, labelFn) =>
+      (raw||[]).map(r => ({ label: labelFn((r.dimensions||{})[dimKey]||''), v: parseFloat((r.metrics||{})[metric])||0 }))
+         .filter(d => d.v > 0)
+         .sort((a,b) => b.v - a.v);
 
-  const gender  = parseList(genderRaw,  'gender',         k => GENDER_LABELS[k]||k);
-  const age     = parseList(ageRaw,     'age',            k => k||'Unknown');
-  const country = parseList(countryRaw, 'country_code',   k => k||'Unknown');
-  const province= parseList(provinceRaw,'province_id',    k => VN_PROVINCES[String(k)]||('ID '+k));
-  const os      = parseList(osRaw,      'platform',       k => k||'Unknown');
-  const brand   = parseList(brandRaw,   'device_brand_name', k => k||'Unknown');
+    const gender  = parseList(genderRaw,  'gender',         k => (GENDER_LABELS||{})[k]||k);
+    const age     = parseList(ageRaw,     'age',            k => k||'Unknown');
+    const country = parseList(countryRaw, 'country_code',   k => k||'Unknown');
+    const province= parseList(provinceRaw,'province_id',    k => (VN_PROVINCES||{})[String(k)]||('ID '+k));
+    const os      = parseList(osRaw,      'platform',       k => k||'Unknown');
+    const brand   = parseList(brandRaw,   'device_brand_name', k => k||'Unknown');
 
-  const html = `
-    <!-- ── Xu hướng theo ngày ── -->
-    <div class="anal-card" style="margin-bottom:16px;">
-      <div class="anal-card-title">Xu hướng ${metricLabel} theo ngày</div>
-      ${mkLine(timeSeries)}
-    </div>
-
-    <!-- ── Đối tượng ── -->
-    <div class="anal-grid anal-grid-3" style="margin-bottom:16px;">
-      ${mkDonutCard('Giới tính', gender, metric)}
-      <div class="anal-card">
-        <div class="anal-card-title">Độ tuổi</div>
-        ${mkBarsH(age, metric)}
+    const html = `
+      <!-- ── Xu hướng theo ngày ── -->
+      <div class="anal-card" style="margin-bottom:16px;">
+        <div class="anal-card-title">Xu hướng ${metricLabel} theo ngày</div>
+        ${mkLine(timeSeries)}
       </div>
-      <div class="anal-card">
-        <div class="anal-card-title">Top tuổi theo ${metricLabel}</div>
-        ${mkRankList(age, metric, 6)}
-      </div>
-    </div>
 
-    <!-- ── Địa lý ── -->
-    <div class="anal-grid anal-grid-2" style="margin-bottom:16px;">
-      <div class="anal-card">
-        <div class="anal-card-title">Quốc gia</div>
-        ${mkBarsH(country.slice(0,8), metric)}
+      <!-- ── Đối tượng ── -->
+      <div class="anal-grid anal-grid-3" style="margin-bottom:16px;">
+        ${mkDonutCard('Giới tính', gender, metric)}
+        <div class="anal-card">
+          <div class="anal-card-title">Độ tuổi</div>
+          ${mkBarsH(age, metric)}
+        </div>
+        <div class="anal-card">
+          <div class="anal-card-title">Top tuổi theo ${metricLabel}</div>
+          ${mkRankList(age, metric, 6)}
+        </div>
       </div>
-      <div class="anal-card">
-        <div class="anal-card-title">Tỉnh / Thành phố hàng đầu (VN)</div>
-        ${mkRankList(province, metric, 10)}
-      </div>
-    </div>
 
-    <!-- ── Thiết bị ── -->
-    <div class="anal-grid anal-grid-2" style="margin-bottom:16px;">
-      ${mkDonutCard('Hệ điều hành thiết bị', os, metric)}
-      <div class="anal-card">
-        <div class="anal-card-title">Thương hiệu thiết bị</div>
-        ${mkRankList(brand, metric, 10)}
+      <!-- ── Địa lý ── -->
+      <div class="anal-grid anal-grid-2" style="margin-bottom:16px;">
+        <div class="anal-card">
+          <div class="anal-card-title">Quốc gia</div>
+          ${mkBarsH(country.slice(0,8), metric)}
+        </div>
+        <div class="anal-card">
+          <div class="anal-card-title">Tỉnh / Thành phố hàng đầu (VN)</div>
+          ${mkRankList(province, metric, 10)}
+        </div>
       </div>
-    </div>
-  `;
 
-  document.getElementById('analContent').innerHTML = html;
+      <!-- ── Thiết bị ── -->
+      <div class="anal-grid anal-grid-2" style="margin-bottom:16px;">
+        ${mkDonutCard('Hệ điều hành thiết bị', os, metric)}
+        <div class="anal-card">
+          <div class="anal-card-title">Thương hiệu thiết bị</div>
+          ${mkRankList(brand, metric, 10)}
+        </div>
+      </div>
+    `;
+
+    document.getElementById('analContent').innerHTML = html;
+  } catch(err) {
+    document.getElementById('analContent').innerHTML =
+      `<div style="color:var(--danger);padding:24px;">Lỗi render biểu đồ: ${err.message}</div>`;
+    console.error('loadAnalytics render error:', err);
+  }
 }
 
 document.addEventListener('DOMContentLoaded', init);
