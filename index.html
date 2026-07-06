@@ -294,6 +294,11 @@
     .pacing-fill { height: 100%; border-radius: 2px; background: var(--text3); transition: width .4s; }
     .pacing-fill.pacing-warn   { background: #f59e0b; }
     .pacing-fill.pacing-danger { background: #e53935; }
+    /* ── TREND BADGE ── */
+    .trend-badge { font-size: 10px; font-weight: 700; padding: 1px 5px; border-radius: 10px;
+      margin-left: 5px; white-space: nowrap; vertical-align: middle; }
+    .trend-up { background: rgba(22,163,74,.12); color: #16a34a; }
+    .trend-dn { background: rgba(220,38,38,.1);  color: #dc2626; }
     /* ── OBJECTIVE FILTER CHIPS ── */
     .obj-filter-bar { align-items:center; gap:6px; padding:6px 20px 2px; flex-wrap:wrap; }
     .obj-chip { padding:3px 11px; border:1px solid var(--border); border-radius:20px; font-size:12px;
@@ -1569,6 +1574,7 @@ const S = {
   statusFilter: '',
   nameFilter:   '',
   objFilter:    '',
+  prevMetrics:  {},
   level: 'campaign',           // 'campaign' | 'adgroup' | 'export'
   selectedCampaignId: null,    // current campaign shown in adgroup view
   selectedCampaignIds: new Set(), // checkbox multi-select
@@ -1692,6 +1698,64 @@ function getRange(v) {
   const d = parseInt(v) || 7;
   const s = new Date(t); s.setDate(s.getDate() - d + 1);
   return { start: fmt(s), end: fmt(t) };
+}
+
+function getPrevRange(v) {
+  const fmt = d => d.toISOString().slice(0,10);
+  const t = new Date();
+  if (v === 'today') {
+    const y = new Date(t); y.setDate(y.getDate()-1);
+    return { start: fmt(y), end: fmt(y) };
+  }
+  if (v === 'yesterday') {
+    const d = new Date(t); d.setDate(d.getDate()-2);
+    return { start: fmt(d), end: fmt(d) };
+  }
+  if (v === 'this_month') {
+    return {
+      start: fmt(new Date(t.getFullYear(), t.getMonth()-1, 1)),
+      end:   fmt(new Date(t.getFullYear(), t.getMonth(), 0)),
+    };
+  }
+  if (v === 'last_month') {
+    return {
+      start: fmt(new Date(t.getFullYear(), t.getMonth()-2, 1)),
+      end:   fmt(new Date(t.getFullYear(), t.getMonth()-1, 0)),
+    };
+  }
+  const days = parseInt(v) || 7;
+  const e = new Date(t); e.setDate(e.getDate() - days);
+  const s = new Date(t); s.setDate(s.getDate() - days * 2 + 1);
+  return { start: fmt(s), end: fmt(e) };
+}
+
+async function fetchMetricsByRange(aid, level, start, end) {
+  if (S.demo) return {};
+  const dim = level === 'campaign' ? 'campaign_id' : 'adgroup_id';
+  try {
+    const d = await apiGet('/report/integrated/get/', {
+      advertiser_id: aid,
+      report_type: 'BASIC',
+      data_level: level === 'campaign' ? 'AUCTION_CAMPAIGN' : 'AUCTION_ADGROUP',
+      dimensions: [dim],
+      metrics: ['spend'],
+      start_date: start, end_date: end, page_size: 1000,
+    });
+    const r = {};
+    (d.list || []).forEach(item => { r[item.dimensions[dim]] = item.metrics; });
+    return r;
+  } catch { return {}; }
+}
+
+function trendBadge(cur, prevM) {
+  if (!prevM) return '';
+  const c = parseFloat(cur) || 0;
+  const p = parseFloat(prevM.spend) || 0;
+  if (p === 0) return '';
+  const pct = (c - p) / p * 100;
+  if (Math.abs(pct) < 2) return '';
+  const up = pct > 0;
+  return `<span class="trend-badge ${up?'trend-up':'trend-dn'}">${up?'↑':'↓'}${Math.abs(pct).toFixed(0)}%</span>`;
 }
 
 /* ═══════════════════════════ MOCK DATA ═══════════════════════════ */
@@ -1877,13 +1941,18 @@ async function loadCampaigns(aid) {
   updateSummary();
   setLoading(false);
 
-  // Load campaign metrics + background adgroup count in parallel
+  // Load campaign metrics + prev period + background adgroup count in parallel
   const tasks = [];
   if (S.campaigns.length) {
     tasks.push(
       fetchMetrics(aid, 'campaign', S.campaigns.map(c => c.campaign_id))
         .then(m => { Object.assign(S.metrics, m); render(); updateSummary(); })
         .catch(e => toast('warn', 'Không tải được số liệu: ' + e.message))
+    );
+    const pr = getPrevRange(S.dateRange);
+    tasks.push(
+      fetchMetricsByRange(aid, 'campaign', pr.start, pr.end)
+        .then(m => { S.prevMetrics = m; render(); })
     );
     if (!S.demo) {
       tasks.push(loadAdGroupCount(aid));
@@ -2130,7 +2199,7 @@ function makeCampaignRow(c) {
       </div>
       ${pacingBar}
     </td>
-    <td><span class="spend-val">${fmtCur(m.spend||0)}</span></td>
+    <td><span class="spend-val">${fmtCur(m.spend||0)}</span>${trendBadge(m.spend||0, S.prevMetrics[c.campaign_id])}</td>
     ${cols.map(cl=>`<td class="metric-num">${fmtN(getMetricVal(m,cl),cl.metric)}</td>`).join('')}
     <td onclick="event.stopPropagation()">
       <button class="btn btn-sm btn-ghost" onclick="switchLevel('adgroup','${c.campaign_id}')">
@@ -2188,7 +2257,7 @@ function makeAGRow(ag) {
       </div>
       ${agPacBar}
     </td>
-    <td><span class="spend-val">${fmtCur(m.spend||0)}</span></td>
+    <td><span class="spend-val">${fmtCur(m.spend||0)}</span>${trendBadge(m.spend||0, S.prevMetrics[ag.adgroup_id])}</td>
     ${cols.map(cl=>`<td class="metric-num">${fmtN(getMetricVal(m,cl),cl.metric)}</td>`).join('')}
     <td>
       <button class="btn btn-sm btn-ghost" onclick="openBid('${ag.adgroup_id}','${esc(ag.adgroup_name)}',${ag.bid_price||0})">
@@ -2504,7 +2573,7 @@ function renderChips() {
 function onAccountChange(v) {
   S.accountId = v;
   localStorage.setItem('tt_acc', v);
-  S.campaigns = []; S.adgroups = {}; S.metrics = {}; S.expanded.clear();
+  S.campaigns = []; S.adgroups = {}; S.metrics = {}; S.prevMetrics = {}; S.expanded.clear();
   S.agCount = null; S.level = 'campaign'; S.selectedCampaignId = null;
   S.activeCampaignId = null; S.convertCurrency = false;
   S.selectedCampaignIds = new Set(); S.nameFilter = '';
@@ -2516,7 +2585,7 @@ function onAccountChange(v) {
 
 function onDateChange(v) {
   S.dateRange = v;
-  S.metrics = {};
+  S.metrics = {}; S.prevMetrics = {};
   renderChips(); // update conversion delay note
   if (S.accountId) loadCampaigns(S.accountId);
 }
@@ -3087,7 +3156,7 @@ async function saveSettings() {
   closeSettings();
   document.getElementById('demoBadge').style.display = 'none';
   showDashboard();
-  S.campaigns = []; S.adgroups = {}; S.metrics = {}; S.expanded.clear();
+  S.campaigns = []; S.adgroups = {}; S.metrics = {}; S.prevMetrics = {}; S.expanded.clear();
   S.agCount = null; S.level = 'campaign'; S.selectedCampaignId = null;
   S.selectedCampaignIds = new Set();
   switchLevel('campaign');
@@ -3107,7 +3176,7 @@ async function saveManual() {
   closeSettings();
   document.getElementById('demoBadge').style.display = 'none';
   showDashboard();
-  S.campaigns = []; S.adgroups = {}; S.metrics = {}; S.expanded.clear();
+  S.campaigns = []; S.adgroups = {}; S.metrics = {}; S.prevMetrics = {}; S.expanded.clear();
   S.agCount = null; S.level = 'campaign'; S.selectedCampaignId = null;
   S.selectedCampaignIds = new Set();
   switchLevel('campaign');
@@ -3144,7 +3213,7 @@ function enableDemo() {
 /* ═══════════════════════════ REFRESH ═══════════════════════════ */
 async function refreshData() {
   if (!S.accountId) { toast('warn','Vui lòng chọn tài khoản'); return; }
-  S.metrics = {}; S.adgroups = {}; S.expanded.clear(); S.agCount = null;
+  S.metrics = {}; S.prevMetrics = {}; S.adgroups = {}; S.expanded.clear(); S.agCount = null;
   S.selectedCampaignIds = new Set();
   await loadCampaigns(S.accountId);
   toast('success', 'Đã làm mới dữ liệu ✓');
@@ -3204,7 +3273,7 @@ function copyShareUrl() {
         localStorage.setItem('tt_cfg', JSON.stringify(S.config));
         localStorage.setItem('tt_demo', '0');
         showDashboard();
-        S.campaigns = []; S.adgroups = {}; S.metrics = {}; S.expanded.clear();
+        S.campaigns = []; S.adgroups = {}; S.metrics = {}; S.prevMetrics = {}; S.expanded.clear();
         S.agCount = null; S.level = 'campaign'; S.selectedCampaignId = null;
         S.selectedCampaignIds = new Set();
         switchLevel('campaign');
@@ -3270,7 +3339,7 @@ async function quickLoadCloud() {
       statusEl.innerHTML = '<span style="color:#16A34A;">✅ Thành công! Đang kết nối...</span>';
       setTimeout(() => {
         showDashboard();
-        S.campaigns = []; S.adgroups = {}; S.metrics = {}; S.expanded.clear();
+        S.campaigns = []; S.adgroups = {}; S.metrics = {}; S.prevMetrics = {}; S.expanded.clear();
         S.agCount = null; S.level = 'campaign';
         S.selectedCampaignId = null; S.selectedCampaignIds = new Set();
         switchLevel('campaign');
@@ -3303,7 +3372,7 @@ async function loadFromCloud() {
       setTimeout(() => {
         closeSettings();
         showDashboard();
-        S.campaigns = []; S.adgroups = {}; S.metrics = {}; S.expanded.clear();
+        S.campaigns = []; S.adgroups = {}; S.metrics = {}; S.prevMetrics = {}; S.expanded.clear();
         S.agCount = null; S.level = 'campaign'; S.selectedCampaignId = null;
         S.selectedCampaignIds = new Set();
         switchLevel('campaign');
