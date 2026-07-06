@@ -1158,7 +1158,17 @@ while ($listener.IsListening) {
           <option value="reach">Reach</option>
         </select>
       </div>
-      <span style="font-size:12px;color:var(--text2);" id="analDateLabel"></span>
+      <div class="select-wrap">
+        <select id="analDateSel" onchange="onAnalDateChange(this.value)">
+          <option value="today">Hôm nay</option>
+          <option value="yesterday">Hôm qua</option>
+          <option value="7" selected>7 ngày qua</option>
+          <option value="14">14 ngày qua</option>
+          <option value="30">30 ngày qua</option>
+          <option value="this_month">Tháng này</option>
+          <option value="last_month">Tháng trước</option>
+        </select>
+      </div>
       <button class="btn btn-sm btn-ghost" onclick="loadAnalytics()" style="margin-left:auto;">🔄 Làm mới</button>
     </div>
     <div id="analLoading" style="display:none;text-align:center;padding:48px;color:var(--text2);">
@@ -4415,19 +4425,19 @@ const VN_PROVINCES = {
 };
 
 let S_analMetric = 'spend';
+let S_analDate   = '7';
 
-function onAnalMetricChange(v) {
-  S_analMetric = v;
-  loadAnalytics();
-}
+function onAnalMetricChange(v) { S_analMetric = v; loadAnalytics(); }
+function onAnalDateChange(v)   { S_analDate   = v; loadAnalytics(); }
 
 async function fetchAudienceDim(aid, dims, metric) {
   if (S.demo) return [];
-  const { start, end } = getRange(S.dateRange);
+  const { start, end } = getRange(S_analDate);
   try {
-    const d = await apiGet('/report/audience/get/', {
+    const d = await apiGet('/report/integrated/get/', {
       advertiser_id: aid,
       report_type: 'AUDIENCE',
+      data_level: 'AUCTION_ADVERTISER',
       dimensions: dims,
       metrics: [metric],
       start_date: start, end_date: end,
@@ -4439,7 +4449,7 @@ async function fetchAudienceDim(aid, dims, metric) {
 
 async function fetchTimeSeries(aid, metric) {
   if (S.demo) {
-    const { start, end } = getRange(S.dateRange);
+    const { start, end } = getRange(S_analDate);
     const days = [];
     let cur = new Date(start);
     const endD = new Date(end);
@@ -4449,7 +4459,7 @@ async function fetchTimeSeries(aid, metric) {
     }
     return days;
   }
-  const { start, end } = getRange(S.dateRange);
+  const { start, end } = getRange(S_analDate);
   try {
     const d = await apiGet('/report/integrated/get/', {
       advertiser_id: aid,
@@ -4489,7 +4499,7 @@ function mkDonut(data) {
 
 function mkLine(data) {
   if (!data.length) return '<div style="color:var(--text3);font-size:12px;padding:20px 0;">Không có dữ liệu</div>';
-  const W=540, H=140, PL=8, PR=8, PT=8, PB=24;
+  const W=560, H=110, PL=54, PR=12, PT=10, PB=26;
   const iW=W-PL-PR, iH=H-PT-PB;
   const max = Math.max(...data.map(d=>d.v), 1);
   const pts = data.map((d,i)=>{
@@ -4497,15 +4507,23 @@ function mkLine(data) {
     const y=(PT+iH-(d.v/max)*iH).toFixed(1);
     return `${x},${y}`;
   });
-  const area=`<polygon points="${PL},${PT+iH} ${pts.join(' ')} ${(PL+iW).toFixed(1)},${PT+iH}" fill="rgba(59,77,200,0.1)"/>`;
+  // Grid lines + y-axis labels
+  const yTicks=[0,.25,.5,.75,1];
+  const grid=yTicks.map(t=>{
+    const y=(PT+iH-(t)*iH).toFixed(1);
+    const val=fmtN(max*t,'impressions');
+    return `<line x1="${PL}" y1="${y}" x2="${PL+iW}" y2="${y}" stroke="#e5e7eb" stroke-width="1"/>
+            <text x="${PL-4}" y="${y}" text-anchor="end" font-size="9" fill="#aaa" dominant-baseline="middle">${val}</text>`;
+  }).join('');
+  const area=`<polygon points="${PL},${PT+iH} ${pts.join(' ')} ${(PL+iW).toFixed(1)},${PT+iH}" fill="rgba(59,77,200,0.08)"/>`;
   const line=`<polyline points="${pts.join(' ')}" fill="none" stroke="#3B4DC8" stroke-width="2" stroke-linejoin="round"/>`;
   const step=Math.max(1,Math.floor(data.length/7));
   const labels=data.filter((_,i)=>i%step===0||i===data.length-1).map(d=>{
     const i=data.indexOf(d);
     const x=PL+i/(Math.max(data.length-1,1))*iW;
-    return `<text x="${x.toFixed(1)}" y="${H-6}" text-anchor="middle" font-size="9" fill="#999">${d.date.slice(5)}</text>`;
+    return `<text x="${x.toFixed(1)}" y="${H-4}" text-anchor="middle" font-size="9" fill="#aaa">${d.date.slice(5)}</text>`;
   });
-  return `<div class="anal-line-wrap"><svg width="100%" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" style="display:block;min-width:300px;">${area}${line}${labels.join('')}</svg></div>`;
+  return `<div class="anal-line-wrap"><svg width="100%" viewBox="0 0 ${W} ${H}" style="display:block;height:${H}px;max-height:${H}px;">${grid}${area}${line}${labels.join('')}</svg></div>`;
 }
 
 function mkBarsH(data, metric) {
@@ -4560,9 +4578,6 @@ async function loadAnalytics() {
     return;
   }
   const metric = S_analMetric;
-  const metricLabel = ANAL_METRICS[metric] || metric;
-  const { start, end } = getRange(S.dateRange);
-  document.getElementById('analDateLabel').textContent = `${start} → ${end} | Chỉ số: ${metricLabel}`;
   document.getElementById('analContent').innerHTML = '';
   document.getElementById('analLoading').style.display = 'block';
 
