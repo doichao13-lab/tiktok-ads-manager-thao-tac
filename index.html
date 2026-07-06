@@ -215,9 +215,9 @@
     .campaign-row.expanded > td:first-child { background: rgba(23,71,234,.03) !important; }
     .adgroup-row td { background: #FAFBFC !important; }
     .adgroup-row:hover td { background: #F0F2F5 !important; }
-    .adgroup-row td:first-child { background: #FAFBFC !important; }
-    .adgroup-row:hover td:first-child { background: #F0F2F5 !important; }
-    .adgroup-row td:first-child { border-left: 3px solid var(--red); }
+    .adgroup-row td:first-child, .adgroup-row td:nth-child(2) { background: #FAFBFC !important; }
+    .adgroup-row:hover td:first-child, .adgroup-row:hover td:nth-child(2) { background: #F0F2F5 !important; }
+    .adgroup-row td:nth-child(2) { border-left: 3px solid #CBD5E1; }
 
     .name-cell { display: flex; align-items: center; gap: 8px; }
     .expand-btn {
@@ -2232,6 +2232,7 @@ function makeAGRow(ag) {
     ? `<div class="pacing-bar"><div class="pacing-fill ${agPacCls}" style="width:${agPacPct.toFixed(1)}%"></div></div>`
     : '';
   tr.innerHTML = `
+    <td class="row-check"></td>
     <td>
       <div class="adgroup-indent">
         <div class="adgroup-bar"></div>
