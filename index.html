@@ -598,6 +598,7 @@
 <div class="level-bar" id="levelBar" style="display:none;">
   <div class="level-tab active" id="ltabCampaign" onclick="switchLevel('campaign')">📊 Chiến dịch</div>
   <div class="level-tab" id="ltabAdgroup" onclick="switchLevel('adgroup')">👥 Nhóm QC</div>
+  <div class="level-tab" id="ltabAnalytics" onclick="switchLevel('analytics')">📈 Biểu đồ</div>
   <div class="level-tab" id="ltabExport" onclick="switchLevel('export')">📋 Xuất báo cáo</div>
   <div class="level-tab" id="ltabAI" onclick="switchLevel('ai')">🤖 Trợ lý AI</div>
   <div class="level-tab" id="ltabVideo" onclick="switchLevel('video')">⬇ Tải Video</div>
@@ -1112,6 +1113,60 @@ while ($listener.IsListening) {
   padding:12px 16px; color:#c00; font-size:13px; margin-bottom:16px; }
 .vd-loading { display:none; color:var(--text2); font-size:13px; padding:12px 0; }
 </style>
+
+<style>
+/* ═══ ANALYTICS SECTION ═══ */
+.anal-section { padding:24px 24px 32px; }
+.anal-controls { display:flex;align-items:center;gap:12px;margin-bottom:24px;flex-wrap:wrap;padding-bottom:16px;border-bottom:1px solid var(--border); }
+.anal-title { font-size:15px;font-weight:700;color:var(--text); }
+.anal-grid { display:grid;gap:16px;margin-bottom:16px; }
+.anal-grid-3 { grid-template-columns:repeat(3,1fr); }
+.anal-grid-2 { grid-template-columns:repeat(2,1fr); }
+@media(max-width:900px){ .anal-grid-3{ grid-template-columns:1fr 1fr; } }
+@media(max-width:600px){ .anal-grid-3,.anal-grid-2{ grid-template-columns:1fr; } }
+.anal-card { background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:16px;overflow:hidden; }
+.anal-card-title { font-size:12px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.04em;margin-bottom:12px; }
+.anal-donut-wrap { display:flex;align-items:center;gap:16px;flex-wrap:wrap; }
+.anal-legend { display:flex;flex-direction:column;gap:8px;min-width:120px; }
+.anal-leg-item { display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text); }
+.anal-leg-dot { width:10px;height:10px;border-radius:50%;flex-shrink:0; }
+.anal-leg-val { color:var(--text2);font-size:11px;margin-top:1px; }
+.anal-rank-item { display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border);font-size:12px; }
+.anal-rank-item:last-child { border-bottom:none; }
+.anal-rank-num { width:18px;color:var(--text3);text-align:center;flex-shrink:0; }
+.anal-rank-name { flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text); }
+.anal-rank-val { color:var(--text2);white-space:nowrap;font-size:11px;margin-right:6px; }
+.anal-rank-bar { width:60px;height:5px;background:var(--border);border-radius:3px;flex-shrink:0;overflow:hidden; }
+.anal-rank-fill { height:100%;border-radius:3px;background:#3B4DC8; }
+.anal-bar-row { display:flex;align-items:center;gap:8px;margin-bottom:7px; }
+.anal-bar-label { width:56px;font-size:11px;color:var(--text2);text-align:right;flex-shrink:0; }
+.anal-bar-track { flex:1;height:14px;background:var(--border);border-radius:3px;overflow:hidden; }
+.anal-bar-fill { height:100%;border-radius:3px;transition:width .4s; }
+.anal-bar-val { width:72px;font-size:11px;color:var(--text);text-align:right;flex-shrink:0; }
+.anal-line-wrap { overflow-x:auto; }
+</style>
+
+<div id="analyticsSection" style="display:none;">
+  <div class="anal-section">
+    <div class="anal-controls">
+      <span class="anal-title">📈 Phân tích Audience</span>
+      <div class="select-wrap">
+        <select id="analMetricSel" onchange="onAnalMetricChange(this.value)">
+          <option value="spend">Chi phí</option>
+          <option value="impressions">Lượt hiển thị</option>
+          <option value="clicks">Lượt click</option>
+          <option value="reach">Reach</option>
+        </select>
+      </div>
+      <span style="font-size:12px;color:var(--text2);" id="analDateLabel"></span>
+      <button class="btn btn-sm btn-ghost" onclick="loadAnalytics()" style="margin-left:auto;">🔄 Làm mới</button>
+    </div>
+    <div id="analLoading" style="display:none;text-align:center;padding:48px;color:var(--text2);">
+      <div class="spinner" style="display:inline-block;vertical-align:middle;margin-right:8px;"></div>Đang tải dữ liệu biểu đồ...
+    </div>
+    <div id="analContent"></div>
+  </div>
+</div>
 
 <div id="videoSection" class="vd-section">
   <div class="vd-title">Tải Video TikTok</div>
@@ -2636,13 +2691,15 @@ function setActiveCampaign(cid) {
 function switchLevel(level, campaignId) {
   S.level = level;
 
-  const exportSec = document.getElementById('exportSection');
-  const aiSec    = document.getElementById('aiSection');
-  const videoSec = document.getElementById('videoSection');
+  const exportSec   = document.getElementById('exportSection');
+  const aiSec       = document.getElementById('aiSection');
+  const videoSec    = document.getElementById('videoSection');
+  const analyticsSec= document.getElementById('analyticsSection');
   const vd = document.getElementById('viewDesktop');
   const vm = document.getElementById('viewMobile');
   const lt1 = document.getElementById('ltabCampaign');
   const lt2 = document.getElementById('ltabAdgroup');
+  const lt3 = document.getElementById('ltabAnalytics');
   const lt4 = document.getElementById('ltabExport');
   const lt5 = document.getElementById('ltabAI');
   const lt6 = document.getElementById('ltabVideo');
@@ -2650,9 +2707,11 @@ function switchLevel(level, campaignId) {
   const nfw    = document.getElementById('nameFilterWrap');
 
   // Hide all special sections first
-  if (exportSec) exportSec.style.display = 'none';
-  if (aiSec)    aiSec.style.display    = 'none';
-  if (videoSec) videoSec.style.display = 'none';
+  if (exportSec)    exportSec.style.display    = 'none';
+  if (aiSec)        aiSec.style.display        = 'none';
+  if (videoSec)     videoSec.style.display     = 'none';
+  if (analyticsSec) analyticsSec.style.display = 'none';
+  [lt1,lt2,lt3,lt4,lt5,lt6].forEach(t => t && t.classList.remove('active'));
 
   if (level === 'export') {
     if (exportSec) exportSec.style.display = '';
@@ -2687,13 +2746,20 @@ function switchLevel(level, campaignId) {
     if (videoSec) videoSec.style.display = 'block';
     if (vd) vd.style.display = 'none';
     if (vm) vm.style.display = 'none';
-    if (lt1) lt1.classList.remove('active');
-    if (lt2) lt2.classList.remove('active');
-    if (lt4) lt4.classList.remove('active');
-    if (lt5) lt5.classList.remove('active');
     if (lt6) lt6.classList.add('active');
     if (agHead) agHead.style.display = 'none';
     if (nfw)    nfw.style.display    = 'none';
+    return;
+  }
+
+  if (level === 'analytics') {
+    if (analyticsSec) analyticsSec.style.display = 'block';
+    if (vd) vd.style.display = 'none';
+    if (vm) vm.style.display = 'none';
+    if (lt3) lt3.classList.add('active');
+    if (agHead) agHead.style.display = 'none';
+    if (nfw)    nfw.style.display    = 'none';
+    loadAnalytics();
     return;
   }
 
@@ -4321,6 +4387,254 @@ async function vdDownload(type) {
     window.open(fileUrl, '_blank');
     toast('info', 'Mở tab mới — nhấn chuột phải → Lưu video để tải về');
   }
+}
+
+/* ═══════════════════════════ ANALYTICS ═══════════════════════════ */
+const ANAL_COLORS = ['#3B4DC8','#C084FC','#67E8F9','#34D399','#FB923C','#FCD34D','#F472B6','#A78BFA'];
+const ANAL_METRICS = {
+  spend:       'Chi phí',
+  impressions: 'Lượt hiển thị',
+  clicks:      'Lượt click',
+  reach:       'Reach',
+};
+const GENDER_LABELS = { MALE:'Nam', FEMALE:'Nữ', UNKNOWN:'Unknown' };
+const VN_PROVINCES = {
+  '220':'Hà Nội','227':'Hồ Chí Minh','228':'Đà Nẵng','234':'Hải Phòng','229':'Cần Thơ',
+  '221':'Hà Giang','222':'Cao Bằng','223':'Bắc Kạn','224':'Tuyên Quang','225':'Lào Cai',
+  '226':'Điện Biên','230':'Lai Châu','231':'Sơn La','232':'Yên Bái','233':'Hoà Bình',
+  '235':'Thái Nguyên','236':'Lạng Sơn','237':'Quảng Ninh','238':'Bắc Giang','239':'Phú Thọ',
+  '240':'Vĩnh Phúc','241':'Bắc Ninh','242':'Hải Dương','243':'Hưng Yên','244':'Thái Bình',
+  '245':'Hà Nam','246':'Nam Định','247':'Ninh Bình','248':'Thanh Hoá','249':'Nghệ An',
+  '250':'Hà Tĩnh','251':'Quảng Bình','252':'Quảng Trị','253':'Thừa Thiên Huế','254':'Quảng Nam',
+  '255':'Quảng Ngãi','256':'Bình Định','257':'Phú Yên','258':'Khánh Hoà','259':'Ninh Thuận',
+  '260':'Bình Thuận','261':'Kon Tum','262':'Gia Lai','263':'Đắk Lắk','264':'Đắk Nông',
+  '265':'Lâm Đồng','266':'Bình Phước','267':'Tây Ninh','268':'Bình Dương','269':'Đồng Nai',
+  '270':'Bà Rịa-Vũng Tàu','271':'Long An','272':'Tiền Giang','273':'Bến Tre','274':'Trà Vinh',
+  '275':'Vĩnh Long','276':'Đồng Tháp','277':'An Giang','278':'Kiên Giang','279':'Hậu Giang',
+  '280':'Sóc Trăng','281':'Bạc Liêu','282':'Cà Mau',
+};
+
+let S_analMetric = 'spend';
+
+function onAnalMetricChange(v) {
+  S_analMetric = v;
+  loadAnalytics();
+}
+
+async function fetchAudienceDim(aid, dims, metric) {
+  if (S.demo) return [];
+  const { start, end } = getRange(S.dateRange);
+  try {
+    const d = await apiGet('/report/audience/get/', {
+      advertiser_id: aid,
+      report_type: 'AUDIENCE',
+      dimensions: dims,
+      metrics: [metric],
+      start_date: start, end_date: end,
+      page_size: 1000,
+    });
+    return d.list || [];
+  } catch { return []; }
+}
+
+async function fetchTimeSeries(aid, metric) {
+  if (S.demo) {
+    const { start, end } = getRange(S.dateRange);
+    const days = [];
+    let cur = new Date(start);
+    const endD = new Date(end);
+    while (cur <= endD) {
+      days.push({ date: cur.toISOString().slice(0,10), v: Math.floor(Math.random()*500000+50000) });
+      cur.setDate(cur.getDate()+1);
+    }
+    return days;
+  }
+  const { start, end } = getRange(S.dateRange);
+  try {
+    const d = await apiGet('/report/integrated/get/', {
+      advertiser_id: aid,
+      report_type: 'BASIC',
+      data_level: 'AUCTION_ADVERTISER',
+      dimensions: ['stat_time_day'],
+      metrics: [metric],
+      start_date: start, end_date: end,
+      page_size: 1000,
+    });
+    return (d.list || []).map(item => ({
+      date: item.dimensions.stat_time_day,
+      v: parseFloat(item.metrics[metric]) || 0,
+    })).sort((a,b) => a.date.localeCompare(b.date));
+  } catch { return []; }
+}
+
+/* ── CHART RENDERERS ── */
+function mkDonut(data) {
+  const W=160, cx=80, cy=80, OR=62, IR=40;
+  const total = data.reduce((s,d) => s+(d.v||0), 0);
+  if (!total) return `<svg width="${W}" height="${W}"><text x="50%" y="52%" text-anchor="middle" font-size="11" fill="#aaa">Không có dữ liệu</text></svg>`;
+  let angle = -Math.PI/2;
+  let paths = '';
+  data.forEach((d,i) => {
+    const a = (d.v/total)*2*Math.PI;
+    const x1=cx+OR*Math.cos(angle), y1=cy+OR*Math.sin(angle);
+    angle += a;
+    const x2=cx+OR*Math.cos(angle), y2=cy+OR*Math.sin(angle);
+    const xi1=cx+IR*Math.cos(angle), yi1=cy+IR*Math.sin(angle);
+    const xi2=cx+IR*Math.cos(angle-a), yi2=cy+IR*Math.sin(angle-a);
+    const lg = a>Math.PI?1:0;
+    paths += `<path d="M${x1.toFixed(1)},${y1.toFixed(1)} A${OR},${OR} 0 ${lg},1 ${x2.toFixed(1)},${y2.toFixed(1)} L${xi1.toFixed(1)},${yi1.toFixed(1)} A${IR},${IR} 0 ${lg},0 ${xi2.toFixed(1)},${yi2.toFixed(1)} Z" fill="${ANAL_COLORS[i%ANAL_COLORS.length]}"/>`;
+  });
+  return `<svg width="${W}" height="${W}" viewBox="0 0 ${W} ${W}">${paths}</svg>`;
+}
+
+function mkLine(data) {
+  if (!data.length) return '<div style="color:var(--text3);font-size:12px;padding:20px 0;">Không có dữ liệu</div>';
+  const W=540, H=140, PL=8, PR=8, PT=8, PB=24;
+  const iW=W-PL-PR, iH=H-PT-PB;
+  const max = Math.max(...data.map(d=>d.v), 1);
+  const pts = data.map((d,i)=>{
+    const x=(PL+i/(Math.max(data.length-1,1))*iW).toFixed(1);
+    const y=(PT+iH-(d.v/max)*iH).toFixed(1);
+    return `${x},${y}`;
+  });
+  const area=`<polygon points="${PL},${PT+iH} ${pts.join(' ')} ${(PL+iW).toFixed(1)},${PT+iH}" fill="rgba(59,77,200,0.1)"/>`;
+  const line=`<polyline points="${pts.join(' ')}" fill="none" stroke="#3B4DC8" stroke-width="2" stroke-linejoin="round"/>`;
+  const step=Math.max(1,Math.floor(data.length/7));
+  const labels=data.filter((_,i)=>i%step===0||i===data.length-1).map(d=>{
+    const i=data.indexOf(d);
+    const x=PL+i/(Math.max(data.length-1,1))*iW;
+    return `<text x="${x.toFixed(1)}" y="${H-6}" text-anchor="middle" font-size="9" fill="#999">${d.date.slice(5)}</text>`;
+  });
+  return `<div class="anal-line-wrap"><svg width="100%" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" style="display:block;min-width:300px;">${area}${line}${labels.join('')}</svg></div>`;
+}
+
+function mkBarsH(data, metric) {
+  if (!data.length) return '<div style="color:var(--text3);font-size:12px;">Không có dữ liệu</div>';
+  const max = Math.max(...data.map(d=>d.v), 1);
+  return data.map((d,i)=>`
+    <div class="anal-bar-row">
+      <span class="anal-bar-label">${esc(d.label)}</span>
+      <div class="anal-bar-track">
+        <div class="anal-bar-fill" style="width:${(d.v/max*100).toFixed(1)}%;background:${ANAL_COLORS[i%ANAL_COLORS.length]};"></div>
+      </div>
+      <span class="anal-bar-val">${fmtN(d.v, metric)}</span>
+    </div>`).join('');
+}
+
+function mkRankList(data, metric, n=10) {
+  if (!data.length) return '<div style="color:var(--text3);font-size:12px;">Không có dữ liệu</div>';
+  const max = Math.max(...data.map(d=>d.v), 1);
+  const medals = ['🥇','🥈','🥉'];
+  return data.slice(0,n).map((d,i)=>`
+    <div class="anal-rank-item">
+      <span class="anal-rank-num">${medals[i]||i+1}</span>
+      <span class="anal-rank-name" title="${esc(d.label)}">${esc(d.label)}</span>
+      <span class="anal-rank-val">${fmtN(d.v, metric)}</span>
+      <div class="anal-rank-bar"><div class="anal-rank-fill" style="width:${(d.v/max*100).toFixed(1)}%"></div></div>
+    </div>`).join('');
+}
+
+function mkDonutCard(title, data, metric) {
+  const total = data.reduce((s,d)=>s+d.v, 0);
+  const legend = data.map((d,i)=>`
+    <div class="anal-leg-item">
+      <div class="anal-leg-dot" style="background:${ANAL_COLORS[i%ANAL_COLORS.length]}"></div>
+      <div>
+        <div>${esc(d.label)}</div>
+        <div class="anal-leg-val">${fmtN(d.v,metric)}</div>
+      </div>
+    </div>`).join('');
+  return `<div class="anal-card">
+    <div class="anal-card-title">${title}</div>
+    <div class="anal-donut-wrap">
+      ${mkDonut(data)}
+      <div class="anal-legend">${legend}</div>
+    </div>
+  </div>`;
+}
+
+async function loadAnalytics() {
+  const aid = S.accountId;
+  if (!aid && !S.demo) {
+    document.getElementById('analContent').innerHTML = '<div style="color:var(--text2);padding:40px;text-align:center;">Vui lòng chọn tài khoản quảng cáo</div>';
+    return;
+  }
+  const metric = S_analMetric;
+  const metricLabel = ANAL_METRICS[metric] || metric;
+  const { start, end } = getRange(S.dateRange);
+  document.getElementById('analDateLabel').textContent = `${start} → ${end} | Chỉ số: ${metricLabel}`;
+  document.getElementById('analContent').innerHTML = '';
+  document.getElementById('analLoading').style.display = 'block';
+
+  // Fetch all in parallel
+  const [timeSeries, genderRaw, ageRaw, countryRaw, provinceRaw, osRaw, brandRaw] = await Promise.all([
+    fetchTimeSeries(aid || '0', metric),
+    fetchAudienceDim(aid || '0', ['gender'], metric),
+    fetchAudienceDim(aid || '0', ['age'], metric),
+    fetchAudienceDim(aid || '0', ['country_code'], metric),
+    fetchAudienceDim(aid || '0', ['province_id'], metric),
+    fetchAudienceDim(aid || '0', ['platform'], metric),
+    fetchAudienceDim(aid || '0', ['device_brand_name'], metric),
+  ]);
+
+  document.getElementById('analLoading').style.display = 'none';
+
+  // Parse helpers
+  const parseList = (raw, dimKey, labelFn) =>
+    raw.map(r => ({ label: labelFn(r.dimensions[dimKey]||''), v: parseFloat(r.metrics[metric])||0 }))
+       .filter(d => d.v > 0)
+       .sort((a,b) => b.v - a.v);
+
+  const gender  = parseList(genderRaw,  'gender',         k => GENDER_LABELS[k]||k);
+  const age     = parseList(ageRaw,     'age',            k => k||'Unknown');
+  const country = parseList(countryRaw, 'country_code',   k => k||'Unknown');
+  const province= parseList(provinceRaw,'province_id',    k => VN_PROVINCES[String(k)]||('ID '+k));
+  const os      = parseList(osRaw,      'platform',       k => k||'Unknown');
+  const brand   = parseList(brandRaw,   'device_brand_name', k => k||'Unknown');
+
+  const html = `
+    <!-- ── Xu hướng theo ngày ── -->
+    <div class="anal-card" style="margin-bottom:16px;">
+      <div class="anal-card-title">Xu hướng ${metricLabel} theo ngày</div>
+      ${mkLine(timeSeries)}
+    </div>
+
+    <!-- ── Đối tượng ── -->
+    <div class="anal-grid anal-grid-3" style="margin-bottom:16px;">
+      ${mkDonutCard('Giới tính', gender, metric)}
+      <div class="anal-card">
+        <div class="anal-card-title">Độ tuổi</div>
+        ${mkBarsH(age, metric)}
+      </div>
+      <div class="anal-card">
+        <div class="anal-card-title">Top tuổi theo ${metricLabel}</div>
+        ${mkRankList(age, metric, 6)}
+      </div>
+    </div>
+
+    <!-- ── Địa lý ── -->
+    <div class="anal-grid anal-grid-2" style="margin-bottom:16px;">
+      <div class="anal-card">
+        <div class="anal-card-title">Quốc gia</div>
+        ${mkBarsH(country.slice(0,8), metric)}
+      </div>
+      <div class="anal-card">
+        <div class="anal-card-title">Tỉnh / Thành phố hàng đầu (VN)</div>
+        ${mkRankList(province, metric, 10)}
+      </div>
+    </div>
+
+    <!-- ── Thiết bị ── -->
+    <div class="anal-grid anal-grid-2" style="margin-bottom:16px;">
+      ${mkDonutCard('Hệ điều hành thiết bị', os, metric)}
+      <div class="anal-card">
+        <div class="anal-card-title">Thương hiệu thiết bị</div>
+        ${mkRankList(brand, metric, 10)}
+      </div>
+    </div>
+  `;
+
+  document.getElementById('analContent').innerHTML = html;
 }
 
 document.addEventListener('DOMContentLoaded', init);
