@@ -4023,10 +4023,12 @@ function vdReset() {
   document.getElementById('vdLoading').style.display = 'none';
 }
 
-// Try Cloudflare Worker /tikwm endpoint (no CORS issues, no rate limits)
+// Route tikwm.com qua Cloudflare Worker (bypass CORS, không bị block)
 async function vdCallWorker(videoUrl) {
   const workerBase = 'https://tiktok-proxy.doichao13.workers.dev';
-  const u = `${workerBase}/tikwm?url=${encodeURIComponent(videoUrl)}&hd=1`;
+  const tikwmUrl = `https://tikwm.com/api/?url=${encodeURIComponent(videoUrl)}&hd=1`;
+  // Dùng generic proxy ?url= (có sẵn, không cần endpoint /tikwm riêng)
+  const u = `${workerBase}/?url=${encodeURIComponent(tikwmUrl)}`;
   const r = await fetchWithTimeout(u, {}, 12000);
   if (!r.ok) throw new Error(`Worker HTTP ${r.status}`);
   const json = JSON.parse(await r.text());
