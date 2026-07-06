@@ -284,6 +284,22 @@
       border: 1.5px solid var(--accent); border-radius: 5px; padding: 2px 7px;
       outline: none; min-width: 150px; max-width: 280px;
     }
+    /* ── ROW COLOR CODING ── */
+    .row-warn td:not(.row-check) { background: rgba(245,158,11,0.07); }
+    .row-warn .name-main { color: #b45309; }
+    @media (prefers-color-scheme: dark) { .row-warn .name-main { color: #fbbf24; } }
+    :root[data-theme="dark"] .row-warn .name-main { color: #fbbf24; }
+    /* ── BUDGET PACING BAR ── */
+    .pacing-bar { height: 3px; background: var(--border); border-radius: 2px; margin-top: 5px; overflow: hidden; }
+    .pacing-fill { height: 100%; border-radius: 2px; background: var(--text3); transition: width .4s; }
+    .pacing-fill.pacing-warn   { background: #f59e0b; }
+    .pacing-fill.pacing-danger { background: #e53935; }
+    /* ── OBJECTIVE FILTER CHIPS ── */
+    .obj-filter-bar { align-items:center; gap:6px; padding:6px 20px 2px; flex-wrap:wrap; }
+    .obj-chip { padding:3px 11px; border:1px solid var(--border); border-radius:20px; font-size:12px;
+      background:var(--bg3); color:var(--text2); cursor:pointer; transition:all .15s; white-space:nowrap; }
+    .obj-chip:hover { background:var(--bg4); color:var(--text); }
+    .obj-chip.active { background:var(--accent); color:var(--bg); border-color:var(--accent); font-weight:600; }
 
     /* ── MOBILE CARD VIEW ── */
     .cards { display: grid; gap: 12px; }
@@ -566,6 +582,11 @@
   <span class="filter-label">Cột hiển thị (tối đa 3):</span>
   <div class="chips" id="chips"></div>
   <span id="conversionNote" style="display:none;font-size:11px;color:#e07b00;margin-left:8px;" title="Dùng real_time_result (số liệu trong ngày) + fallback về result (attribution). Nếu cả hai đều 0 → TikTok không cung cấp qua Public API — xem trực tiếp trong TikTok Ads Manager.">⚠ Nếu Lead / KQ = 0 dù có chạy: xem TikTok Ads Manager để biết số liệu thực tế</span>
+</div>
+<!-- ===================== OBJECTIVE FILTER ===================== -->
+<div class="obj-filter-bar filter-bar" id="objFilterBar" style="display:none;">
+  <span class="filter-label">Mục tiêu:</span>
+  <div id="objChips" style="display:flex;gap:6px;flex-wrap:wrap;"></div>
 </div>
 
 <!-- ===================== LEVEL BAR ===================== -->
@@ -1512,6 +1533,7 @@ const COLS = {
   video_2s:     { label: 'View 2s',     metric: 'video_watched_2s',  icon: '▶' },
   video_6s:     { label: 'View 6s',     metric: 'video_watched_6s',  icon: '▶▶' },
   conversion:   { label: 'Lead / KQ', metric: 'real_time_result', metricFallback: 'result', icon: '✅', note: 'Dùng real_time_result (thực tế trong ngày). Nếu trống sẽ fallback về result (attribution window). Cả hai = 0 → xem TikTok Ads Manager.' },
+  cpl:          { label: 'Giá/KQ',     metric: 'cost_per_result',        icon: '💰' },
   purchase:     { label: 'Mua hàng',    metric: 'complete_payment',  icon: '🛒' },
   click_to_web: { label: 'Click Web',   metric: 'clicks',                 icon: '🖱' },
   follow:       { label: 'Follow',      metric: 'follows',                icon: '➕' },
@@ -1540,12 +1562,13 @@ const S = {
   columns:   (() => {
     const saved = JSON.parse(localStorage.getItem('tt_cols') || '["reach","conversion","click_to_web"]');
     // Migrate old key names
-    return saved.map(k => k === 'lead_form' ? 'conversion' : k).filter(k => k in {impressions:1,frequency:1,reach:1,video_2s:1,video_6s:1,conversion:1,purchase:1,click_to_web:1,follow:1});
+    return saved.map(k => k === 'lead_form' ? 'conversion' : k).filter(k => k in {impressions:1,frequency:1,reach:1,video_2s:1,video_6s:1,conversion:1,cpl:1,purchase:1,click_to_web:1,follow:1});
   })(),
   view:      localStorage.getItem('tt_view') || 'desktop',
   dateRange: '7',
   statusFilter: '',
-  nameFilter: '',
+  nameFilter:   '',
+  objFilter:    '',
   level: 'campaign',           // 'campaign' | 'adgroup' | 'export'
   selectedCampaignId: null,    // current campaign shown in adgroup view
   selectedCampaignIds: new Set(), // checkbox multi-select
@@ -1968,6 +1991,7 @@ function render() {
 
 function renderCampaignLevel() {
   renderHead();
+  renderObjFilter();
   const tb = document.getElementById('tBody');
   tb.innerHTML = '';
   let list = S.campaigns;
@@ -1976,6 +2000,7 @@ function renderCampaignLevel() {
     const q = S.nameFilter.toLowerCase();
     list = list.filter(c => c.campaign_name.toLowerCase().includes(q));
   }
+  if (S.objFilter) list = list.filter(c => c.objective_type === S.objFilter);
   if (!list.length) {
     tb.innerHTML = `<tr><td colspan="20" style="text-align:center;padding:50px;color:var(--text2);">Không có chiến dịch nào</td></tr>`;
     return;
@@ -2066,6 +2091,16 @@ function makeCampaignRow(c) {
   const agLoaded   = S.adgroups[c.campaign_id];
   const agCount    = agLoaded ? agLoaded.length : '?';
   const campDispName = (S.config.campNames||{})[c.campaign_id] || c.campaign_name;
+  // Color coding: đang chạy nhưng không chi tiêu → cảnh báo
+  if (active && (m.spend === 0 || m.spend === '0' || !m.spend)) tr.classList.add('row-warn');
+  // Budget pacing bar
+  const spendNum  = parseFloat(m.spend) || 0;
+  const budgetNum = parseFloat(c.budget) || 0;
+  const pacingPct = budgetNum > 0 ? Math.min(100, spendNum / budgetNum * 100) : -1;
+  const pacingCls = pacingPct >= 90 ? 'pacing-danger' : pacingPct >= 70 ? 'pacing-warn' : '';
+  const pacingBar = pacingPct >= 0
+    ? `<div class="pacing-bar"><div class="pacing-fill ${pacingCls}" style="width:${pacingPct.toFixed(1)}%"></div></div>`
+    : '';
   tr.innerHTML = `
     <td class="row-check" onclick="event.stopPropagation()">
       <input type="checkbox" ${selected?'checked':''} onchange="toggleCampaignSelect('${c.campaign_id}',this.checked)" />
@@ -2093,6 +2128,7 @@ function makeCampaignRow(c) {
         <span>${fmtCur(c.budget)}</span><span class="budget-mode">${bmode}</span>
         <button class="edit-btn" onclick="openBudget('campaign','${c.campaign_id}','${esc(c.campaign_name)}',${c.budget})" title="Sửa ngân sách">✎</button>
       </div>
+      ${pacingBar}
     </td>
     <td><span class="spend-val">${fmtCur(m.spend||0)}</span></td>
     ${cols.map(cl=>`<td class="metric-num">${fmtN(getMetricVal(m,cl),cl.metric)}</td>`).join('')}
@@ -2119,6 +2155,13 @@ function makeAGRow(ag) {
   const parentCamp = S.campaigns.find(c => c.campaign_id === ag.campaign_id) || null;
   const parentLabel = (S.level === 'adgroup' && parentCamp) ? `<span style="color:var(--text3);font-size:10px;display:block;margin-top:1px;">📊 ${esc(parentCamp.campaign_name)}</span>` : '';
   const agDispName = (S.config.agNames||{})[ag.adgroup_id] || ag.adgroup_name;
+  const agSpend  = parseFloat(m.spend) || 0;
+  const agBudget = parseFloat(ag.budget) || 0;
+  const agPacPct = agBudget > 0 ? Math.min(100, agSpend / agBudget * 100) : -1;
+  const agPacCls = agPacPct >= 90 ? 'pacing-danger' : agPacPct >= 70 ? 'pacing-warn' : '';
+  const agPacBar = agPacPct >= 0
+    ? `<div class="pacing-bar"><div class="pacing-fill ${agPacCls}" style="width:${agPacPct.toFixed(1)}%"></div></div>`
+    : '';
   tr.innerHTML = `
     <td>
       <div class="adgroup-indent">
@@ -2143,6 +2186,7 @@ function makeAGRow(ag) {
         <span>${fmtCur(ag.budget)}</span><span class="budget-mode">${bmode}</span>
         <button class="edit-btn" onclick="openBudget('adgroup','${ag.adgroup_id}','${esc(ag.adgroup_name)}',${ag.budget})" title="Sửa ngân sách">✎</button>
       </div>
+      ${agPacBar}
     </td>
     <td><span class="spend-val">${fmtCur(m.spend||0)}</span></td>
     ${cols.map(cl=>`<td class="metric-num">${fmtN(getMetricVal(m,cl),cl.metric)}</td>`).join('')}
@@ -2484,6 +2528,28 @@ function onStatusFilter(v) {
 
 function onNameFilter(v) {
   S.nameFilter = v;
+  render();
+}
+
+function renderObjFilter() {
+  const bar = document.getElementById('objFilterBar');
+  if (!bar) return;
+  if (S.level !== 'campaign' || !S.campaigns.length) { bar.style.display = 'none'; return; }
+  const types = [...new Set(S.campaigns.map(c => c.objective_type).filter(Boolean))];
+  if (types.length <= 1) { bar.style.display = 'none'; return; }
+  bar.style.display = 'flex';
+  const chips = document.getElementById('objChips');
+  chips.innerHTML =
+    `<button class="obj-chip${!S.objFilter?' active':''}" onclick="onObjFilter('')">Tất cả (${S.campaigns.length})</button>` +
+    types.map(t => {
+      const cnt = S.campaigns.filter(c => c.objective_type === t).length;
+      return `<button class="obj-chip${S.objFilter===t?' active':''}" onclick="onObjFilter('${t}')">${OBJ_MAP[t]||t} (${cnt})</button>`;
+    }).join('');
+}
+
+function onObjFilter(v) {
+  S.objFilter = v;
+  renderObjFilter();
   render();
 }
 
