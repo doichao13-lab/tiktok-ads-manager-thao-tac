@@ -4520,7 +4520,7 @@ async function fetchAdBreakdown(aid) {
       advertiser_id: aid,
       report_type: 'BASIC',
       data_level: 'AUCTION_AD',
-      dimensions: ['ad_id','ad_name','adgroup_id','adgroup_name','campaign_id'],
+      dimensions: ['campaign_id','adgroup_id','ad_id'],
       metrics: ['spend','impressions','clicks','ctr','cpm','real_time_result','cost_per_result','video_watched_6s'],
       start_date: start, end_date: end,
       page_size: 100,
@@ -4544,6 +4544,21 @@ async function fetchAudienceMulti(aid, dims) {
     });
     return d.list || [];
   } catch { return []; }
+}
+
+async function fetchProvinceMap(aid) {
+  if (S.demo) return {};
+  try {
+    const d = await apiGet('/tool/region/', {
+      advertiser_id: aid,
+      placement_type: 'PLACEMENT_TIKTOK',
+      level: 'PROVINCE',
+      region_codes: ['VN'],
+    });
+    const map = {};
+    (d.regions || []).forEach(r => { map[String(r.region_id)] = r.region_name; });
+    return map;
+  } catch { return {}; }
 }
 
 async function fetchTimeSeries(aid) {
@@ -4756,8 +4771,10 @@ function renderAdPanel() {
     </tr></thead>
     <tbody>${rows.map((r,i)=>{
       const m=r.metrics||{},dim=r.dimensions||{};
-      const adName=dim.ad_name||('ID '+(dim.ad_id||''));
-      const agName=dim.adgroup_name||('AG '+(dim.adgroup_id||''));
+      const adName=dim.ad_name||(dim.ad_id?'Ad #'+dim.ad_id:'—');
+      const agid=dim.adgroup_id||'';
+      const agRec=(S.adgroups[String(dim.campaign_id||'')]||[]).find(ag=>String(ag.adgroup_id)===String(agid));
+      const agName=dim.adgroup_name||(agRec&&agRec.adgroup_name)||('AG #'+agid);
       return `<tr>
         <td style="color:var(--text3);font-size:11px;">${i+1}</td>
         <td class="perf-name" title="${esc(adName)}">${esc(adName.length>42?adName.slice(0,42)+'…':adName)}</td>
@@ -4795,15 +4812,16 @@ async function loadAnalytics() {
   document.getElementById('analContent').innerHTML='';
   document.getElementById('analLoading').style.display='block';
 
-  const [summary,timeSeries,campBreak,adBreak,ageRaw,genderRaw,brandRaw,provinceRaw]=await Promise.all([
+  const [summary,timeSeries,campBreak,adBreak,ageRaw,genderRaw,osRaw,provinceRaw,provMap]=await Promise.all([
     fetchSummaryAgg(aid||'0'),
     fetchTimeSeries(aid||'0'),
     fetchCampaignBreakdown(aid||'0'),
     fetchAdBreakdown(aid||'0'),
     fetchAudienceMulti(aid||'0',['age']),
     fetchAudienceMulti(aid||'0',['gender']),
-    fetchAudienceMulti(aid||'0',['device_brand_name']),
+    fetchAudienceMulti(aid||'0',['operating_system']),
     fetchAudienceMulti(aid||'0',['province_id']),
+    fetchProvinceMap(aid||'0'),
   ]);
 
   _analCampData=campBreak; _analAdData=adBreak; _analCampTab=''; _analAdTab='';
@@ -4860,10 +4878,12 @@ async function loadAnalytics() {
 
     /* ── Distribution ── */
     const bySpend=(arr)=>[...arr].sort((a,b)=>(parseFloat(b.metrics.spend)||0)-(parseFloat(a.metrics.spend)||0));
-    const ageSorted=bySpend(ageRaw),genderSorted=bySpend(genderRaw),brandSorted=bySpend(brandRaw),provSorted=bySpend(provinceRaw);
+    const ageSorted=bySpend(ageRaw),genderSorted=bySpend(genderRaw),osSorted=bySpend(osRaw),provSorted=bySpend(provinceRaw);
     const ageBarData=ageSorted.map(r=>({label:(r.dimensions||{}).age||'Unknown',v:parseFloat((r.metrics||{}).spend)||0}));
     const genderChart=genderSorted.map(r=>({label:GENDER_LABELS[(r.dimensions||{}).gender||'']||(r.dimensions||{}).gender||'?',v:parseFloat((r.metrics||{}).spend)||0}));
-    const brandBarData=brandSorted.slice(0,8).map(r=>({label:(r.dimensions||{}).device_brand_name||'Unknown',v:parseFloat((r.metrics||{}).spend)||0}));
+    const OS_LABELS={'iOS':'iOS','ANDROID':'Android','ANDROID_WITHOUT_GOOGLE':'Android','WINDOWS':'Windows','MACOS':'macOS','UNKNOWN':'Không rõ'};
+    const osBarData=osSorted.slice(0,6).map(r=>({label:OS_LABELS[(r.dimensions||{}).operating_system||'']||(r.dimensions||{}).operating_system||'Unknown',v:parseFloat((r.metrics||{}).spend)||0}));
+    const dynProvMap=Object.keys(provMap).length?provMap:{};
 
     const distHtml=`
       <div class="anal-grid anal-grid-2">
@@ -4884,16 +4904,16 @@ async function loadAnalytics() {
       </div>
       <div class="anal-grid anal-grid-2">
         <div class="anal-panel">
-          <div class="anal-panel-hdr">Phân phối theo Thiết bị</div>
+          <div class="anal-panel-hdr">Phân phối theo Hệ điều hành</div>
           <div class="anal-panel-body">
-            ${mkBarsH(brandBarData,'spend')}
-            ${mkDistTable(brandSorted.slice(0,12),'device_brand_name',k=>k||'Unknown')}
+            ${mkBarsH(osBarData,'spend')}
+            ${mkDistTable(osSorted.slice(0,10),'operating_system',k=>OS_LABELS[k]||k||'Unknown')}
           </div>
         </div>
         <div class="anal-panel">
           <div class="anal-panel-hdr">Phân phối theo Tỉnh / Thành phố</div>
           <div class="anal-panel-body">
-            ${mkDistTable(provSorted.slice(0,15),'province_id',k=>(VN_PROVINCES||{})[String(k)]||('ID '+k))}
+            ${mkDistTable(provSorted.slice(0,15),'province_id',k=>dynProvMap[String(k)]||(VN_PROVINCES||{})[String(k)]||k)}
           </div>
         </div>
       </div>`;
