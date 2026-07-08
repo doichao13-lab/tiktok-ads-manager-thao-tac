@@ -1116,48 +1116,98 @@ while ($listener.IsListening) {
 
 <style>
 /* ═══ ANALYTICS SECTION ═══ */
-.anal-section { padding:24px 24px 32px; }
-.anal-controls { display:flex;align-items:center;gap:12px;margin-bottom:24px;flex-wrap:wrap;padding-bottom:16px;border-bottom:1px solid var(--border); }
+.anal-section { padding:20px 24px 32px; }
+.anal-controls { display:flex;align-items:center;gap:12px;margin-bottom:20px;flex-wrap:wrap;padding-bottom:14px;border-bottom:1px solid var(--border); }
 .anal-title { font-size:15px;font-weight:700;color:var(--text); }
-.anal-grid { display:grid;gap:16px;margin-bottom:16px; }
-.anal-grid-3 { grid-template-columns:repeat(3,1fr); }
-.anal-grid-2 { grid-template-columns:repeat(2,1fr); }
-@media(max-width:900px){ .anal-grid-3{ grid-template-columns:1fr 1fr; } }
-@media(max-width:600px){ .anal-grid-3,.anal-grid-2{ grid-template-columns:1fr; } }
-.anal-card { background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:16px;overflow:hidden; }
-.anal-card-title { font-size:12px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.04em;margin-bottom:12px; }
+
+/* KPI Cards */
+.anal-kpi-big   { display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:12px; }
+.anal-kpi-small { display:grid;grid-template-columns:repeat(6,1fr);gap:10px;margin-bottom:22px; }
+@media(max-width:1100px){ .anal-kpi-small{grid-template-columns:repeat(3,1fr);} }
+@media(max-width:900px) { .anal-kpi-big{grid-template-columns:1fr 1fr;} .anal-kpi-small{grid-template-columns:repeat(3,1fr);} }
+@media(max-width:600px) { .anal-kpi-big,.anal-kpi-small{grid-template-columns:1fr 1fr;} }
+.anal-kpi-card      { background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:14px 16px;box-shadow:0 1px 3px rgba(0,0,0,.05); }
+.anal-kpi-card.big  { border-left:4px solid var(--primary); }
+.anal-kpi-card.big.green  { border-left-color:#16A34A; }
+.anal-kpi-card.big.purple { border-left-color:#7C3AED; }
+.anal-kpi-label  { font-size:10px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.06em;margin-bottom:5px; }
+.anal-kpi-val    { font-size:26px;font-weight:800;color:var(--text);line-height:1.15; }
+.anal-kpi-val-sm { font-size:17px;font-weight:700;color:var(--text); }
+.anal-kpi-sub    { font-size:11px;color:var(--text2);margin-top:3px; }
+.anal-kpi-sub .blue   { color:var(--primary);font-weight:600; }
+.anal-kpi-sub .green  { color:#16A34A;font-weight:600; }
+.anal-kpi-sub .purple { color:#7C3AED;font-weight:600; }
+
+/* Panels */
+.anal-panel     { background:var(--bg2);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:18px; }
+.anal-panel-hdr { background:rgba(23,71,234,.06);border-bottom:1px solid var(--border);padding:11px 18px;font-size:13px;font-weight:700;color:var(--primary); }
+.anal-panel-body{ padding:16px 18px; }
+
+/* Grids */
+.anal-grid { display:grid;gap:16px; }
+.anal-grid-3  { grid-template-columns:repeat(3,1fr); }
+.anal-grid-2  { grid-template-columns:repeat(2,1fr); }
+.anal-grid-62 { grid-template-columns:3fr 2fr; }
+@media(max-width:900px){ .anal-grid-3{grid-template-columns:1fr 1fr;} .anal-grid-62,.anal-grid-2{grid-template-columns:1fr;} }
+@media(max-width:600px){ .anal-grid-3,.anal-grid-2{grid-template-columns:1fr;} }
+
+/* Tabs */
+.anal-tabs { display:flex;gap:0;padding:0 18px;border-bottom:1px solid var(--border);overflow-x:auto; }
+.anal-tab  { padding:10px 15px;font-size:12px;font-weight:500;color:var(--text2);cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;transition:color .15s,border-color .15s; }
+.anal-tab:hover { color:var(--text); }
+.anal-tab.active{ color:var(--primary);border-bottom-color:var(--primary);font-weight:600; }
+
+/* Donut / Legend */
 .anal-donut-wrap { display:flex;align-items:center;gap:16px;flex-wrap:wrap; }
-.anal-legend { display:flex;flex-direction:column;gap:8px;min-width:120px; }
-.anal-leg-item { display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text); }
-.anal-leg-dot { width:10px;height:10px;border-radius:50%;flex-shrink:0; }
-.anal-leg-val { color:var(--text2);font-size:11px;margin-top:1px; }
+.anal-legend     { display:flex;flex-direction:column;gap:7px;min-width:120px; }
+.anal-leg-item   { display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text); }
+.anal-leg-dot    { width:10px;height:10px;border-radius:50%;flex-shrink:0; }
+.anal-leg-val    { color:var(--text2);font-size:11px;margin-top:1px; }
+
+/* Horizontal bars */
+.anal-bar-row   { display:flex;align-items:center;gap:8px;margin-bottom:6px; }
+.anal-bar-label { width:72px;font-size:11px;color:var(--text2);text-align:right;flex-shrink:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap; }
+.anal-bar-track { flex:1;height:13px;background:var(--border);border-radius:3px;overflow:hidden; }
+.anal-bar-fill  { height:100%;border-radius:3px;transition:width .4s; }
+.anal-bar-val   { width:80px;font-size:11px;color:var(--text);text-align:right;flex-shrink:0; }
+
+/* Rank list */
 .anal-rank-item { display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border);font-size:12px; }
 .anal-rank-item:last-child { border-bottom:none; }
-.anal-rank-num { width:18px;color:var(--text3);text-align:center;flex-shrink:0; }
+.anal-rank-num  { width:18px;color:var(--text3);text-align:center;flex-shrink:0; }
 .anal-rank-name { flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text); }
-.anal-rank-val { color:var(--text2);white-space:nowrap;font-size:11px;margin-right:6px; }
-.anal-rank-bar { width:60px;height:5px;background:var(--border);border-radius:3px;flex-shrink:0;overflow:hidden; }
-.anal-rank-fill { height:100%;border-radius:3px;background:#3B4DC8; }
-.anal-bar-row { display:flex;align-items:center;gap:8px;margin-bottom:7px; }
-.anal-bar-label { width:56px;font-size:11px;color:var(--text2);text-align:right;flex-shrink:0; }
-.anal-bar-track { flex:1;height:14px;background:var(--border);border-radius:3px;overflow:hidden; }
-.anal-bar-fill { height:100%;border-radius:3px;transition:width .4s; }
-.anal-bar-val { width:72px;font-size:11px;color:var(--text);text-align:right;flex-shrink:0; }
+.anal-rank-val  { color:var(--text2);white-space:nowrap;font-size:11px;margin-right:6px; }
+.anal-rank-bar  { width:60px;height:5px;background:var(--border);border-radius:3px;flex-shrink:0;overflow:hidden; }
+.anal-rank-fill { height:100%;border-radius:3px;background:var(--primary); }
+
+/* Distribution table */
+.dist-table    { width:100%;border-collapse:collapse;font-size:12px; }
+.dist-table th { background:var(--bg3);padding:7px 10px;text-align:left;font-size:11px;font-weight:600;color:var(--text2);white-space:nowrap;border-bottom:1px solid var(--border); }
+.dist-table td { padding:7px 10px;border-bottom:1px solid var(--border);color:var(--text);white-space:nowrap; }
+.dist-table tr:last-child td { border-bottom:none; }
+.dist-table tr:hover td { background:var(--bg3); }
+.dist-table .right,.dist-table th.right { text-align:right; }
+.dist-label    { max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap; }
+
+/* Performance table (campaign / ad) */
+.perf-table-wrap { overflow-x:auto;max-height:380px;overflow-y:auto; }
+.perf-table      { width:100%;border-collapse:collapse;font-size:12px;min-width:860px; }
+.perf-table th   { background:var(--bg3);padding:9px 12px;text-align:left;font-size:11px;font-weight:600;color:var(--text2);white-space:nowrap;border-bottom:1px solid var(--border);position:sticky;top:0;z-index:1; }
+.perf-table td   { padding:8px 12px;border-bottom:1px solid var(--border);white-space:nowrap; }
+.perf-table tr:last-child td { border-bottom:none; }
+.perf-table tr:hover td { background:var(--bg3); }
+.perf-table .right,.perf-table th.right { text-align:right; }
+.perf-num  { font-variant-numeric:tabular-nums; }
+.perf-name { max-width:230px;overflow:hidden;text-overflow:ellipsis; }
+.obj-badge-sm { display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600;background:rgba(23,71,234,.1);color:var(--primary); }
+
 .anal-line-wrap { overflow-x:auto; }
 </style>
 
 <div id="analyticsSection" style="display:none;">
   <div class="anal-section">
     <div class="anal-controls">
-      <span class="anal-title">📈 Phân tích Audience</span>
-      <div class="select-wrap">
-        <select id="analMetricSel" onchange="onAnalMetricChange(this.value)">
-          <option value="spend">Chi phí</option>
-          <option value="impressions">Lượt hiển thị</option>
-          <option value="clicks">Lượt click</option>
-          <option value="reach">Reach</option>
-        </select>
-      </div>
+      <span class="anal-title">📊 Tổng quan Hiệu quả</span>
       <div class="select-wrap">
         <select id="analDateSel" onchange="onAnalDateChange(this.value)">
           <option value="today">Hôm nay</option>
@@ -1172,7 +1222,7 @@ while ($listener.IsListening) {
       <button class="btn btn-sm btn-ghost" onclick="loadAnalytics()" style="margin-left:auto;">🔄 Làm mới</button>
     </div>
     <div id="analLoading" style="display:none;text-align:center;padding:48px;color:var(--text2);">
-      <div class="spinner" style="display:inline-block;vertical-align:middle;margin-right:8px;"></div>Đang tải dữ liệu biểu đồ...
+      <div class="spinner" style="display:inline-block;vertical-align:middle;margin-right:8px;"></div>Đang tải dữ liệu...
     </div>
     <div id="analContent"></div>
   </div>
@@ -4400,14 +4450,8 @@ async function vdDownload(type) {
 }
 
 /* ═══════════════════════════ ANALYTICS ═══════════════════════════ */
-const ANAL_COLORS = ['#3B4DC8','#C084FC','#67E8F9','#34D399','#FB923C','#FCD34D','#F472B6','#A78BFA'];
-const ANAL_METRICS = {
-  spend:       'Chi phí',
-  impressions: 'Lượt hiển thị',
-  clicks:      'Lượt click',
-  reach:       'Reach',
-};
-const GENDER_LABELS = { MALE:'Nam', FEMALE:'Nữ', UNKNOWN:'Unknown' };
+const ANAL_COLORS = ['#1747EA','#7C3AED','#0EA5A0','#16A34A','#D97706','#DC2626','#C084FC','#67E8F9'];
+const GENDER_LABELS = { MALE:'Nam', FEMALE:'Nữ', UNKNOWN:'Không rõ' };
 const VN_PROVINCES = {
   '220':'Hà Nội','227':'Hồ Chí Minh','228':'Đà Nẵng','234':'Hải Phòng','229':'Cần Thơ',
   '221':'Hà Giang','222':'Cao Bằng','223':'Bắc Kạn','224':'Tuyên Quang','225':'Lào Cai',
@@ -4424,13 +4468,68 @@ const VN_PROVINCES = {
   '280':'Sóc Trăng','281':'Bạc Liêu','282':'Cà Mau',
 };
 
-let S_analMetric = 'spend';
-let S_analDate   = '7';
+let S_analDate    = '7';
+let _analCampData = [];
+let _analAdData   = [];
+let _analCampTab  = '';
+let _analAdTab    = '';
 
-function onAnalMetricChange(v) { S_analMetric = v; loadAnalytics(); }
-function onAnalDateChange(v)   { S_analDate   = v; loadAnalytics(); }
+function onAnalDateChange(v) { S_analDate = v; loadAnalytics(); }
 
-async function fetchAudienceDim(aid, dims, metric) {
+async function fetchSummaryAgg(aid) {
+  if (S.demo) {
+    return { spend:'3500000',impressions:'3545332',reach:'2500000',clicks:'93539',cpm:'988',ctr:'2.64',frequency:'1.42',real_time_result:'45',cost_per_result:'77778',video_watched_6s:'850000' };
+  }
+  const { start, end } = getRange(S_analDate);
+  try {
+    const d = await apiGet('/report/integrated/get/', {
+      advertiser_id: aid,
+      report_type: 'BASIC',
+      data_level: 'AUCTION_ADVERTISER',
+      dimensions: ['advertiser_id'],
+      metrics: ['spend','impressions','reach','clicks','cpm','ctr','frequency','real_time_result','cost_per_result','video_watched_6s'],
+      start_date: start, end_date: end,
+      page_size: 1,
+    });
+    return (((d.list||[])[0])||{}).metrics || {};
+  } catch { return {}; }
+}
+
+async function fetchCampaignBreakdown(aid) {
+  if (S.demo) return [];
+  const { start, end } = getRange(S_analDate);
+  try {
+    const d = await apiGet('/report/integrated/get/', {
+      advertiser_id: aid,
+      report_type: 'BASIC',
+      data_level: 'AUCTION_CAMPAIGN',
+      dimensions: ['campaign_id'],
+      metrics: ['spend','impressions','clicks','ctr','cpm','reach','real_time_result','cost_per_result','video_watched_6s'],
+      start_date: start, end_date: end,
+      page_size: 100,
+    });
+    return d.list || [];
+  } catch { return []; }
+}
+
+async function fetchAdBreakdown(aid) {
+  if (S.demo) return [];
+  const { start, end } = getRange(S_analDate);
+  try {
+    const d = await apiGet('/report/integrated/get/', {
+      advertiser_id: aid,
+      report_type: 'BASIC',
+      data_level: 'AUCTION_AD',
+      dimensions: ['ad_id','ad_name','adgroup_id','adgroup_name','campaign_id'],
+      metrics: ['spend','impressions','clicks','ctr','cpm','real_time_result','cost_per_result','video_watched_6s'],
+      start_date: start, end_date: end,
+      page_size: 100,
+    });
+    return d.list || [];
+  } catch { return []; }
+}
+
+async function fetchAudienceMulti(aid, dims) {
   if (S.demo) return [];
   const { start, end } = getRange(S_analDate);
   try {
@@ -4439,7 +4538,7 @@ async function fetchAudienceDim(aid, dims, metric) {
       report_type: 'AUDIENCE',
       data_level: 'AUCTION_ADVERTISER',
       dimensions: dims,
-      metrics: [metric],
+      metrics: ['spend','impressions','real_time_result','video_watched_6s','clicks'],
       start_date: start, end_date: end,
       page_size: 1000,
     });
@@ -4447,12 +4546,11 @@ async function fetchAudienceDim(aid, dims, metric) {
   } catch { return []; }
 }
 
-async function fetchTimeSeries(aid, metric) {
+async function fetchTimeSeries(aid) {
   if (S.demo) {
     const { start, end } = getRange(S_analDate);
     const days = [];
-    let cur = new Date(start);
-    const endD = new Date(end);
+    let cur = new Date(start), endD = new Date(end);
     while (cur <= endD) {
       days.push({ date: cur.toISOString().slice(0,10), v: Math.floor(Math.random()*500000+50000) });
       cur.setDate(cur.getDate()+1);
@@ -4466,13 +4564,13 @@ async function fetchTimeSeries(aid, metric) {
       report_type: 'BASIC',
       data_level: 'AUCTION_ADVERTISER',
       dimensions: ['stat_time_day'],
-      metrics: [metric],
+      metrics: ['spend'],
       start_date: start, end_date: end,
       page_size: 1000,
     });
     return (d.list || []).map(item => ({
-      date: item.dimensions.stat_time_day,
-      v: parseFloat(item.metrics[metric]) || 0,
+      date: (item.dimensions.stat_time_day||'').slice(0,10),
+      v: parseFloat(item.metrics.spend) || 0,
     })).sort((a,b) => a.date.localeCompare(b.date));
   } catch { return []; }
 }
@@ -4480,183 +4578,333 @@ async function fetchTimeSeries(aid, metric) {
 /* ── CHART RENDERERS ── */
 function mkDonut(data) {
   const W=160, cx=80, cy=80, OR=62, IR=40;
-  const total = data.reduce((s,d) => s+(d.v||0), 0);
+  const total = data.reduce((s,d)=>s+(d.v||0),0);
   if (!total) return `<svg width="${W}" height="${W}"><text x="50%" y="52%" text-anchor="middle" font-size="11" fill="#aaa">Không có dữ liệu</text></svg>`;
-  let angle = -Math.PI/2;
-  let paths = '';
-  data.forEach((d,i) => {
-    const a = (d.v/total)*2*Math.PI;
-    const x1=cx+OR*Math.cos(angle), y1=cy+OR*Math.sin(angle);
-    angle += a;
-    const x2=cx+OR*Math.cos(angle), y2=cy+OR*Math.sin(angle);
-    const xi1=cx+IR*Math.cos(angle), yi1=cy+IR*Math.sin(angle);
-    const xi2=cx+IR*Math.cos(angle-a), yi2=cy+IR*Math.sin(angle-a);
-    const lg = a>Math.PI?1:0;
-    paths += `<path d="M${x1.toFixed(1)},${y1.toFixed(1)} A${OR},${OR} 0 ${lg},1 ${x2.toFixed(1)},${y2.toFixed(1)} L${xi1.toFixed(1)},${yi1.toFixed(1)} A${IR},${IR} 0 ${lg},0 ${xi2.toFixed(1)},${yi2.toFixed(1)} Z" fill="${ANAL_COLORS[i%ANAL_COLORS.length]}"/>`;
+  let angle=-Math.PI/2, paths='';
+  data.forEach((d,i)=>{
+    const a=(d.v/total)*2*Math.PI;
+    const x1=cx+OR*Math.cos(angle),y1=cy+OR*Math.sin(angle);
+    angle+=a;
+    const x2=cx+OR*Math.cos(angle),y2=cy+OR*Math.sin(angle);
+    const xi1=cx+IR*Math.cos(angle),yi1=cy+IR*Math.sin(angle);
+    const xi2=cx+IR*Math.cos(angle-a),yi2=cy+IR*Math.sin(angle-a);
+    const lg=a>Math.PI?1:0;
+    paths+=`<path d="M${x1.toFixed(1)},${y1.toFixed(1)} A${OR},${OR} 0 ${lg},1 ${x2.toFixed(1)},${y2.toFixed(1)} L${xi1.toFixed(1)},${yi1.toFixed(1)} A${IR},${IR} 0 ${lg},0 ${xi2.toFixed(1)},${yi2.toFixed(1)} Z" fill="${ANAL_COLORS[i%ANAL_COLORS.length]}"/>`;
   });
   return `<svg width="${W}" height="${W}" viewBox="0 0 ${W} ${W}">${paths}</svg>`;
 }
 
-function mkLine(data) {
-  if (!data.length) return '<div style="color:var(--text3);font-size:12px;padding:20px 0;">Không có dữ liệu</div>';
-  const W=560, H=110, PL=54, PR=12, PT=10, PB=26;
-  const iW=W-PL-PR, iH=H-PT-PB;
-  const max = Math.max(...data.map(d=>d.v), 1);
-  const pts = data.map((d,i)=>{
-    const x=(PL+i/(Math.max(data.length-1,1))*iW).toFixed(1);
-    const y=(PT+iH-(d.v/max)*iH).toFixed(1);
-    return `${x},${y}`;
-  });
-  // Grid lines + y-axis labels
-  const yTicks=[0,.25,.5,.75,1];
-  const grid=yTicks.map(t=>{
-    const y=(PT+iH-(t)*iH).toFixed(1);
-    const val=fmtN(max*t,'impressions');
+function mkLegend(data) {
+  return `<div class="anal-legend">${data.map((d,i)=>`
+    <div class="anal-leg-item">
+      <div class="anal-leg-dot" style="background:${ANAL_COLORS[i%ANAL_COLORS.length]}"></div>
+      <div><div>${esc(d.label)}</div><div class="anal-leg-val">${fmtCur(d.v)}</div></div>
+    </div>`).join('')}</div>`;
+}
+
+function mkBarsV(data) {
+  if (!data||!data.length) return '<div style="color:var(--text3);padding:32px;text-align:center;">Không có dữ liệu</div>';
+  const W=560,H=140,PL=58,PR=12,PT=10,PB=28;
+  const iW=W-PL-PR,iH=H-PT-PB;
+  const max=Math.max(...data.map(d=>d.v),1);
+  const n=data.length,gap=iW/n,barW=Math.max(4,gap*0.65);
+  const grid=[0,.25,.5,.75,1].map(t=>{
+    const y=(PT+iH*(1-t)).toFixed(1);
     return `<line x1="${PL}" y1="${y}" x2="${PL+iW}" y2="${y}" stroke="#e5e7eb" stroke-width="1"/>
-            <text x="${PL-4}" y="${y}" text-anchor="end" font-size="9" fill="#aaa" dominant-baseline="middle">${val}</text>`;
+            <text x="${PL-4}" y="${y}" text-anchor="end" font-size="9" fill="#aaa" dominant-baseline="middle">${fmtCurShort(max*t)}</text>`;
   }).join('');
-  const area=`<polygon points="${PL},${PT+iH} ${pts.join(' ')} ${(PL+iW).toFixed(1)},${PT+iH}" fill="rgba(59,77,200,0.08)"/>`;
-  const line=`<polyline points="${pts.join(' ')}" fill="none" stroke="#3B4DC8" stroke-width="2" stroke-linejoin="round"/>`;
-  const step=Math.max(1,Math.floor(data.length/7));
-  const labels=data.filter((_,i)=>i%step===0||i===data.length-1).map(d=>{
-    const i=data.indexOf(d);
-    const x=PL+i/(Math.max(data.length-1,1))*iW;
-    return `<text x="${x.toFixed(1)}" y="${H-4}" text-anchor="middle" font-size="9" fill="#aaa">${d.date.slice(5)}</text>`;
-  });
-  return `<div class="anal-line-wrap"><svg width="100%" viewBox="0 0 ${W} ${H}" style="display:block;height:${H}px;max-height:${H}px;">${grid}${area}${line}${labels.join('')}</svg></div>`;
+  const bars=data.map((d,i)=>{
+    const h=(d.v/max)*iH,x=PL+i*gap+(gap-barW)/2;
+    return `<rect x="${x.toFixed(1)}" y="${(PT+iH-h).toFixed(1)}" width="${barW.toFixed(1)}" height="${Math.max(h,0).toFixed(1)}" rx="2" fill="#1747EA" opacity="0.85"/>`;
+  }).join('');
+  const step=Math.max(1,Math.floor(n/6));
+  const labels=data.filter((_,i)=>i%step===0||i===n-1).map(d=>{
+    const i=data.indexOf(d),x=PL+i*gap+gap/2;
+    return `<text x="${x.toFixed(1)}" y="${H-4}" text-anchor="middle" font-size="9" fill="#aaa">${d.date.slice(5,10)}</text>`;
+  }).join('');
+  return `<div class="anal-line-wrap"><svg width="100%" viewBox="0 0 ${W} ${H}" style="display:block;height:${H}px;">${grid}${bars}${labels}</svg></div>`;
 }
 
 function mkBarsH(data, metric) {
-  if (!data.length) return '<div style="color:var(--text3);font-size:12px;">Không có dữ liệu</div>';
-  const max = Math.max(...data.map(d=>d.v), 1);
+  if (!data||!data.length) return '<div style="color:var(--text3);font-size:12px;">Không có dữ liệu</div>';
+  const max=Math.max(...data.map(d=>d.v),1);
   return data.map((d,i)=>`
     <div class="anal-bar-row">
-      <span class="anal-bar-label">${esc(d.label)}</span>
-      <div class="anal-bar-track">
-        <div class="anal-bar-fill" style="width:${(d.v/max*100).toFixed(1)}%;background:${ANAL_COLORS[i%ANAL_COLORS.length]};"></div>
-      </div>
-      <span class="anal-bar-val">${fmtN(d.v, metric)}</span>
+      <span class="anal-bar-label" title="${esc(d.label)}">${esc(d.label)}</span>
+      <div class="anal-bar-track"><div class="anal-bar-fill" style="width:${(d.v/max*100).toFixed(1)}%;background:${ANAL_COLORS[i%ANAL_COLORS.length]};"></div></div>
+      <span class="anal-bar-val">${fmtN(d.v,metric)}</span>
     </div>`).join('');
 }
 
 function mkRankList(data, metric, n=10) {
-  if (!data.length) return '<div style="color:var(--text3);font-size:12px;">Không có dữ liệu</div>';
-  const max = Math.max(...data.map(d=>d.v), 1);
-  const medals = ['🥇','🥈','🥉'];
+  if (!data||!data.length) return '<div style="color:var(--text3);font-size:12px;">Không có dữ liệu</div>';
+  const max=Math.max(...data.map(d=>d.v),1);
+  const medals=['🥇','🥈','🥉'];
   return data.slice(0,n).map((d,i)=>`
     <div class="anal-rank-item">
       <span class="anal-rank-num">${medals[i]||i+1}</span>
       <span class="anal-rank-name" title="${esc(d.label)}">${esc(d.label)}</span>
-      <span class="anal-rank-val">${fmtN(d.v, metric)}</span>
+      <span class="anal-rank-val">${fmtN(d.v,metric)}</span>
       <div class="anal-rank-bar"><div class="anal-rank-fill" style="width:${(d.v/max*100).toFixed(1)}%"></div></div>
     </div>`).join('');
 }
 
-function mkDonutCard(title, data, metric) {
-  const total = data.reduce((s,d)=>s+d.v, 0);
-  const legend = data.map((d,i)=>`
-    <div class="anal-leg-item">
-      <div class="anal-leg-dot" style="background:${ANAL_COLORS[i%ANAL_COLORS.length]}"></div>
-      <div>
-        <div>${esc(d.label)}</div>
-        <div class="anal-leg-val">${fmtN(d.v,metric)}</div>
-      </div>
-    </div>`).join('');
-  return `<div class="anal-card">
-    <div class="anal-card-title">${title}</div>
-    <div class="anal-donut-wrap">
-      ${mkDonut(data)}
-      <div class="anal-legend">${legend}</div>
-    </div>
+function mkDistTable(rows, dimKey, labelFn) {
+  if (!rows||!rows.length) return '<div style="color:var(--text3);font-size:12px;padding:12px 0;">Không có dữ liệu</div>';
+  const DCOLS=[
+    {key:'spend',           label:'Chi phí',  fmt:v=>fmtCur(parseFloat(v)||0)},
+    {key:'impressions',     label:'Hiển thị', fmt:v=>fmtN(parseFloat(v)||0,'impressions')},
+    {key:'real_time_result',label:'Lead/KQ',  fmt:v=>fmtN(parseFloat(v)||0,'result')},
+    {key:'video_watched_6s',label:'View 6s',  fmt:v=>fmtN(parseFloat(v)||0,'video_watched_6s')},
+  ];
+  const hdr=DCOLS.map(c=>`<th class="right">${c.label}</th>`).join('');
+  const trs=rows.map(r=>{
+    const label=labelFn((r.dimensions||{})[dimKey]||'');
+    const tds=DCOLS.map(c=>`<td class="right perf-num">${c.fmt((r.metrics||{})[c.key])}</td>`).join('');
+    return `<tr><td class="dist-label" title="${esc(label)}">${esc(label)}</td>${tds}</tr>`;
+  }).join('');
+  return `<div style="overflow-x:auto;margin-top:12px;"><table class="dist-table">
+    <thead><tr><th>Phân khúc</th>${hdr}</tr></thead><tbody>${trs}</tbody>
+  </table></div>`;
+}
+
+function getObjDistribution() {
+  const byObj={};
+  (S.campaigns||[]).forEach(c=>{
+    const obj=OBJ_MAP[c.objective_type]||c.objective_type||'Khác';
+    const spend=parseFloat((S.metrics[c.campaign_id]||{}).spend)||0;
+    byObj[obj]=(byObj[obj]||0)+spend;
+  });
+  return Object.entries(byObj).map(([label,v])=>({label,v})).filter(d=>d.v>0).sort((a,b)=>b.v-a.v);
+}
+
+function renderCampPanel() {
+  const objTypes=[...new Set((S.campaigns||[]).map(c=>c.objective_type).filter(Boolean))];
+  const rows=[..._analCampData].filter(r=>{
+    if(!_analCampTab) return true;
+    const cid=String((r.dimensions||{}).campaign_id||'');
+    const camp=(S.campaigns||[]).find(c=>String(c.campaign_id)===cid);
+    return camp&&camp.objective_type===_analCampTab;
+  }).sort((a,b)=>(parseFloat(b.metrics.spend)||0)-(parseFloat(a.metrics.spend)||0));
+
+  const tabs=`<div class="anal-tabs">
+    <div class="anal-tab${!_analCampTab?' active':''}" onclick="setCampTab('')">Tất cả</div>
+    ${objTypes.map(t=>`<div class="anal-tab${_analCampTab===t?' active':''}" onclick="setCampTab(${JSON.stringify(t)})">${esc(OBJ_MAP[t]||t)}</div>`).join('')}
+  </div>`;
+
+  const table=rows.length?`<div class="perf-table-wrap"><table class="perf-table">
+    <thead><tr>
+      <th>#</th><th>Tên chiến dịch</th><th>Mục tiêu</th>
+      <th class="right">Chi phí</th><th class="right">Impressions</th>
+      <th class="right">Clicks</th><th class="right">CTR</th>
+      <th class="right">Lead/KQ</th><th class="right">Cost/KQ</th>
+      <th class="right">View 6s</th><th class="right">CPM</th>
+    </tr></thead>
+    <tbody>${rows.map((r,i)=>{
+      const m=r.metrics||{},cid=String((r.dimensions||{}).campaign_id||'');
+      const camp=(S.campaigns||[]).find(c=>String(c.campaign_id)===cid)||{};
+      const name=camp.campaign_name||('ID '+cid),obj=OBJ_MAP[camp.objective_type]||camp.objective_type||'—';
+      return `<tr>
+        <td style="color:var(--text3);font-size:11px;">${i+1}</td>
+        <td class="perf-name" title="${esc(name)}">${esc(name.length>42?name.slice(0,42)+'…':name)}</td>
+        <td><span class="obj-badge-sm">${esc(obj)}</span></td>
+        <td class="right perf-num">${fmtCur(parseFloat(m.spend)||0)}</td>
+        <td class="right perf-num">${fmtN(parseFloat(m.impressions)||0,'impressions')}</td>
+        <td class="right perf-num">${fmtN(parseFloat(m.clicks)||0,'clicks')}</td>
+        <td class="right perf-num">${(parseFloat(m.ctr)||0).toFixed(2)}%</td>
+        <td class="right perf-num">${fmtN(parseFloat(m.real_time_result)||0,'result')}</td>
+        <td class="right perf-num">${fmtCur(parseFloat(m.cost_per_result)||0)}</td>
+        <td class="right perf-num">${fmtN(parseFloat(m.video_watched_6s)||0,'video_watched_6s')}</td>
+        <td class="right perf-num">${fmtCur(parseFloat(m.cpm)||0)}</td>
+      </tr>`;
+    }).join('')}</tbody>
+  </table></div>`:'<div style="color:var(--text3);padding:24px;text-align:center;">Không có dữ liệu</div>';
+
+  return `<div class="anal-panel" id="analCampPanel">
+    <div class="anal-panel-hdr">📊 Hiệu quả theo Chiến dịch</div>
+    ${tabs}<div>${table}</div>
   </div>`;
 }
 
+function setCampTab(tab) {
+  _analCampTab=tab;
+  const el=document.getElementById('analCampPanel');
+  if(el) el.outerHTML=renderCampPanel();
+}
+
+function renderAdPanel() {
+  const objTypes=[...new Set((S.campaigns||[]).map(c=>c.objective_type).filter(Boolean))];
+  const allRows=[..._analAdData].sort((a,b)=>(parseFloat(b.metrics.spend)||0)-(parseFloat(a.metrics.spend)||0));
+  const rows=_analAdTab?allRows.filter(r=>{
+    const cid=String((r.dimensions||{}).campaign_id||'');
+    const camp=(S.campaigns||[]).find(c=>String(c.campaign_id)===cid);
+    return camp&&camp.objective_type===_analAdTab;
+  }):allRows.slice(0,50);
+
+  const tabs=`<div class="anal-tabs">
+    <div class="anal-tab${!_analAdTab?' active':''}" onclick="setAdTab('')">Tất cả</div>
+    ${objTypes.map(t=>`<div class="anal-tab${_analAdTab===t?' active':''}" onclick="setAdTab(${JSON.stringify(t)})">${esc(OBJ_MAP[t]||t)}</div>`).join('')}
+  </div>`;
+
+  const table=rows.length?`<div class="perf-table-wrap"><table class="perf-table">
+    <thead><tr>
+      <th>#</th><th>Tên quảng cáo</th><th>Nhóm QC</th>
+      <th class="right">Chi phí</th><th class="right">Impressions</th>
+      <th class="right">Clicks</th><th class="right">CTR</th>
+      <th class="right">Lead/KQ</th><th class="right">Cost/KQ</th>
+      <th class="right">View 6s</th><th class="right">CPM</th>
+    </tr></thead>
+    <tbody>${rows.map((r,i)=>{
+      const m=r.metrics||{},dim=r.dimensions||{};
+      const adName=dim.ad_name||('ID '+(dim.ad_id||''));
+      const agName=dim.adgroup_name||('AG '+(dim.adgroup_id||''));
+      return `<tr>
+        <td style="color:var(--text3);font-size:11px;">${i+1}</td>
+        <td class="perf-name" title="${esc(adName)}">${esc(adName.length>42?adName.slice(0,42)+'…':adName)}</td>
+        <td class="perf-name" title="${esc(agName)}" style="color:var(--text2)">${esc(agName.length>28?agName.slice(0,28)+'…':agName)}</td>
+        <td class="right perf-num">${fmtCur(parseFloat(m.spend)||0)}</td>
+        <td class="right perf-num">${fmtN(parseFloat(m.impressions)||0,'impressions')}</td>
+        <td class="right perf-num">${fmtN(parseFloat(m.clicks)||0,'clicks')}</td>
+        <td class="right perf-num">${(parseFloat(m.ctr)||0).toFixed(2)}%</td>
+        <td class="right perf-num">${fmtN(parseFloat(m.real_time_result)||0,'result')}</td>
+        <td class="right perf-num">${fmtCur(parseFloat(m.cost_per_result)||0)}</td>
+        <td class="right perf-num">${fmtN(parseFloat(m.video_watched_6s)||0,'video_watched_6s')}</td>
+        <td class="right perf-num">${fmtCur(parseFloat(m.cpm)||0)}</td>
+      </tr>`;
+    }).join('')}</tbody>
+  </table></div>`:'<div style="color:var(--text3);padding:24px;text-align:center;">Không có dữ liệu</div>';
+
+  return `<div class="anal-panel" id="analAdPanel">
+    <div class="anal-panel-hdr">🎯 Hiệu quả Quảng cáo</div>
+    ${tabs}<div>${table}</div>
+  </div>`;
+}
+
+function setAdTab(tab) {
+  _analAdTab=tab;
+  const el=document.getElementById('analAdPanel');
+  if(el) el.outerHTML=renderAdPanel();
+}
+
 async function loadAnalytics() {
-  const aid = S.accountId;
-  if (!aid && !S.demo) {
-    document.getElementById('analContent').innerHTML = '<div style="color:var(--text2);padding:40px;text-align:center;">Vui lòng chọn tài khoản quảng cáo</div>';
+  const aid=S.accountId;
+  if(!aid&&!S.demo){
+    document.getElementById('analContent').innerHTML='<div style="color:var(--text2);padding:40px;text-align:center;">Vui lòng chọn tài khoản quảng cáo</div>';
     return;
   }
-  const metric = S_analMetric;
-  const ANAL_METRIC_LABELS = { spend: 'Chi phí', impressions: 'Lượt hiển thị', clicks: 'Lượt click', reach: 'Reach' };
-  const metricLabel = ANAL_METRIC_LABELS[metric] || metric;
-  document.getElementById('analContent').innerHTML = '';
-  document.getElementById('analLoading').style.display = 'block';
+  document.getElementById('analContent').innerHTML='';
+  document.getElementById('analLoading').style.display='block';
 
-  // Fetch all in parallel
-  const [timeSeries, genderRaw, ageRaw, countryRaw, provinceRaw, osRaw, brandRaw] = await Promise.all([
-    fetchTimeSeries(aid || '0', metric),
-    fetchAudienceDim(aid || '0', ['gender'], metric),
-    fetchAudienceDim(aid || '0', ['age'], metric),
-    fetchAudienceDim(aid || '0', ['country_code'], metric),
-    fetchAudienceDim(aid || '0', ['province_id'], metric),
-    fetchAudienceDim(aid || '0', ['platform'], metric),
-    fetchAudienceDim(aid || '0', ['device_brand_name'], metric),
+  const [summary,timeSeries,campBreak,adBreak,ageRaw,genderRaw,brandRaw,provinceRaw]=await Promise.all([
+    fetchSummaryAgg(aid||'0'),
+    fetchTimeSeries(aid||'0'),
+    fetchCampaignBreakdown(aid||'0'),
+    fetchAdBreakdown(aid||'0'),
+    fetchAudienceMulti(aid||'0',['age']),
+    fetchAudienceMulti(aid||'0',['gender']),
+    fetchAudienceMulti(aid||'0',['device_brand_name']),
+    fetchAudienceMulti(aid||'0',['province_id']),
   ]);
 
-  document.getElementById('analLoading').style.display = 'none';
+  _analCampData=campBreak; _analAdData=adBreak; _analCampTab=''; _analAdTab='';
+  document.getElementById('analLoading').style.display='none';
 
   try {
-    // Parse helpers
-    const parseList = (raw, dimKey, labelFn) =>
-      (raw||[]).map(r => ({ label: labelFn((r.dimensions||{})[dimKey]||''), v: parseFloat((r.metrics||{})[metric])||0 }))
-         .filter(d => d.v > 0)
-         .sort((a,b) => b.v - a.v);
+    const fC=v=>fmtCur(parseFloat(v)||0);
+    const fN=(v,m)=>fmtN(parseFloat(v)||0,m);
 
-    const gender  = parseList(genderRaw,  'gender',         k => (GENDER_LABELS||{})[k]||k);
-    const age     = parseList(ageRaw,     'age',            k => k||'Unknown');
-    const country = parseList(countryRaw, 'country_code',   k => k||'Unknown');
-    const province= parseList(provinceRaw,'province_id',    k => (VN_PROVINCES||{})[String(k)]||('ID '+k));
-    const os      = parseList(osRaw,      'platform',       k => k||'Unknown');
-    const brand   = parseList(brandRaw,   'device_brand_name', k => k||'Unknown');
-
-    const html = `
-      <!-- ── Xu hướng theo ngày ── -->
-      <div class="anal-card" style="margin-bottom:16px;">
-        <div class="anal-card-title">Xu hướng ${metricLabel} theo ngày</div>
-        ${mkLine(timeSeries)}
-      </div>
-
-      <!-- ── Đối tượng ── -->
-      <div class="anal-grid anal-grid-3" style="margin-bottom:16px;">
-        ${mkDonutCard('Giới tính', gender, metric)}
-        <div class="anal-card">
-          <div class="anal-card-title">Độ tuổi</div>
-          ${mkBarsH(age, metric)}
+    /* ── KPI Cards ── */
+    const kpiHtml=`
+      <div class="anal-kpi-big">
+        <div class="anal-kpi-card big">
+          <div class="anal-kpi-label">Chi phí</div>
+          <div class="anal-kpi-val">${fmtCurShort(parseFloat(summary.spend)||0)}</div>
+          <div class="anal-kpi-sub">Tổng ngân sách đã chi</div>
         </div>
-        <div class="anal-card">
-          <div class="anal-card-title">Top tuổi theo ${metricLabel}</div>
-          ${mkRankList(age, metric, 6)}
+        <div class="anal-kpi-card big green">
+          <div class="anal-kpi-label">Lead / KQ</div>
+          <div class="anal-kpi-val">${fN(summary.real_time_result,'result')}</div>
+          <div class="anal-kpi-sub">Cost/KQ: <span class="green">${fC(summary.cost_per_result)}</span></div>
+        </div>
+        <div class="anal-kpi-card big purple">
+          <div class="anal-kpi-label">View 6s</div>
+          <div class="anal-kpi-val">${fN(summary.video_watched_6s,'video_watched_6s')}</div>
+          <div class="anal-kpi-sub">CPM: <span class="purple">${fC(summary.cpm)}</span></div>
         </div>
       </div>
+      <div class="anal-kpi-small">
+        <div class="anal-kpi-card"><div class="anal-kpi-label">Impressions</div><div class="anal-kpi-val-sm">${fN(summary.impressions,'impressions')}</div></div>
+        <div class="anal-kpi-card"><div class="anal-kpi-label">Reach</div><div class="anal-kpi-val-sm">${fN(summary.reach,'reach')}</div></div>
+        <div class="anal-kpi-card"><div class="anal-kpi-label">Clicks</div><div class="anal-kpi-val-sm">${fN(summary.clicks,'clicks')}</div></div>
+        <div class="anal-kpi-card"><div class="anal-kpi-label">CPM</div><div class="anal-kpi-val-sm">${fC(summary.cpm)}</div></div>
+        <div class="anal-kpi-card"><div class="anal-kpi-label">CTR</div><div class="anal-kpi-val-sm">${(parseFloat(summary.ctr)||0).toFixed(2)}%</div></div>
+        <div class="anal-kpi-card"><div class="anal-kpi-label">Tần suất</div><div class="anal-kpi-val-sm">${(parseFloat(summary.frequency)||0).toFixed(2)}</div></div>
+      </div>`;
 
-      <!-- ── Địa lý ── -->
-      <div class="anal-grid anal-grid-2" style="margin-bottom:16px;">
-        <div class="anal-card">
-          <div class="anal-card-title">Quốc gia</div>
-          ${mkBarsH(country.slice(0,8), metric)}
+    /* ── Daily chart + Objective donut ── */
+    const objDist=getObjDistribution();
+    const dailyHtml=`
+      <div class="anal-grid anal-grid-62">
+        <div class="anal-panel">
+          <div class="anal-panel-hdr">Hiệu quả hàng ngày (Chi phí)</div>
+          <div class="anal-panel-body">${mkBarsV(timeSeries)}</div>
         </div>
-        <div class="anal-card">
-          <div class="anal-card-title">Tỉnh / Thành phố hàng đầu (VN)</div>
-          ${mkRankList(province, metric, 10)}
+        <div class="anal-panel">
+          <div class="anal-panel-hdr">Phân bố chi phí theo Mục tiêu</div>
+          <div class="anal-panel-body">${objDist.length?`<div class="anal-donut-wrap">${mkDonut(objDist)}${mkLegend(objDist)}</div>`:'<div style="color:var(--text3);padding:24px;text-align:center;font-size:12px;">Không có dữ liệu<br>Vui lòng tải chiến dịch trước</div>'}</div>
+        </div>
+      </div>`;
+
+    /* ── Campaign table ── */
+    const campHtml=renderCampPanel();
+
+    /* ── Distribution ── */
+    const bySpend=(arr)=>[...arr].sort((a,b)=>(parseFloat(b.metrics.spend)||0)-(parseFloat(a.metrics.spend)||0));
+    const ageSorted=bySpend(ageRaw),genderSorted=bySpend(genderRaw),brandSorted=bySpend(brandRaw),provSorted=bySpend(provinceRaw);
+    const ageBarData=ageSorted.map(r=>({label:(r.dimensions||{}).age||'Unknown',v:parseFloat((r.metrics||{}).spend)||0}));
+    const genderChart=genderSorted.map(r=>({label:GENDER_LABELS[(r.dimensions||{}).gender||'']||(r.dimensions||{}).gender||'?',v:parseFloat((r.metrics||{}).spend)||0}));
+    const brandBarData=brandSorted.slice(0,8).map(r=>({label:(r.dimensions||{}).device_brand_name||'Unknown',v:parseFloat((r.metrics||{}).spend)||0}));
+
+    const distHtml=`
+      <div class="anal-grid anal-grid-2">
+        <div class="anal-panel">
+          <div class="anal-panel-hdr">Phân phối theo Độ tuổi</div>
+          <div class="anal-panel-body">
+            ${mkBarsH(ageBarData,'spend')}
+            ${mkDistTable(ageSorted,'age',k=>k||'Unknown')}
+          </div>
+        </div>
+        <div class="anal-panel">
+          <div class="anal-panel-hdr">Phân phối theo Giới tính</div>
+          <div class="anal-panel-body">
+            <div class="anal-donut-wrap" style="margin-bottom:14px;">${mkDonut(genderChart)}${mkLegend(genderChart)}</div>
+            ${mkDistTable(genderSorted,'gender',k=>GENDER_LABELS[k]||k||'Unknown')}
+          </div>
         </div>
       </div>
-
-      <!-- ── Thiết bị ── -->
-      <div class="anal-grid anal-grid-2" style="margin-bottom:16px;">
-        ${mkDonutCard('Hệ điều hành thiết bị', os, metric)}
-        <div class="anal-card">
-          <div class="anal-card-title">Thương hiệu thiết bị</div>
-          ${mkRankList(brand, metric, 10)}
+      <div class="anal-grid anal-grid-2">
+        <div class="anal-panel">
+          <div class="anal-panel-hdr">Phân phối theo Thiết bị</div>
+          <div class="anal-panel-body">
+            ${mkBarsH(brandBarData,'spend')}
+            ${mkDistTable(brandSorted.slice(0,12),'device_brand_name',k=>k||'Unknown')}
+          </div>
         </div>
-      </div>
-    `;
+        <div class="anal-panel">
+          <div class="anal-panel-hdr">Phân phối theo Tỉnh / Thành phố</div>
+          <div class="anal-panel-body">
+            ${mkDistTable(provSorted.slice(0,15),'province_id',k=>(VN_PROVINCES||{})[String(k)]||('ID '+k))}
+          </div>
+        </div>
+      </div>`;
 
-    document.getElementById('analContent').innerHTML = html;
+    /* ── Ad table ── */
+    const adHtml=renderAdPanel();
+
+    document.getElementById('analContent').innerHTML=kpiHtml+dailyHtml+campHtml+distHtml+adHtml;
   } catch(err) {
-    document.getElementById('analContent').innerHTML =
-      `<div style="color:var(--danger);padding:24px;">Lỗi render biểu đồ: ${err.message}</div>`;
-    console.error('loadAnalytics render error:', err);
+    document.getElementById('analContent').innerHTML=`<div style="color:var(--danger);padding:24px;">Lỗi render: ${err.message}</div>`;
+    console.error('analytics error:',err);
   }
 }
 
