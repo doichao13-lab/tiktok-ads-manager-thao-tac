@@ -4659,12 +4659,14 @@ async function fetchAdCreatives(aid, adIds) {
     const adToImgId = {};
     const allVids = [];
     const allImgIds = [];
+    console.log('[thumb] /ad/get/ raw list:', (d.list||[]).slice(0,3).map(a=>({ad_id:a.ad_id,video_id:a.video_id,image_ids:a.image_ids})));
     for (const ad of (d.list || [])) {
       const adId = String(ad.ad_id);
       map[adId] = { name: ad.ad_name || '', thumb: '' };
       if (ad.video_id) { adToVid[adId] = String(ad.video_id); allVids.push(String(ad.video_id)); }
       else if (ad.image_ids && ad.image_ids.length > 0) { adToImgId[adId] = ad.image_ids[0]; allImgIds.push(ad.image_ids[0]); }
     }
+    console.log('[thumb] video_ids found:', allVids.length, '| image_ids found:', allImgIds.length);
     // Fetch video cover thumbnails
     if (allVids.length > 0) {
       try {
@@ -4672,14 +4674,15 @@ async function fetchAdCreatives(aid, adIds) {
           advertiser_id: aid,
           video_ids: [...new Set(allVids)].slice(0, 100),
         });
+        console.log('[thumb] /file/video/get/ raw list sample:', (vd.list||[]).slice(0,2));
         const vidMap = {};
         for (const v of (vd.list || [])) {
-          vidMap[String(v.video_id)] = v.video_cover_url || v.image_url || v.poster_url || '';
+          vidMap[String(v.video_id)] = v.video_cover_url || v.image_url || v.poster_url || v.preview_url || '';
         }
         for (const [adId, vid] of Object.entries(adToVid)) {
           if (vidMap[vid]) map[adId].thumb = vidMap[vid];
         }
-      } catch {}
+      } catch(e) { console.log('[thumb] /file/video/get/ error:', e.message); }
     }
     // Fallback: fetch image thumbnails for image-based ads
     if (allImgIds.length > 0) {
