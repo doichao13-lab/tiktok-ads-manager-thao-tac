@@ -4652,41 +4652,69 @@ async function fetchAdCreatives(aid, adIds) {
     const d = await apiGet('/ad/get/', {
       advertiser_id: aid,
       ad_ids: adIds.slice(0, 100),
-      fields: ['ad_id','ad_name','video_id','image_ids','tiktok_item_id','identity_id','identity_type','card_id'],
+      fields: ['ad_id','ad_name','video_id','image_ids','tiktok_item_id','identity_id','identity_type'],
     });
     const map = {};
     const adToVid = {};
     const adToImgId = {};
+    const adToSparkItem = {}; // { adId: { item_id, identity_id, identity_type } }
     const allVids = [];
     const allImgIds = [];
-    const firstAd = (d.list||[])[0] || {};
-    console.log('[thumb] /ad/get/ first ad ALL keys:', Object.keys(firstAd));
-    console.log('[thumb] /ad/get/ first ad FULL:', JSON.stringify(firstAd));
     for (const ad of (d.list || [])) {
       const adId = String(ad.ad_id);
       map[adId] = { name: ad.ad_name || '', thumb: '' };
-      if (ad.video_id) { adToVid[adId] = String(ad.video_id); allVids.push(String(ad.video_id)); }
-      else if (ad.image_ids && ad.image_ids.length > 0) { adToImgId[adId] = ad.image_ids[0]; allImgIds.push(ad.image_ids[0]); }
+      if (ad.video_id) {
+        adToVid[adId] = String(ad.video_id); allVids.push(String(ad.video_id));
+      } else if (ad.tiktok_item_id) {
+        adToSparkItem[adId] = { item_id: String(ad.tiktok_item_id), identity_id: ad.identity_id, identity_type: ad.identity_type };
+      } else if (ad.image_ids && ad.image_ids.length > 0) {
+        adToImgId[adId] = ad.image_ids[0]; allImgIds.push(ad.image_ids[0]);
+      }
     }
-    console.log('[thumb] video_ids found:', allVids.length, '| image_ids found:', allImgIds.length);
-    // Fetch video cover thumbnails
+    // Regular video ads: /file/video/get/
     if (allVids.length > 0) {
       try {
         const vd = await apiGet('/file/video/get/', {
           advertiser_id: aid,
           video_ids: [...new Set(allVids)].slice(0, 100),
         });
-        console.log('[thumb] /file/video/get/ raw list sample:', (vd.list||[]).slice(0,2));
         const vidMap = {};
         for (const v of (vd.list || [])) {
-          vidMap[String(v.video_id)] = v.video_cover_url || v.image_url || v.poster_url || v.preview_url || '';
+          vidMap[String(v.video_id)] = v.video_cover_url || v.cover_url || v.image_url || v.poster_url || '';
         }
         for (const [adId, vid] of Object.entries(adToVid)) {
           if (vidMap[vid]) map[adId].thumb = vidMap[vid];
         }
-      } catch(e) { console.log('[thumb] /file/video/get/ error:', e.message); }
+      } catch {}
     }
-    // Fallback: fetch image thumbnails for image-based ads
+    // Spark Ads: /tt_video/list/ grouped by identity
+    if (Object.keys(adToSparkItem).length > 0) {
+      const byIdentity = {};
+      for (const [adId, info] of Object.entries(adToSparkItem)) {
+        const key = `${info.identity_id}|${info.identity_type}`;
+        if (!byIdentity[key]) byIdentity[key] = { identity_id: info.identity_id, identity_type: info.identity_type, entries: [] };
+        byIdentity[key].entries.push({ adId, item_id: info.item_id });
+      }
+      for (const { identity_id, identity_type, entries } of Object.values(byIdentity)) {
+        try {
+          const vd = await apiGet('/tt_video/list/', {
+            advertiser_id: aid,
+            identity_id,
+            identity_type,
+            video_ids: entries.map(e => e.item_id),
+          });
+          console.log('[thumb] /tt_video/list/ sample:', (vd.list||[]).slice(0,1));
+          const vidMap = {};
+          for (const v of (vd.list || [])) {
+            vidMap[String(v.item_id || v.video_id || v.id)] = v.cover_url || v.video_cover_url || v.thumbnail_url || v.poster_url || '';
+          }
+          for (const { adId, item_id } of entries) {
+            if (vidMap[item_id]) map[adId].thumb = vidMap[item_id];
+          }
+        } catch(e) { console.log('[thumb] /tt_video/list/ error:', e.message); }
+      }
+    }
+    // Image-based ads: /file/image/get/
     if (allImgIds.length > 0) {
       try {
         const imgData = await apiGet('/file/image/get/', {
