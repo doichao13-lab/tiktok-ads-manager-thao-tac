@@ -1191,7 +1191,7 @@ while ($listener.IsListening) {
 
 /* Performance table (campaign / ad) */
 .perf-table-wrap { overflow-x:auto;max-height:380px;overflow-y:auto; }
-.perf-table      { width:100%;border-collapse:collapse;font-size:12px;min-width:860px; }
+.perf-table      { width:100%;border-collapse:collapse;font-size:12px;min-width:900px; }
 .perf-table th   { background:var(--bg3);padding:9px 12px;text-align:left;font-size:11px;font-weight:600;color:var(--text2);white-space:nowrap;border-bottom:1px solid var(--border);position:sticky;top:0;z-index:1; }
 .perf-table td   { padding:8px 12px;border-bottom:1px solid var(--border);white-space:nowrap; }
 .perf-table tr:last-child td { border-bottom:none; }
@@ -4477,11 +4477,12 @@ const VN_PROVINCES = {
   '1581130':'Hà Nội','1581592':'Hải Phòng','1584256':'Cần Thơ',
 };
 
-let S_analDate    = '7';
-let _analCampData = [];
-let _analAdData   = [];
-let _analCampTab  = '';
-let _analAdTab    = '';
+let S_analDate      = '7';
+let _analCampData   = [];
+let _analAdData     = [];
+let _analAdCreative = {}; // { ad_id: { name, thumb } }
+let _analCampTab    = '';
+let _analAdTab      = '';
 
 function onAnalDateChange(v) { S_analDate = v; loadAnalytics(); }
 
@@ -4536,6 +4537,25 @@ async function fetchAdBreakdown(aid) {
     });
     return d.list || [];
   } catch { return []; }
+}
+
+async function fetchAdCreatives(aid, adIds) {
+  if (S.demo || !adIds.length) return {};
+  try {
+    const d = await apiGet('/ad/get/', {
+      advertiser_id: aid,
+      ad_ids: adIds.slice(0, 100),
+      fields: ['ad_id','ad_name','video_id','image_ids','video_info','image_info'],
+    });
+    const map = {};
+    for (const ad of (d.list || [])) {
+      const thumb = (ad.video_info && ad.video_info.poster_url)
+        || (ad.image_info && ad.image_info.image_url)
+        || '';
+      map[String(ad.ad_id)] = { name: ad.ad_name || '', thumb };
+    }
+    return map;
+  } catch { return {}; }
 }
 
 async function fetchAudienceMulti(aid, dims) {
@@ -4761,7 +4781,7 @@ function renderAdPanel() {
 
   const table=rows.length?`<div class="perf-table-wrap"><table class="perf-table">
     <thead><tr>
-      <th>#</th><th>Ad ID</th>
+      <th>#</th><th>Quảng cáo</th>
       <th class="right">Chi phí</th><th class="right">Impressions</th>
       <th class="right">Clicks</th><th class="right">CTR</th>
       <th class="right">Lead/KQ</th><th class="right">Cost/KQ</th>
@@ -4770,10 +4790,19 @@ function renderAdPanel() {
     <tbody>${rows.map((r,i)=>{
       const m=r.metrics||{},dim=r.dimensions||{};
       const adId=String(dim.ad_id||'');
-      const adLabel='…'+adId.slice(-8);
+      const cr=_analAdCreative[adId]||{};
+      const adName=cr.name||('Ad …'+adId.slice(-8));
+      const thumbHtml=cr.thumb
+        ?`<img src="${esc(cr.thumb)}" style="width:40px;height:40px;object-fit:cover;border-radius:4px;flex-shrink:0;" onerror="this.style.display='none'">`
+        :`<div style="width:40px;height:40px;border-radius:4px;background:var(--bg3);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:16px;">🎬</div>`;
       return `<tr>
         <td style="color:var(--text3);font-size:11px;">${i+1}</td>
-        <td class="perf-name" title="Ad ID: ${esc(adId)}" style="font-family:monospace;font-size:11px;color:var(--text2);">${esc(adLabel)}</td>
+        <td class="perf-name" title="ID: ${esc(adId)}">
+          <div style="display:flex;align-items:center;gap:8px;">
+            ${thumbHtml}
+            <span style="font-size:12px;">${esc(adName.length>36?adName.slice(0,36)+'…':adName)}</span>
+          </div>
+        </td>
         <td class="right perf-num">${fmtCur(parseFloat(m.spend)||0)}</td>
         <td class="right perf-num">${fmtN(parseFloat(m.impressions)||0,'impressions')}</td>
         <td class="right perf-num">${fmtN(parseFloat(m.clicks)||0,'clicks')}</td>
@@ -4820,6 +4849,8 @@ async function loadAnalytics() {
   ]);
 
   _analCampData=campBreak; _analAdData=adBreak; _analCampTab=''; _analAdTab='';
+  const adIds=adBreak.map(r=>String((r.dimensions||{}).ad_id||'')).filter(Boolean);
+  _analAdCreative=await fetchAdCreatives(aid||'0', adIds);
   document.getElementById('analLoading').style.display='none';
 
   try {
