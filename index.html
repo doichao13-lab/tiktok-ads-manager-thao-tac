@@ -1698,7 +1698,10 @@ const S = {
   agCount: null,               // { total, active } from quick fetch
   budgetEdit: null,
   bidEdit: null,
-  kpi: JSON.parse(localStorage.getItem('tt_kpi') || '{}'), // { campaign_id: number }
+  kpi:      JSON.parse(localStorage.getItem('tt_kpi')    || '{}'), // { campaign_id: number }
+  kpiExtra: JSON.parse(localStorage.getItem('tt_kpi_ex') || '{}'), // { campaign_id: number } — KPI từ TK khác
+  kpiAg:    JSON.parse(localStorage.getItem('tt_kpi_ag') || '{}'), // { adgroup_id: number }
+  kpiAgEx:  JSON.parse(localStorage.getItem('tt_kpi_ag_ex') || '{}'), // { adgroup_id: number } — bổ sung AG
 };
 
 /* ═══════════════════════════ API ═══════════════════════════ */
@@ -2154,7 +2157,8 @@ function renderHead() {
       <th>Chi tiêu</th>
       ${cols.map(c => `<th>${c.icon} ${c.label}</th>`).join('')}
       <th title="Mục tiêu KPI cần đạt">🎯 KPI</th>
-      <th title="% đã đạt so với KPI">📊 Tiến độ</th>
+      <th title="KPI đã chạy từ tài khoản khác (tùy chọn)">➕ Bổ sung</th>
+      <th title="% đã đạt so với KPI (bao gồm cả Bổ sung)">📊 Tiến độ</th>
       <th>Thao tác</th>
     `;
     // Set indeterminate state
@@ -2167,6 +2171,9 @@ function renderHead() {
       <th>Ngân sách</th>
       <th>Chi tiêu</th>
       ${cols.map(c => `<th>${c.icon} ${c.label}</th>`).join('')}
+      <th title="Mục tiêu KPI nhóm QC">🎯 KPI</th>
+      <th title="KPI bổ sung từ TK khác">➕ Bổ sung</th>
+      <th title="% tiến độ nhóm QC">📊 Tiến độ</th>
       <th>Thao tác</th>
     `;
   }
@@ -2327,23 +2334,15 @@ function makeCampaignRow(c) {
         onchange="saveKpi('${c.campaign_id}',this.value)"
         title="Nhập KPI mục tiêu (${OBJ_MAP[c.objective_type]||c.objective_type||'KQ'})" />
     </td>
-    <td onclick="event.stopPropagation()" style="min-width:110px;">
-      ${(()=>{
-        const kpi=S.kpi[c.campaign_id];
-        if(!kpi) return '<span style="color:var(--text3);font-size:12px;">—</span>';
-        const cur=getKpiCurrentVal(c.campaign_id,m,c.objective_type);
-        const pct=Math.min(Math.round(cur/kpi*100),999);
-        const fill=Math.min(pct,100);
-        const color=fill>=100?'#16A34A':fill>=70?'#1747EA':fill>=40?'#D97706':'#DC2626';
-        return `<div style="display:flex;flex-direction:column;gap:3px;">
-          <div style="display:flex;justify-content:space-between;font-size:11px;font-weight:600;color:${color};">
-            <span>${pct}%</span><span style="color:var(--text3);font-weight:400;">${fmtN(cur,'')}/${fmtN(kpi,'')}</span>
-          </div>
-          <div style="height:5px;border-radius:3px;background:var(--bg3);">
-            <div style="height:100%;border-radius:3px;background:${color};width:${fill}%;transition:width .3s;"></div>
-          </div>
-        </div>`;
-      })()}
+    <td onclick="event.stopPropagation()" style="min-width:90px;">
+      <input type="number" min="0" placeholder="—"
+        value="${S.kpiExtra[c.campaign_id]||''}"
+        style="width:80px;padding:3px 6px;border:1px solid var(--border);border-radius:6px;background:var(--bg2);color:#7C3AED;font-size:12px;text-align:right;"
+        onchange="saveKpiExtra('${c.campaign_id}',this.value)"
+        title="KPI đã chạy từ tài khoản khác (tùy chọn)" />
+    </td>
+    <td onclick="event.stopPropagation()" style="min-width:120px;">
+      ${mkProgressCell(S.kpi[c.campaign_id],getKpiCurrentVal(c.campaign_id,m,c.objective_type),S.kpiExtra[c.campaign_id]||0)}
     </td>
     <td onclick="event.stopPropagation()">
       <button class="btn btn-sm btn-ghost" onclick="switchLevel('adgroup','${c.campaign_id}')">
@@ -2404,6 +2403,27 @@ function makeAGRow(ag) {
     </td>
     <td><span class="spend-val">${fmtCur(m.spend||0)}</span>${trendBadge(m.spend||0, S.prevMetrics[ag.adgroup_id])}</td>
     ${cols.map(cl=>`<td class="metric-num">${fmtN(getMetricVal(m,cl),cl.metric)}</td>`).join('')}
+    <td onclick="event.stopPropagation()" style="min-width:90px;">
+      <input type="number" min="0" placeholder="—"
+        value="${S.kpiAg[ag.adgroup_id]||''}"
+        style="width:80px;padding:3px 6px;border:1px solid var(--border);border-radius:6px;background:var(--bg2);color:var(--text);font-size:12px;text-align:right;"
+        onchange="saveKpiAg('${ag.adgroup_id}',this.value)"
+        title="KPI mục tiêu nhóm QC này" />
+    </td>
+    <td onclick="event.stopPropagation()" style="min-width:90px;">
+      <input type="number" min="0" placeholder="—"
+        value="${S.kpiAgEx[ag.adgroup_id]||''}"
+        style="width:80px;padding:3px 6px;border:1px solid var(--border);border-radius:6px;background:var(--bg2);color:#7C3AED;font-size:12px;text-align:right;"
+        onchange="saveKpiAgEx('${ag.adgroup_id}',this.value)"
+        title="KPI bổ sung từ TK khác (tùy chọn)" />
+    </td>
+    <td onclick="event.stopPropagation()" style="min-width:120px;">
+      ${(()=>{
+        const parentCamp2=S.campaigns.find(c=>c.campaign_id===ag.campaign_id)||{};
+        const cur2=getKpiCurrentVal(ag.adgroup_id,m,parentCamp2.objective_type);
+        return mkProgressCell(S.kpiAg[ag.adgroup_id],cur2,S.kpiAgEx[ag.adgroup_id]||0);
+      })()}
+    </td>
     <td>
       <button class="btn btn-sm btn-ghost" onclick="openBid('${ag.adgroup_id}','${esc(ag.adgroup_name)}',${ag.bid_price||0})">
         🎯 Bid
@@ -2931,6 +2951,24 @@ function saveKpi(cid, val) {
   localStorage.setItem('tt_kpi', JSON.stringify(S.kpi));
   renderTable();
 }
+function saveKpiExtra(cid, val) {
+  const v = parseInt(val) || 0;
+  if (v > 0) S.kpiExtra[cid] = v; else delete S.kpiExtra[cid];
+  localStorage.setItem('tt_kpi_ex', JSON.stringify(S.kpiExtra));
+  renderTable();
+}
+function saveKpiAg(agid, val) {
+  const v = parseInt(val) || 0;
+  if (v > 0) S.kpiAg[agid] = v; else delete S.kpiAg[agid];
+  localStorage.setItem('tt_kpi_ag', JSON.stringify(S.kpiAg));
+  renderTable();
+}
+function saveKpiAgEx(agid, val) {
+  const v = parseInt(val) || 0;
+  if (v > 0) S.kpiAgEx[agid] = v; else delete S.kpiAgEx[agid];
+  localStorage.setItem('tt_kpi_ag_ex', JSON.stringify(S.kpiAgEx));
+  renderTable();
+}
 function getKpiCurrentVal(cid, m, objType) {
   const OBJ_METRIC = {
     VIDEO_VIEWS: m.video_watched_2s || m.video_watched_6s || 0,
@@ -2943,6 +2981,24 @@ function getKpiCurrentVal(cid, m, objType) {
     PRODUCT_SALES: m.real_time_result || 0,
   };
   return OBJ_METRIC[objType] ?? (m.real_time_result || m.impressions || 0);
+}
+function mkProgressCell(kpi, cur, extra) {
+  if (!kpi) return '<span style="color:var(--text3);font-size:12px;">—</span>';
+  const total = cur + (extra || 0);
+  const pct = Math.min(Math.round(total / kpi * 100), 999);
+  const fill = Math.min(pct, 100);
+  const color = fill >= 100 ? '#16A34A' : fill >= 70 ? '#1747EA' : fill >= 40 ? '#D97706' : '#DC2626';
+  const extraNote = extra ? `<span style="color:#7C3AED;font-size:10px;" title="Đã bổ sung ${fmtN(extra,'')} từ TK khác"> (+${fmtN(extra,'')})</span>` : '';
+  return `<div style="display:flex;flex-direction:column;gap:3px;">
+    <div style="display:flex;justify-content:space-between;font-size:11px;font-weight:600;color:${color};">
+      <span>${pct}%${extra?'*':''}</span>
+      <span style="color:var(--text3);font-weight:400;">${fmtN(total,'')}/${fmtN(kpi,'')}</span>
+    </div>
+    <div style="height:5px;border-radius:3px;background:var(--bg3);">
+      <div style="height:100%;border-radius:3px;background:${color};width:${fill}%;transition:width .3s;"></div>
+    </div>
+    ${extra?`<div style="font-size:10px;color:#7C3AED;">Đã có: ${fmtN(extra,'')} từ TK khác</div>`:''}
+  </div>`;
 }
 
 /* ═══════════════════════════ BUDGET MODAL ═══════════════════════════ */
