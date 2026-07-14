@@ -1022,7 +1022,7 @@ while ($listener.IsListening) {
           <input type="password" id="iGeminiKey" class="form-input" placeholder="AIzaSy..." autocomplete="off" style="flex:1;" />
           <button class="btn btn-sm" onclick="document.getElementById('iGeminiKey').type=document.getElementById('iGeminiKey').type==='password'?'text':'password'">👁</button>
         </div>
-        <div class="form-hint">Dùng model <strong>gemini-2.0-flash</strong> — nhanh, rẻ (~$0.0004/phút video). Key lưu trên máy, không upload lên server.</div>
+        <div class="form-hint">Dùng model <strong>gemini-1.5-flash</strong> — nhanh, rẻ (~$0.0004/phút video). Key lưu trên máy, không upload lên server.</div>
       </div>
       <div style="display:flex;gap:8px;align-items:center;">
         <button class="btn btn-primary" onclick="saveGeminiKey()">💾 Lưu API Key</button>
@@ -5060,7 +5060,7 @@ async function testGeminiKey() {
   if (!key) { el.textContent = '⚠ Nhập API key trước'; el.style.color='var(--red)'; return; }
   el.textContent = 'Đang kiểm tra...'; el.style.color = 'var(--text2)';
   try {
-    const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${key}`, {
+    const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`, {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ contents: [{ parts: [{ text: 'Hello' }] }] })
     });
@@ -5204,7 +5204,7 @@ async function analyzeAdVideo(adId) {
 
     setStatus('Gemini đang phân tích...');
     const resp = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${key}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`,
       { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ contents:[{ parts }] }) }
     );
     if (!resp.ok) { const e=await resp.json(); throw new Error(e.error?.message || `HTTP ${resp.status}`); }
