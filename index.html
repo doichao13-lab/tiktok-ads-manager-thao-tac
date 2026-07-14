@@ -767,6 +767,7 @@
       <div class="stab"        id="stab2" onclick="switchTab(2)">📋 Tôi đã có Access Token</div>
       <div class="stab"        id="stab3" onclick="switchTab(3)">⚡ Demo Mode</div>
       <div class="stab"        id="stab4" onclick="switchTab(4)">☁️ Cloud Sync</div>
+      <div class="stab"        id="stab5" onclick="switchTab(5)">🤖 Gemini AI</div>
     </div>
 
     <!-- ════ TAB 1: OAuth flow ════ -->
@@ -1010,6 +1011,37 @@ while ($listener.IsListening) {
       </div>
     </div>
 
+    <!-- ════ TAB 5: Gemini AI ════ -->
+    <div class="stab-panel" id="spanel5">
+      <div style="background:#F0FDF4;border:1px solid #86EFAC;border-radius:8px;padding:11px 14px;font-size:12px;color:#166534;margin-bottom:18px;line-height:1.7;">
+        🤖 <strong>Gemini AI</strong> phân tích nội dung video quảng cáo: Hook, Script, Visual, CTA và đưa ra gợi ý cải thiện cụ thể. Cần có Google Gemini API key (miễn phí tại <a href="https://aistudio.google.com/apikey" target="_blank" style="color:#166534;">aistudio.google.com</a>).
+      </div>
+      <div class="form-group">
+        <label class="form-label">Gemini API Key</label>
+        <div style="display:flex;gap:8px;">
+          <input type="password" id="iGeminiKey" class="form-input" placeholder="AIzaSy..." autocomplete="off" style="flex:1;" />
+          <button class="btn btn-sm" onclick="document.getElementById('iGeminiKey').type=document.getElementById('iGeminiKey').type==='password'?'text':'password'">👁</button>
+        </div>
+        <div class="form-hint">Dùng model <strong>gemini-2.0-flash</strong> — nhanh, rẻ (~$0.0004/phút video). Key lưu trên máy, không upload lên server.</div>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <button class="btn btn-primary" onclick="saveGeminiKey()">💾 Lưu API Key</button>
+        <button class="btn btn-sm" onclick="testGeminiKey()">⚡ Test kết nối</button>
+        <span id="geminiTestStatus" style="font-size:12px;"></span>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ===================== GEMINI AI MODAL ===================== -->
+<div class="overlay" id="geminiOverlay">
+  <div class="modal" style="max-width:640px;max-height:88vh;display:flex;flex-direction:column;">
+    <div class="modal-head" style="flex-shrink:0;">
+      <div class="modal-title">🤖 Phân tích AI — <span id="geminiAdName" style="color:var(--primary);"></span></div>
+      <button class="modal-close" onclick="closeGemini()">✕</button>
+    </div>
+    <div id="geminiContent" style="overflow-y:auto;flex:1;padding:4px 2px;"></div>
   </div>
 </div>
 
@@ -3073,7 +3105,7 @@ let _activeTab     = 1;
 /* ─ TAB SWITCHING ─ */
 function switchTab(n) {
   _activeTab = n;
-  [1,2,3,4].forEach(i => {
+  [1,2,3,4,5].forEach(i => {
     document.getElementById('stab'+(i)).classList.toggle('active', i===n);
     document.getElementById('spanel'+i).classList.toggle('active', i===n);
   });
@@ -3351,6 +3383,9 @@ function openSettings() {
   _advNamesManual = {...(S.config.advNames || {})};
   renderIdTags(_advIdsManual, 'idTagsManual');
   renderAdvNames();
+  // restore Tab 5 fields
+  document.getElementById('iGeminiKey').value = S.config.geminiKey || '';
+  document.getElementById('geminiTestStatus').textContent = '';
   // reset statuses
   ['exchangeStatus','manualTestStatus'].forEach(id => {
     const el = document.getElementById(id);
@@ -3383,7 +3418,7 @@ async function saveSettings() {
   const secret= document.getElementById('iSecret').value.trim();
   if (!token) { toast('warn','Chưa có Access Token — hoàn thành bước 3 trước'); return; }
 
-  S.config = { token, proxy, appId, secret, advIds: _advIds };
+  S.config = { token, proxy, appId, secret, advIds: _advIds, geminiKey: S.config.geminiKey || '' };
   S.demo   = false;
   localStorage.setItem('tt_cfg',  JSON.stringify(S.config));
   localStorage.setItem('tt_demo', '0');
@@ -3403,7 +3438,7 @@ async function saveManual() {
   const proxy = document.getElementById('iProxyManual').value.trim();
   if (!token) { toast('warn','Vui lòng nhập Access Token'); return; }
 
-  S.config = { token, proxy, advIds: _advIdsManual, advNames: _advNamesManual };
+  S.config = { token, proxy, advIds: _advIdsManual, advNames: _advNamesManual, geminiKey: S.config.geminiKey || '' };
   S.demo   = false;
   localStorage.setItem('tt_cfg',  JSON.stringify(S.config));
   localStorage.setItem('tt_demo', '0');
@@ -4662,7 +4697,7 @@ async function fetchAdCreatives(aid, adIds) {
     const allImgIds = [];
     for (const ad of (d.list || [])) {
       const adId = String(ad.ad_id);
-      map[adId] = { name: ad.ad_name || '', thumb: '' };
+      map[adId] = { name: ad.ad_name || '', thumb: '', previewUrl: '' };
       if (ad.video_id) {
         adToVid[adId] = String(ad.video_id); allVids.push(String(ad.video_id));
       } else if (ad.tiktok_item_id) {
@@ -4680,10 +4715,13 @@ async function fetchAdCreatives(aid, adIds) {
         });
         const vidMap = {};
         for (const v of (vd.list || [])) {
-          vidMap[String(v.video_id)] = v.video_cover_url || v.cover_url || v.image_url || v.poster_url || '';
+          vidMap[String(v.video_id)] = {
+            thumb: v.video_cover_url || v.cover_url || v.image_url || v.poster_url || '',
+            previewUrl: v.preview_url || '',
+          };
         }
         for (const [adId, vid] of Object.entries(adToVid)) {
-          if (vidMap[vid]) map[adId].thumb = vidMap[vid];
+          if (vidMap[vid]) { map[adId].thumb = vidMap[vid].thumb; map[adId].previewUrl = vidMap[vid].previewUrl; }
         }
       } catch {}
     }
@@ -4974,7 +5012,10 @@ function renderAdPanel() {
         <td class="perf-name" title="ID: ${esc(adId)}">
           <div style="display:flex;align-items:center;gap:8px;">
             ${thumbHtml}
-            <span style="font-size:12px;">${esc(adName.length>36?adName.slice(0,36)+'…':adName)}</span>
+            <div style="flex:1;min-width:0;">
+              <div style="font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(adName.length>36?adName.slice(0,36)+'…':adName)}</div>
+              <button onclick="analyzeAdVideo('${esc(adId)}')" style="margin-top:4px;padding:2px 8px;font-size:10px;background:#F0FDF4;border:1px solid #86EFAC;border-radius:4px;cursor:pointer;color:#166534;font-weight:600;" title="Phân tích AI với Gemini">🤖 Phân tích AI</button>
+            </div>
           </div>
         </td>
         <td class="right perf-num">${fmtCur(parseFloat(m.spend)||0)}</td>
@@ -4999,6 +5040,201 @@ function setAdTab(tab) {
   _analAdTab=tab;
   const el=document.getElementById('analAdPanel');
   if(el) el.outerHTML=renderAdPanel();
+}
+
+/* ══════════ GEMINI AI VIDEO ANALYSIS ══════════ */
+function closeGemini() { document.getElementById('geminiOverlay').classList.remove('open'); }
+
+function saveGeminiKey() {
+  const key = document.getElementById('iGeminiKey').value.trim();
+  S.config.geminiKey = key;
+  const cfg = JSON.parse(localStorage.getItem('tt_cfg') || '{}');
+  cfg.geminiKey = key;
+  localStorage.setItem('tt_cfg', JSON.stringify(cfg));
+  toast('success', 'Đã lưu Gemini API key ✓');
+}
+
+async function testGeminiKey() {
+  const key = document.getElementById('iGeminiKey').value.trim();
+  const el = document.getElementById('geminiTestStatus');
+  if (!key) { el.textContent = '⚠ Nhập API key trước'; el.style.color='var(--red)'; return; }
+  el.textContent = 'Đang kiểm tra...'; el.style.color = 'var(--text2)';
+  try {
+    const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${key}`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ contents: [{ parts: [{ text: 'Hello' }] }] })
+    });
+    if (r.ok) { el.textContent = '✅ Kết nối thành công!'; el.style.color = '#16A34A'; }
+    else { const d = await r.json(); el.textContent = '❌ ' + (d.error?.message || r.status); el.style.color='var(--red)'; }
+  } catch(e) { el.textContent = '❌ ' + e.message; el.style.color='var(--red)'; }
+}
+
+async function getBase64ViaProxy(url) {
+  const proxies = S.config.proxy ? [S.config.proxy, ...PROXIES] : PROXIES;
+  for (const p of proxies) {
+    try {
+      const r = await fetchWithTimeout(p + encodeURIComponent(url), {}, 10000);
+      if (!r.ok) continue;
+      const blob = await r.blob();
+      return await new Promise(resolve => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result.split(',')[1]);
+        reader.readAsDataURL(blob);
+      });
+    } catch {}
+  }
+  return null;
+}
+
+async function uploadToGeminiFiles(blob, mimeType, displayName, key) {
+  const initResp = await fetch(`https://generativelanguage.googleapis.com/upload/v1beta/files?key=${key}`, {
+    method: 'POST',
+    headers: {
+      'X-Goog-Upload-Protocol': 'resumable',
+      'X-Goog-Upload-Command': 'start',
+      'X-Goog-Upload-Content-Type': mimeType,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ file: { displayName } })
+  });
+  const uploadUrl = initResp.headers.get('X-Goog-Upload-URL');
+  if (!uploadUrl) throw new Error('Không nhận được upload URL từ Gemini');
+  const uploadResp = await fetch(uploadUrl, {
+    method: 'POST',
+    headers: { 'Content-Length': String(blob.size), 'X-Goog-Upload-Offset': '0', 'X-Goog-Upload-Command': 'upload, finalize' },
+    body: blob
+  });
+  const fileData = await uploadResp.json();
+  const fileUri = fileData?.file?.uri;
+  if (!fileUri) throw new Error('Không nhận được file URI từ Gemini');
+  // Poll until ACTIVE
+  const fileName = fileData.file.name.split('/').pop();
+  for (let i = 0; i < 30; i++) {
+    const info = await (await fetch(`https://generativelanguage.googleapis.com/v1beta/files/${fileName}?key=${key}`)).json();
+    if (info.state === 'ACTIVE' || info?.file?.state === 'ACTIVE') return fileUri;
+    if (info.state === 'FAILED') throw new Error('Gemini xử lý video thất bại');
+    await new Promise(r => setTimeout(r, 2000));
+  }
+  return fileUri; // return anyway after timeout
+}
+
+function buildAnalysisPrompt(adName, metrics, hasVideo) {
+  const spend = fmtCur(parseFloat(metrics.spend)||0);
+  const imp   = fmtN(parseFloat(metrics.impressions)||0, 'impressions');
+  const ctr   = (parseFloat(metrics.ctr)||0).toFixed(2);
+  const cpm   = fmtCur(parseFloat(metrics.cpm)||0);
+  const kq    = fmtN(parseFloat(metrics.real_time_result)||0, 'result');
+  const v6s   = fmtN(parseFloat(metrics.video_watched_6s)||0, 'video_watched_6s');
+  return `Bạn là chuyên gia phân tích sáng tạo quảng cáo TikTok tại Việt Nam.\n\nTên quảng cáo: "${adName}"\n\nHiệu quả thực tế:\n- Chi tiêu: ${spend}đ | Impressions: ${imp} | CTR: ${ctr}% | CPM: ${cpm}đ | Lead/KQ: ${kq} | View 6s: ${v6s}\n\nHãy phân tích ${hasVideo ? 'VIDEO' : 'HÌNH ẢNH/THUMBNAIL'} quảng cáo này (viết bằng tiếng Việt ngắn gọn, súc tích):\n\n## 🎯 Hook (3 giây đầu)\n[Có thu hút không? Tại sao?]\n\n## 📝 Nội dung & Script\n[Thông điệp chính, cách truyền đạt]\n\n## 🎨 Visual & Sản xuất\n[Chất lượng hình ảnh, màu sắc, text overlay]\n\n## 📣 Call-to-Action\n[CTA có rõ ràng không?]\n\n## ✅ Điểm mạnh (2-3 điểm)\n- ...\n\n## 🔧 Gợi ý cải thiện\n- ...\n\n## ⭐ Điểm tổng thể: X/10\n[Nhận xét ngắn và liên hệ với CTR ${ctr}%]`;
+}
+
+function renderGeminiMd(text) {
+  return text
+    .replace(/^## (.+)/gm, '<h3 style="margin:14px 0 5px;font-size:13px;color:var(--primary);font-weight:700;">$1</h3>')
+    .replace(/^\*\*(.+)\*\*$/gm, '<strong>$1</strong>')
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    .replace(/^- (.+)/gm, '<li style="margin:2px 0;">$1</li>')
+    .replace(/(<li.*<\/li>\n?)+/g, s => `<ul style="margin:4px 0 8px 16px;padding:0;">${s}</ul>`)
+    .replace(/\n\n/g, '<br>')
+    .replace(/\n/g, '<br>');
+}
+
+async function analyzeAdVideo(adId) {
+  const key = S.config.geminiKey;
+  if (!key) {
+    toast('warn', 'Chưa có Gemini API key — vào Cài đặt → tab 🤖 Gemini AI');
+    openSettings(); switchTab(5);
+    return;
+  }
+  const cr = _analAdCreative[adId] || {};
+  const metricsRow = (_analAdData || []).find(r => String((r.dimensions||{}).ad_id) === adId) || {};
+  const metrics = metricsRow.metrics || {};
+  const adName = cr.name || `Ad …${adId.slice(-8)}`;
+
+  document.getElementById('geminiAdName').textContent = adName.length > 35 ? adName.slice(0,35)+'…' : adName;
+  document.getElementById('geminiContent').innerHTML = `<div style="text-align:center;padding:48px 20px;">
+    <div class="spinner" style="display:inline-block;margin-bottom:16px;"></div>
+    <div id="geminiStatus" style="color:var(--text2);font-size:13px;line-height:1.6;">Đang chuẩn bị...</div>
+  </div>`;
+  document.getElementById('geminiOverlay').classList.add('open');
+  const setStatus = s => { const el=document.getElementById('geminiStatus'); if(el) el.innerHTML=s; };
+
+  try {
+    let parts = [];
+
+    // Try video analysis (regular ads with previewUrl)
+    if (cr.previewUrl) {
+      setStatus('Đang tải video... <small>(30-60 giây)</small>');
+      try {
+        const proxies = S.config.proxy ? [S.config.proxy, ...PROXIES] : PROXIES;
+        let videoBlob = null;
+        for (const p of proxies) {
+          try {
+            const r = await fetchWithTimeout(p + encodeURIComponent(cr.previewUrl), {}, 30000);
+            if (r.ok) { videoBlob = await r.blob(); break; }
+          } catch {}
+        }
+        if (videoBlob) {
+          setStatus('Đang upload video lên Gemini...');
+          const fileUri = await uploadToGeminiFiles(videoBlob, videoBlob.type || 'video/mp4', adName, key);
+          parts = [
+            { fileData: { mimeType: videoBlob.type || 'video/mp4', fileUri } },
+            { text: buildAnalysisPrompt(adName, metrics, true) }
+          ];
+        }
+      } catch(e) { console.log('[gemini] video error:', e.message); }
+    }
+
+    // Fallback: thumbnail image
+    if (!parts.length && cr.thumb) {
+      setStatus('Đang tải ảnh thumbnail...');
+      try {
+        const base64 = await getBase64ViaProxy(cr.thumb);
+        if (base64) {
+          parts = [
+            { inlineData: { mimeType: 'image/jpeg', data: base64 } },
+            { text: buildAnalysisPrompt(adName, metrics, false) }
+          ];
+        }
+      } catch {}
+    }
+
+    // Text-only fallback
+    if (!parts.length) parts = [{ text: buildAnalysisPrompt(adName, metrics, false) }];
+
+    setStatus('Gemini đang phân tích...');
+    const resp = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${key}`,
+      { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ contents:[{ parts }] }) }
+    );
+    if (!resp.ok) { const e=await resp.json(); throw new Error(e.error?.message || `HTTP ${resp.status}`); }
+    const data = await resp.json();
+    const text = data.candidates?.[0]?.content?.parts?.[0]?.text || 'Không có kết quả';
+
+    // Render result
+    const spend = fmtCur(parseFloat(metrics.spend)||0);
+    const ctr   = (parseFloat(metrics.ctr)||0).toFixed(2);
+    const cpm   = fmtCur(parseFloat(metrics.cpm)||0);
+    const kq    = fmtN(parseFloat(metrics.real_time_result)||0,'result');
+    const isVideo = parts[0]?.fileData || (parts[0]?.inlineData && false);
+    document.getElementById('geminiContent').innerHTML = `
+      <div style="display:flex;gap:12px;margin-bottom:14px;background:var(--bg2);border-radius:8px;padding:12px;">
+        ${cr.thumb?`<img src="${esc(cr.thumb)}" style="width:70px;height:93px;object-fit:cover;border-radius:6px;flex-shrink:0;">`:`<div style="width:70px;height:93px;border-radius:6px;background:var(--bg3);display:flex;align-items:center;justify-content:center;font-size:28px;flex-shrink:0;">🎬</div>`}
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:12px;font-weight:600;margin-bottom:6px;word-break:break-word;">${esc(adName)}</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:3px 10px;font-size:11px;color:var(--text2);">
+            <span>💰 <strong style="color:var(--text);">${spend}đ</strong></span>
+            <span>📊 CTR <strong style="color:var(--text);">${ctr}%</strong></span>
+            <span>📱 CPM <strong style="color:var(--text);">${cpm}đ</strong></span>
+            <span>✅ KQ <strong style="color:var(--text);">${kq}</strong></span>
+          </div>
+          <div style="margin-top:6px;font-size:10px;color:var(--text3);">${parts[0]?.fileData ? '🎬 Phân tích từ video thực' : parts[0]?.inlineData ? '🖼 Phân tích từ thumbnail' : '📝 Phân tích từ tên + metrics'}</div>
+        </div>
+      </div>
+      <div style="font-size:13px;line-height:1.8;color:var(--text);">${renderGeminiMd(text)}</div>`;
+  } catch(e) {
+    document.getElementById('geminiContent').innerHTML = `<div style="color:var(--red);padding:20px;text-align:center;font-size:13px;">❌ Lỗi: ${esc(e.message)}</div>`;
+  }
 }
 
 async function loadAnalytics() {
