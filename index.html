@@ -4453,38 +4453,28 @@ async function vdDownload(type) {
 const ANAL_COLORS = ['#1747EA','#7C3AED','#0EA5A0','#16A34A','#D97706','#DC2626','#C084FC','#67E8F9'];
 const GENDER_LABELS = { MALE:'Nam', FEMALE:'Nữ', UNKNOWN:'Không rõ' };
 const VN_PROVINCES = {
-  /* GeoNames IDs — TikTok reporting format */
-  '1566083':'TP. Hồ Chí Minh','1572151':'Đà Nẵng','1574023':'Đồng Tháp','1574205':'Đồng Nai',
-  '1574218':'Điện Biên','1574917':'Đắk Lắk','1574918':'Đắk Nông','1575364':'Gia Lai',
-  '1575532':'Hà Giang','1575564':'Hà Nam','1576633':'Hà Tĩnh','1577472':'Hải Dương',
-  '1577592':'Hậu Giang','1577681':'Hoà Bình','1578320':'Khánh Hoà','1578413':'Kiên Giang',
-  '1578962':'Kon Tum','1579218':'Lâm Đồng','1579358':'Lạng Sơn','1579491':'Lào Cai',
-  '1579673':'Long An','1580009':'Nam Định','1580249':'Nghệ An','1580578':'Thanh Hoá',
-  '1581029':'Tiền Giang','1581130':'Hà Nội','1581129':'TT-Huế','1581249':'Quảng Trị',
-  '1581592':'Hải Phòng','1582054':'Quảng Ngãi','1582279':'Quảng Nam','1582637':'Quảng Bình',
-  '1582720':'Quảng Ninh','1583030':'Phú Thọ','1583039':'Phú Yên','1584244':'Cà Mau',
-  '1584256':'Cần Thơ','1584659':'Bình Thuận','1584715':'Bình Phước','1584958':'Bình Dương',
-  '1585031':'Bình Định','1585311':'Bến Tre','1585534':'Bắc Ninh','1585607':'Bắc Kạn',
-  '1585706':'Bắc Giang','1586350':'An Giang','1586997':'Vĩnh Phúc','1587019':'Vĩnh Long',
-  '1587263':'Tuyên Quang','1587317':'Trà Vinh','1562822':'Tây Ninh','1563441':'Sóc Trăng',
-  '1563767':'Ninh Thuận','1564196':'Ninh Bình','1565033':'Cao Bằng','1586182':'Yên Bái',
-  '1562799':'Thái Nguyên','1562519':'Thái Bình','1562772':'Sơn La','1563178':'Phú Thọ',
-  '1562820':'Tây Ninh','1584436':'Bà Rịa-Vũng Tàu','1563808':'Hưng Yên','1576443':'Hà Nội',
-  '1580763':'Nghệ An','1581134':'Hà Nội','1577752':'Hà Tĩnh',
-  /* short-code format (legacy) */
-  '220':'Hà Nội','227':'TP. Hồ Chí Minh','228':'Đà Nẵng','234':'Hải Phòng','229':'Cần Thơ',
-  '221':'Hà Giang','222':'Cao Bằng','223':'Bắc Kạn','224':'Tuyên Quang','225':'Lào Cai',
-  '226':'Điện Biên','230':'Lai Châu','231':'Sơn La','232':'Yên Bái','233':'Hoà Bình',
-  '235':'Thái Nguyên','236':'Lạng Sơn','237':'Quảng Ninh','238':'Bắc Giang','239':'Phú Thọ',
-  '240':'Vĩnh Phúc','241':'Bắc Ninh','242':'Hải Dương','243':'Hưng Yên','244':'Thái Bình',
-  '245':'Hà Nam','246':'Nam Định','247':'Ninh Bình','248':'Thanh Hoá','249':'Nghệ An',
-  '250':'Hà Tĩnh','251':'Quảng Bình','252':'Quảng Trị','253':'Thừa Thiên Huế','254':'Quảng Nam',
-  '255':'Quảng Ngãi','256':'Bình Định','257':'Phú Yên','258':'Khánh Hoà','259':'Ninh Thuận',
-  '260':'Bình Thuận','261':'Kon Tum','262':'Gia Lai','263':'Đắk Lắk','264':'Đắk Nông',
-  '265':'Lâm Đồng','266':'Bình Phước','267':'Tây Ninh','268':'Bình Dương','269':'Đồng Nai',
-  '270':'Bà Rịa-Vũng Tàu','271':'Long An','272':'Tiền Giang','273':'Bến Tre','274':'Trà Vinh',
-  '275':'Vĩnh Long','276':'Đồng Tháp','277':'An Giang','278':'Kiên Giang','279':'Hậu Giang',
-  '280':'Sóc Trăng','281':'Bạc Liêu','282':'Cà Mau',
+  /* IDs thực từ TikTok reporting API (verified từ data) */
+  '-1':'Không xác định',
+  '1559969':'Hà Nội','1559970':'TP. Hồ Chí Minh','1559971':'Đà Nẵng','1559972':'Hải Phòng',
+  '1559975':'Cần Thơ','1559976':'An Giang','1559977':'Bà Rịa-VT','1559978':'Bắc Giang',
+  '1562412':'Bắc Kạn','1564676':'Bạc Liêu','1565033':'Cao Bằng','1565088':'Bắc Ninh',
+  '1566165':'Bình Dương','1566338':'Bình Định','1566557':'Bình Phước','1567643':'Bình Thuận',
+  '1568733':'Cà Mau','1568758':'Cần Thơ','1568769':'Cao Bằng','1568839':'Đà Nẵng',
+  '1569805':'Đắk Lắk','1572594':'Đắk Nông','1575788':'Điện Biên','1576632':'Đồng Nai',
+  '1577882':'Đồng Tháp','1577954':'Gia Lai','1579008':'Hà Giang','1579634':'Hà Nam',
+  '1580578':'Thanh Hoá','1580700':'Hà Tĩnh','1581030':'Hải Dương','1581088':'Hải Phòng',
+  '1581129':'TT-Huế','1581188':'Hà Nội','1581297':'Hậu Giang','1581882':'Hoà Bình',
+  '1582562':'Hưng Yên','1582720':'Quảng Ninh','1584169':'Khánh Hoà','1584534':'Kiên Giang',
+  '1586182':'Yên Bái','1587871':'Kon Tum','1587974':'Lai Châu','1594446':'Lâm Đồng',
+  '1904987':'Lạng Sơn','1905099':'Lào Cai','1905412':'Long An','1905419':'Nam Định',
+  '1905468':'Nghệ An','1905475':'Ninh Bình','1905480':'Ninh Thuận','1905497':'Phú Thọ',
+  '1905516':'Phú Yên','1905577':'Quảng Bình','1905626':'Quảng Nam','1905637':'Quảng Ngãi',
+  '1905669':'Quảng Trị','1905675':'Sóc Trăng','1905678':'Sơn La','1905686':'Tây Ninh',
+  '1905699':'Thái Bình','1905856':'Thái Nguyên','7506719':'Tiền Giang',
+  /* GeoNames IDs fallback */
+  '1580578':'Thanh Hoá','1581129':'TT-Huế','1582720':'Quảng Ninh',
+  '1566083':'TP. Hồ Chí Minh','1572151':'Đà Nẵng','1574917':'Đắk Lắk',
+  '1581130':'Hà Nội','1581592':'Hải Phòng','1584256':'Cần Thơ',
 };
 
 let S_analDate    = '7';
@@ -4539,7 +4529,7 @@ async function fetchAdBreakdown(aid) {
       advertiser_id: aid,
       report_type: 'BASIC',
       data_level: 'AUCTION_AD',
-      dimensions: ['campaign_id','adgroup_id','ad_id'],
+      dimensions: ['ad_id'],
       metrics: ['spend','impressions','clicks','ctr','cpm','real_time_result','cost_per_result','video_watched_6s'],
       start_date: start, end_date: end,
       page_size: 100,
@@ -4767,22 +4757,11 @@ function setCampTab(tab) {
 }
 
 function renderAdPanel() {
-  const objTypes=[...new Set((S.campaigns||[]).map(c=>c.objective_type).filter(Boolean))];
-  const allRows=[..._analAdData].sort((a,b)=>(parseFloat(b.metrics.spend)||0)-(parseFloat(a.metrics.spend)||0));
-  const rows=_analAdTab?allRows.filter(r=>{
-    const cid=String((r.dimensions||{}).campaign_id||'');
-    const camp=(S.campaigns||[]).find(c=>String(c.campaign_id)===cid);
-    return camp&&camp.objective_type===_analAdTab;
-  }):allRows.slice(0,50);
-
-  const tabs=`<div class="anal-tabs">
-    <div class="anal-tab${!_analAdTab?' active':''}" onclick="setAdTab('')">Tất cả</div>
-    ${objTypes.map(t=>`<div class="anal-tab${_analAdTab===t?' active':''}" onclick="setAdTab(${JSON.stringify(t)})">${esc(OBJ_MAP[t]||t)}</div>`).join('')}
-  </div>`;
+  const rows=[..._analAdData].sort((a,b)=>(parseFloat(b.metrics.spend)||0)-(parseFloat(a.metrics.spend)||0)).slice(0,50);
 
   const table=rows.length?`<div class="perf-table-wrap"><table class="perf-table">
     <thead><tr>
-      <th>#</th><th>Tên quảng cáo</th><th>Nhóm QC</th>
+      <th>#</th><th>Ad ID</th>
       <th class="right">Chi phí</th><th class="right">Impressions</th>
       <th class="right">Clicks</th><th class="right">CTR</th>
       <th class="right">Lead/KQ</th><th class="right">Cost/KQ</th>
@@ -4790,14 +4769,11 @@ function renderAdPanel() {
     </tr></thead>
     <tbody>${rows.map((r,i)=>{
       const m=r.metrics||{},dim=r.dimensions||{};
-      const adName=dim.ad_name||(dim.ad_id?'Ad #'+dim.ad_id:'—');
-      const agid=dim.adgroup_id||'';
-      const agRec=(S.adgroups[String(dim.campaign_id||'')]||[]).find(ag=>String(ag.adgroup_id)===String(agid));
-      const agName=dim.adgroup_name||(agRec&&agRec.adgroup_name)||('AG #'+agid);
+      const adId=String(dim.ad_id||'');
+      const adLabel='…'+adId.slice(-8);
       return `<tr>
         <td style="color:var(--text3);font-size:11px;">${i+1}</td>
-        <td class="perf-name" title="${esc(adName)}">${esc(adName.length>42?adName.slice(0,42)+'…':adName)}</td>
-        <td class="perf-name" title="${esc(agName)}" style="color:var(--text2)">${esc(agName.length>28?agName.slice(0,28)+'…':agName)}</td>
+        <td class="perf-name" title="Ad ID: ${esc(adId)}" style="font-family:monospace;font-size:11px;color:var(--text2);">${esc(adLabel)}</td>
         <td class="right perf-num">${fmtCur(parseFloat(m.spend)||0)}</td>
         <td class="right perf-num">${fmtN(parseFloat(m.impressions)||0,'impressions')}</td>
         <td class="right perf-num">${fmtN(parseFloat(m.clicks)||0,'clicks')}</td>
@@ -4811,8 +4787,8 @@ function renderAdPanel() {
   </table></div>`:'<div style="color:var(--text3);padding:24px;text-align:center;">Không có dữ liệu</div>';
 
   return `<div class="anal-panel" id="analAdPanel">
-    <div class="anal-panel-hdr">🎯 Hiệu quả Quảng cáo</div>
-    ${tabs}<div>${table}</div>
+    <div class="anal-panel-hdr">🎯 Hiệu quả Quảng cáo (Top 50 theo chi phí)</div>
+    <div>${table}</div>
   </div>`;
 }
 
