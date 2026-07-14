@@ -4652,14 +4652,33 @@ async function fetchAdCreatives(aid, adIds) {
     const d = await apiGet('/ad/get/', {
       advertiser_id: aid,
       ad_ids: adIds.slice(0, 100),
-      fields: ['ad_id','ad_name','video_id','image_ids','video_info','image_info'],
+      fields: ['ad_id','ad_name','image_ids'],
     });
     const map = {};
+    const adToImgId = {};
+    const allImgIds = [];
     for (const ad of (d.list || [])) {
-      const thumb = (ad.video_info && ad.video_info.poster_url)
-        || (ad.image_info && ad.image_info.image_url)
-        || '';
-      map[String(ad.ad_id)] = { name: ad.ad_name || '', thumb };
+      const adId = String(ad.ad_id);
+      map[adId] = { name: ad.ad_name || '', thumb: '' };
+      if (ad.image_ids && ad.image_ids.length > 0) {
+        adToImgId[adId] = ad.image_ids[0];
+        allImgIds.push(ad.image_ids[0]);
+      }
+    }
+    if (allImgIds.length > 0) {
+      try {
+        const imgData = await apiGet('/file/image/get/', {
+          advertiser_id: aid,
+          image_ids: [...new Set(allImgIds)].slice(0, 100),
+        });
+        const imgMap = {};
+        for (const img of (imgData.list || [])) {
+          imgMap[img.image_id] = img.image_url;
+        }
+        for (const [adId, imgId] of Object.entries(adToImgId)) {
+          if (imgMap[imgId]) map[adId].thumb = imgMap[imgId];
+        }
+      } catch {}
     }
     return map;
   } catch { return {}; }
@@ -4900,8 +4919,8 @@ function renderAdPanel() {
       const cr=_analAdCreative[adId]||{};
       const adName=cr.name||('Ad …'+adId.slice(-8));
       const thumbHtml=cr.thumb
-        ?`<img src="${esc(cr.thumb)}" style="width:48px;height:48px;object-fit:cover;border-radius:6px;flex-shrink:0;border:1px solid var(--border);" onerror="this.style.display='none'">`
-        :`<div style="width:48px;height:48px;border-radius:6px;background:var(--bg3);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:22px;border:1px solid var(--border);">🎬</div>`;
+        ?`<img src="${esc(cr.thumb)}" style="width:60px;height:80px;object-fit:cover;border-radius:6px;flex-shrink:0;border:1px solid var(--border);" onerror="this.outerHTML='<div style=\\'width:60px;height:80px;border-radius:6px;background:var(--bg3);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:26px;border:1px solid var(--border);\\'>🎬</div>'">`
+        :`<div style="width:60px;height:80px;border-radius:6px;background:var(--bg3);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:26px;border:1px solid var(--border);">🎬</div>`;
       return `<tr>
         <td style="color:var(--text3);font-size:11px;">${i+1}</td>
         <td class="perf-name" title="ID: ${esc(adId)}">
