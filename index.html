@@ -4495,11 +4495,20 @@ function vdReset() {
   document.getElementById('vdLoading').style.display = 'none';
 }
 
-// Route tikwm.com qua Cloudflare Worker (bypass CORS, không bị block)
-async function vdCallWorker(videoUrl) {
-  const workerBase = 'https://tiktok-proxy.doichao13.workers.dev';
+// Gọi thẳng tikwm.com (API có sẵn CORS headers)
+async function vdCallDirect(videoUrl) {
   const tikwmUrl = `https://tikwm.com/api/?url=${encodeURIComponent(videoUrl)}&hd=1`;
-  // Dùng generic proxy ?url= (có sẵn, không cần endpoint /tikwm riêng)
+  const r = await fetchWithTimeout(tikwmUrl, {}, 12000);
+  if (!r.ok) throw new Error(`tikwm HTTP ${r.status}`);
+  const json = JSON.parse(await r.text());
+  if (!json || json.code !== 0 || !json.data) throw new Error(json?.msg || 'tikwm: không lấy được data');
+  return json;
+}
+
+// Route tikwm.com qua Cloudflare Worker (backup)
+async function vdCallWorker(videoUrl) {
+  const workerBase = S.config?.proxy || 'https://tiktok-proxy.doichao13.workers.dev';
+  const tikwmUrl = `https://tikwm.com/api/?url=${encodeURIComponent(videoUrl)}&hd=1`;
   const u = `${workerBase}/?url=${encodeURIComponent(tikwmUrl)}`;
   const r = await fetchWithTimeout(u, {}, 12000);
   if (!r.ok) throw new Error(`Worker HTTP ${r.status}`);
@@ -4508,7 +4517,7 @@ async function vdCallWorker(videoUrl) {
   return json;
 }
 
-// Fallback: public CORS proxies → tikwm.com (có thể bị chặn)
+// Fallback: public CORS proxies → tikwm.com
 async function vdCallProxy(videoUrl) {
   const tikwmUrl = `https://tikwm.com/api/?url=${encodeURIComponent(videoUrl)}&hd=1`;
   let lastErr = '';
@@ -4524,7 +4533,7 @@ async function vdCallProxy(videoUrl) {
       if (json?.code === 0 && json?.data) return json;
     } catch(e) { lastErr = e.message; }
   }
-  throw new Error('Không kết nối được qua proxy. ' + (lastErr || 'Worker chưa có endpoint /tikwm — xem hướng dẫn.'));
+  throw new Error('Không kết nối được. ' + (lastErr || 'Vui lòng thử lại.'));
 }
 
 async function vdFetch() {
@@ -4535,11 +4544,15 @@ async function vdFetch() {
   document.getElementById('vdLoading').style.display = 'block';
   try {
     let json;
-    // 1. Worker trước (đáng tin cậy nhất — cần thêm endpoint /tikwm vào Worker)
-    try { json = await vdCallWorker(url); }
+    // 1. Gọi thẳng tikwm.com (không cần proxy, nhanh nhất)
+    try { json = await vdCallDirect(url); }
     catch(e) {
-      // 2. Fallback public CORS proxies
-      json = await vdCallProxy(url);
+      // 2. Worker Cloudflare
+      try { json = await vdCallWorker(url); }
+      catch(e2) {
+        // 3. Public CORS proxies
+        json = await vdCallProxy(url);
+      }
     }
     VD.data = json.data;
     vdRenderCard(json.data);
