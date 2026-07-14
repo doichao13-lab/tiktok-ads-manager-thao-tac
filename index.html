@@ -4652,14 +4652,16 @@ async function fetchAdCreatives(aid, adIds) {
     const d = await apiGet('/ad/get/', {
       advertiser_id: aid,
       ad_ids: adIds.slice(0, 100),
-      fields: ['ad_id','ad_name','video_id','image_ids'],
+      fields: ['ad_id','ad_name','video_id','image_ids','tiktok_item_id','identity_id','identity_type','card_id'],
     });
     const map = {};
     const adToVid = {};
     const adToImgId = {};
     const allVids = [];
     const allImgIds = [];
-    console.log('[thumb] /ad/get/ raw list:', (d.list||[]).slice(0,3).map(a=>({ad_id:a.ad_id,video_id:a.video_id,image_ids:a.image_ids})));
+    const firstAd = (d.list||[])[0] || {};
+    console.log('[thumb] /ad/get/ first ad ALL keys:', Object.keys(firstAd));
+    console.log('[thumb] /ad/get/ first ad FULL:', JSON.stringify(firstAd));
     for (const ad of (d.list || [])) {
       const adId = String(ad.ad_id);
       map[adId] = { name: ad.ad_name || '', thumb: '' };
