@@ -2419,7 +2419,7 @@ function makeAGRow(ag) {
     </td>
     <td onclick="event.stopPropagation()" style="min-width:120px;">
       ${(()=>{
-        const parentCamp2=S.campaigns.find(c=>c.campaign_id===ag.campaign_id)||{};
+        const parentCamp2=S.campaigns.find(c=>String(c.campaign_id)===String(ag.campaign_id))||{};
         const cur2=getKpiCurrentVal(ag.adgroup_id,m,parentCamp2.objective_type);
         return mkProgressCell(S.kpiAg[ag.adgroup_id],cur2,S.kpiAgEx[ag.adgroup_id]||0);
       })()}
