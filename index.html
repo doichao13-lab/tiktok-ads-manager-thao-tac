@@ -2970,21 +2970,22 @@ function saveKpiAgEx(agid, val) {
   renderTable();
 }
 function getKpiCurrentVal(cid, m, objType) {
+  const n = v => parseFloat(v) || 0;
   const OBJ_METRIC = {
-    VIDEO_VIEWS: m.video_watched_2s || m.video_watched_6s || 0,
-    REACH: m.reach || 0,
-    LEAD_GENERATION: m.real_time_result || m.result || 0,
-    CONVERSIONS: m.real_time_result || m.result || 0,
-    TRAFFIC: m.clicks || 0,
-    COMMUNITY_INTERACTION: m.real_time_result || 0,
-    APP_PROMOTION: m.real_time_result || 0,
-    PRODUCT_SALES: m.real_time_result || 0,
+    VIDEO_VIEWS: n(m.video_watched_2s) || n(m.video_watched_6s),
+    REACH: n(m.reach),
+    LEAD_GENERATION: n(m.real_time_result) || n(m.result),
+    CONVERSIONS: n(m.real_time_result) || n(m.result),
+    TRAFFIC: n(m.clicks),
+    COMMUNITY_INTERACTION: n(m.real_time_result),
+    APP_PROMOTION: n(m.real_time_result),
+    PRODUCT_SALES: n(m.real_time_result),
   };
-  return OBJ_METRIC[objType] ?? (m.real_time_result || m.impressions || 0);
+  return OBJ_METRIC[objType] ?? (n(m.real_time_result) || n(m.impressions));
 }
 function mkProgressCell(kpi, cur, extra) {
   if (!kpi) return '<span style="color:var(--text3);font-size:12px;">—</span>';
-  const total = cur + (extra || 0);
+  const total = parseFloat(cur || 0) + parseFloat(extra || 0);
   const pct = Math.min(Math.round(total / kpi * 100), 999);
   const fill = Math.min(pct, 100);
   const color = fill >= 100 ? '#16A34A' : fill >= 70 ? '#1747EA' : fill >= 40 ? '#D97706' : '#DC2626';
