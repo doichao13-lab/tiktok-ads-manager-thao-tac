@@ -1745,7 +1745,7 @@ const COLS = {
   follow:       { label: 'Follow',      metric: 'follows',                icon: '➕' },
   cpm:          { label: 'CPM',         metric: 'cpm',                    icon: '📊' },
   ctr:          { label: 'CTR',         metric: 'ctr',                    icon: '🎯' },
-  cpc:          { label: 'CPC',         metric: 'cost_per_click',         icon: '🖱💰' },
+  cpc:          { label: 'CPC',         metric: 'cpc',                    icon: '🖱💰' },
 };
 
 const USD_VND_RATE = 26423; // 1 USD = 26,423 VND
@@ -2110,7 +2110,7 @@ async function fetchMetrics(aid, level, ids) {
     report_type: 'BASIC',
     data_level: level === 'campaign' ? 'AUCTION_CAMPAIGN' : 'AUCTION_ADGROUP',
     dimensions: [dim],
-    metrics: ['spend','reach','video_watched_2s','video_watched_6s','real_time_result','result','cost_per_result','complete_payment','clicks','follows','impressions','frequency','cpm','ctr','cost_per_click'],
+    metrics: ['spend','reach','video_watched_2s','video_watched_6s','real_time_result','result','cost_per_result','complete_payment','clicks','follows','impressions','frequency','cpm','ctr','cpc'],
     start_date: start, end_date: end, page_size: 1000,
   });
   const r = {};
@@ -3790,7 +3790,7 @@ function fmtN(v, metric) { // full number — for metric cells
   if (v === undefined || v === null || v === '' || v === '-') return '—';
   if (metric === 'frequency') return parseFloat(v).toFixed(2);
   if (metric === 'ctr') return parseFloat(v).toFixed(2) + '%';
-  if (metric === 'cpm' || metric === 'cost_per_click') return fmtCur(parseFloat(v) || 0);
+  if (metric === 'cpm' || metric === 'cpc') return fmtCur(parseFloat(v) || 0);
   const n = parseFloat(v);
   if (isNaN(n)) return '—';
   return n.toLocaleString('vi-VN');
