@@ -3064,11 +3064,12 @@ function getKpiCurrentVal(cid, m, objType) {
     LEAD_GENERATION: n(m.real_time_result) || n(m.result),
     CONVERSIONS: n(m.real_time_result) || n(m.result),
     TRAFFIC: n(m.clicks),
-    COMMUNITY_INTERACTION: n(m.real_time_result),
+    ENGAGEMENT: n(m.follows) || n(m.real_time_result),
+    COMMUNITY_INTERACTION: n(m.follows) || n(m.real_time_result),
     APP_PROMOTION: n(m.real_time_result),
     PRODUCT_SALES: n(m.real_time_result),
   };
-  return OBJ_METRIC[objType] ?? (n(m.real_time_result) || n(m.impressions));
+  return OBJ_METRIC[objType] ?? (n(m.real_time_result) || n(m.follows) || n(m.impressions));
 }
 function mkProgressCell(kpi, cur, extra) {
   if (!kpi) return '<span style="color:var(--text3);font-size:12px;">—</span>';
