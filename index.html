@@ -2726,7 +2726,7 @@ function toggleExpand(cid, e) {
 }
 
 async function toggleExpandCard(cid) {
-  const box = document.getElementById('cag-' + cid);
+  let box = document.getElementById('cag-' + cid);
   if (!box) return;
   if (S.expanded.has(cid)) {
     S.expanded.delete(cid);
@@ -2734,8 +2734,19 @@ async function toggleExpandCard(cid) {
   } else {
     S.expanded.add(cid);
     box.innerHTML = '<div style="padding:12px 16px;color:var(--text2);font-size:13px;"><div class="spinner" style="display:inline-block;vertical-align:middle;margin-right:6px;"></div>Đang tải...</div>';
+    // Fetch adgroups if not cached
     if (!S.adgroups[cid]) await loadAdGroups(cid);
-    box.innerHTML = renderAGCards(cid);
+    // Fetch metrics if missing (e.g. after date range change clears S.metrics but keeps S.adgroups)
+    const ags = S.adgroups[cid] || [];
+    if (ags.length && ags.some(ag => !S.metrics[ag.adgroup_id])) {
+      try {
+        const ids = ags.map(a => a.adgroup_id);
+        Object.assign(S.metrics, await fetchMetrics(S.accountId, 'adgroup', ids));
+      } catch(e) { console.warn('adgroup metrics:', e); }
+    }
+    // Re-query box: updateCards() inside loadAdGroups may have recreated the DOM
+    box = document.getElementById('cag-' + cid);
+    if (box) box.innerHTML = renderAGCards(cid);
   }
 }
 
