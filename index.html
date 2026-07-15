@@ -1046,7 +1046,7 @@ while ($listener.IsListening) {
           <input type="password" id="iGroqKey" class="form-input" placeholder="gsk_..." autocomplete="off" style="flex:1;" />
           <button class="btn btn-sm" onclick="document.getElementById('iGroqKey').type=document.getElementById('iGroqKey').type==='password'?'text':'password'">👁</button>
         </div>
-        <div class="form-hint">Dùng model <strong>llama-3.1-70b-versatile</strong> — 14,400 req/ngày miễn phí. Key lưu trên máy, không upload lên server.</div>
+        <div class="form-hint">Dùng model <strong>llama-3.3-70b-versatile</strong> — 14,400 req/ngày miễn phí. Key lưu trên máy, không upload lên server.</div>
       </div>
       <div style="display:flex;gap:8px;align-items:center;">
         <button class="btn btn-primary" onclick="saveGroqKey()">💾 Lưu API Key</button>
@@ -5167,7 +5167,7 @@ async function testGroqKey() {
   el.textContent = 'Đang kiểm tra...'; el.style.color = 'var(--text2)';
   try {
     await callGroq(key, [{ role:'user', content:'Hello' }], 10);
-    el.textContent = '✅ Kết nối thành công! (llama-3.1-70b-versatile)'; el.style.color = '#16A34A';
+    el.textContent = '✅ Kết nối thành công! (llama-3.3-70b-versatile)'; el.style.color = '#16A34A';
   } catch(e) { el.textContent = '❌ ' + e.message; el.style.color='var(--red)'; }
 }
 
@@ -5175,7 +5175,7 @@ async function callGroq(key, messages, maxTokens = 2048) {
   const r = await fetchWithTimeout('https://api.groq.com/openai/v1/chat/completions', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + key },
-    body: JSON.stringify({ model: 'llama-3.1-70b-versatile', messages, max_tokens: maxTokens, temperature: 0.7 })
+    body: JSON.stringify({ model: 'llama-3.3-70b-versatile', messages, max_tokens: maxTokens, temperature: 0.7 })
   }, 30000);
   const d = await r.json();
   if (d.error) throw new Error(d.error.message || JSON.stringify(d.error));
