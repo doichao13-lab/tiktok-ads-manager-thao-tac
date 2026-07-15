@@ -2666,18 +2666,31 @@ function renderAGCards(cid) {
   const ags = S.adgroups[cid];
   if (!ags) return '<div style="padding:12px 16px;color:var(--text2);font-size:13px;"><div class="spinner" style="display:inline-block;vertical-align:middle;margin-right:6px;"></div>Đang tải...</div>';
   if (!ags.length) return '<div style="padding:12px 16px;color:var(--text3);font-size:13px;">Không có nhóm QC</div>';
+  const cols = colDefs();
   return ags.map(ag => {
     const active = ag.operation_status === 'ENABLE';
-    return `<div class="c-ag-item">
-      <div class="c-ag-info">
-        <div class="c-ag-name">${esc(ag.adgroup_name)}</div>
-        <div class="c-ag-sub">Ngân sách: ${fmtCur(ag.budget)} • Bid: ${ag.bid_type==='BID_TYPE_CUSTOM_BID'?fmtCur(ag.bid_price):'Auto'}</div>
+    const m = S.metrics[ag.adgroup_id] || {};
+    const metricsHtml = cols.length ? `
+      <div class="c-card-metrics" style="padding:8px 12px 4px;border-top:1px solid var(--border);">
+        ${cols.map(cl => `
+          <div class="c-card-metric">
+            <div class="c-card-metric-label">${cl.label}</div>
+            <div class="c-card-metric-val">${fmtN(getMetricVal(m, cl), cl.metric)}</div>
+          </div>`).join('')}
+      </div>` : '';
+    return `<div class="c-ag-item" style="flex-direction:column;align-items:stretch;padding:0;">
+      <div style="display:flex;align-items:center;gap:8px;padding:10px 12px;">
+        <div class="c-ag-info" style="flex:1;min-width:0;">
+          <div class="c-ag-name">${esc(ag.adgroup_name)}</div>
+          <div class="c-ag-sub">Ngân sách: ${fmtCur(ag.budget)} • Bid: ${ag.bid_type==='BID_TYPE_CUSTOM_BID'?fmtCur(ag.bid_price):'Auto'}</div>
+        </div>
+        <button class="btn btn-sm btn-ghost" onclick="openBid('${ag.adgroup_id}','${esc(ag.adgroup_name)}',${ag.bid_price||0})">🎯</button>
+        <label class="toggle" onclick="event.stopPropagation()">
+          <input type="checkbox" ${active?'checked':''} onchange="toggleAG('${ag.adgroup_id}','${ag.campaign_id}',this.checked)">
+          <span class="toggle-track"></span>
+        </label>
       </div>
-      <button class="btn btn-sm btn-ghost" onclick="openBid('${ag.adgroup_id}','${esc(ag.adgroup_name)}',${ag.bid_price||0})">🎯</button>
-      <label class="toggle" onclick="event.stopPropagation()">
-        <input type="checkbox" ${active?'checked':''} onchange="toggleAG('${ag.adgroup_id}','${ag.campaign_id}',this.checked)">
-        <span class="toggle-track"></span>
-      </label>
+      ${metricsHtml}
     </div>`;
   }).join('');
 }
