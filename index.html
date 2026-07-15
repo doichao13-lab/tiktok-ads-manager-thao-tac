@@ -1406,7 +1406,7 @@ while ($listener.IsListening) {
 
 <!-- ===================== AI TOOLS SECTION ===================== -->
 <style>
-.ai-section { display:none; height:calc(100vh - 140px); overflow:hidden; }
+.ai-section { display:none; min-height:calc(100vh - 140px); overflow-y:auto; }
 .ai-tool-wrap { display:flex; height:100%; }
 .ai-sidebar {
   width:340px; min-width:300px; max-width:380px; flex-shrink:0;
@@ -1509,7 +1509,7 @@ while ($listener.IsListening) {
   letter-spacing:1px; margin:18px 0 12px; padding-bottom:6px; border-bottom:2px solid rgba(23,71,234,.15); }
 </style>
 
-<div id="aiSection" class="ai-section" style="padding:20px;max-width:860px;margin:0 auto;">
+<div id="aiSection" class="ai-section" style="padding:24px 32px;">
 
 <!-- Tab bar -->
 <div style="display:flex;gap:0;border-bottom:2px solid var(--border);margin-bottom:20px;">
@@ -1554,7 +1554,7 @@ while ($listener.IsListening) {
     <textarea id="groqNote" rows="2" placeholder="VD: Tập trung phân tích nhóm quảng cáo chạy video hook cảm xúc, so sánh hiệu quả A/B..." style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:6px;background:var(--bg3);color:var(--text);font-size:13px;resize:vertical;box-sizing:border-box;"></textarea>
   </div>
   <button onclick="runGroqAnalyst()" style="width:100%;padding:13px;background:#6366F1;border:none;border-radius:8px;color:#fff;font-size:14px;font-weight:700;cursor:pointer;letter-spacing:.3px;">🚀 Phân tích với Groq AI</button>
-  <div id="groqAnalystResult" style="display:none;margin-top:16px;padding:16px;background:var(--bg2);border:1px solid var(--border);border-radius:10px;"></div>
+  <div id="groqAnalystResult" style="display:none;margin-top:16px;padding:20px;background:var(--bg2);border:1px solid var(--border);border-radius:10px;"></div>
 </div>
 
 <!-- ── PANEL 2: Content brief ── -->
