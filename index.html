@@ -1522,30 +1522,39 @@ while ($listener.IsListening) {
   <div id="groqDataBanner" style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px 14px;font-size:12px;color:var(--text2);margin-bottom:16px;">
     ⏳ Chưa có data — vào tab <strong>Chiến dịch</strong> để tải dữ liệu trước.
   </div>
-  <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;">
-    <div>
-      <label style="font-size:12px;font-weight:600;display:block;margin-bottom:4px;">Ngành hoạt động</label>
-      <select id="groqIndustry" style="width:100%;padding:7px 10px;border:1px solid var(--border);border-radius:6px;background:var(--bg3);color:var(--text);font-size:13px;">
-        <option value="fmcg">FMCG — Hàng tiêu dùng nhanh</option>
-        <option value="cosmetic">Mỹ phẩm / Làm đẹp</option>
-        <option value="supplement">Thực phẩm chức năng / Sức khỏe</option>
-        <option value="bds">Bất động sản</option>
-        <option value="edu">Giáo dục / Đào tạo</option>
-        <option value="fashion">Thời trang</option>
-        <option value="other">Khác</option>
-      </select>
+
+  <!-- Campaign selector -->
+  <div style="margin-bottom:14px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+      <label style="font-size:12px;font-weight:600;">Chọn chiến dịch phân tích</label>
+      <div style="display:flex;gap:8px;">
+        <button onclick="groqSelectAll(true)" style="font-size:11px;padding:2px 8px;border:1px solid var(--border);border-radius:4px;background:var(--bg3);color:var(--text);cursor:pointer;">Chọn tất cả</button>
+        <button onclick="groqSelectAll(false)" style="font-size:11px;padding:2px 8px;border:1px solid var(--border);border-radius:4px;background:var(--bg3);color:var(--text);cursor:pointer;">Bỏ chọn</button>
+      </div>
     </div>
-    <div>
-      <label style="font-size:12px;font-weight:600;display:block;margin-bottom:4px;">Kỳ báo cáo <span style="font-weight:400;color:var(--text2);">(tuỳ chọn)</span></label>
-      <input type="text" id="groqPeriod" placeholder="VD: 01/06 – 30/06/2025" style="width:100%;padding:7px 10px;border:1px solid var(--border);border-radius:6px;background:var(--bg3);color:var(--text);font-size:13px;box-sizing:border-box;" />
+    <div id="groqCampList" style="border:1px solid var(--border);border-radius:8px;max-height:180px;overflow-y:auto;background:var(--bg3);">
+      <div style="padding:12px;color:var(--text2);font-size:12px;">⏳ Chưa có chiến dịch — tải dữ liệu trước</div>
     </div>
   </div>
+
+  <!-- Date range -->
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px;">
+    <div>
+      <label style="font-size:12px;font-weight:600;display:block;margin-bottom:4px;">Từ ngày</label>
+      <input type="date" id="groqDateFrom" style="width:100%;padding:7px 10px;border:1px solid var(--border);border-radius:6px;background:var(--bg3);color:var(--text);font-size:13px;box-sizing:border-box;" />
+    </div>
+    <div>
+      <label style="font-size:12px;font-weight:600;display:block;margin-bottom:4px;">Đến ngày</label>
+      <input type="date" id="groqDateTo" style="width:100%;padding:7px 10px;border:1px solid var(--border);border-radius:6px;background:var(--bg3);color:var(--text);font-size:13px;box-sizing:border-box;" />
+    </div>
+  </div>
+
   <div style="margin-bottom:16px;">
-    <label style="font-size:12px;font-weight:600;display:block;margin-bottom:4px;">Ghi chú thêm <span style="font-weight:400;color:var(--text2);">(tuỳ chọn)</span></label>
-    <textarea id="groqNote" rows="2" placeholder="VD: Tập trung phân tích nhóm quảng cáo chạy video hook cảm xúc, hoặc so sánh hiệu quả 2 chiến dịch A và B..." style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:6px;background:var(--bg3);color:var(--text);font-size:13px;resize:vertical;box-sizing:border-box;"></textarea>
+    <label style="font-size:12px;font-weight:600;display:block;margin-bottom:4px;">Ghi chú / Yêu cầu cụ thể <span style="font-weight:400;color:var(--text2);">(tuỳ chọn)</span></label>
+    <textarea id="groqNote" rows="2" placeholder="VD: Tập trung phân tích nhóm quảng cáo chạy video hook cảm xúc, so sánh hiệu quả A/B..." style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:6px;background:var(--bg3);color:var(--text);font-size:13px;resize:vertical;box-sizing:border-box;"></textarea>
   </div>
-  <button onclick="runGroqAnalyst()" style="width:100%;padding:12px;background:#6366F1;border:none;border-radius:8px;color:#fff;font-size:14px;font-weight:700;cursor:pointer;">🚀 Phân tích với Groq AI</button>
-  <div id="groqAnalystResult" style="display:none;margin-top:16px;"></div>
+  <button onclick="runGroqAnalyst()" style="width:100%;padding:13px;background:#6366F1;border:none;border-radius:8px;color:#fff;font-size:14px;font-weight:700;cursor:pointer;letter-spacing:.3px;">🚀 Phân tích với Groq AI</button>
+  <div id="groqAnalystResult" style="display:none;margin-top:16px;padding:16px;background:var(--bg2);border:1px solid var(--border);border-radius:10px;"></div>
 </div>
 
 <!-- ── PANEL 2: Content brief ── -->
@@ -5174,16 +5183,47 @@ async function callGroq(key, messages, maxTokens = 2048) {
 
 function groqUpdateBanner() {
   const el = document.getElementById('groqDataBanner');
-  if (!el) return;
-  const n = (S.campaigns || []).length;
-  if (!n) {
-    el.innerHTML = '⏳ Chưa có data — vào tab <strong>Chiến dịch</strong> để tải dữ liệu trước.';
-    el.style.background = 'var(--bg3)'; el.style.borderColor = 'var(--border)'; el.style.color = 'var(--text2)';
-  } else {
-    const hasMetrics = Object.keys(S.metrics || {}).length > 0;
-    el.innerHTML = `✅ Đã load <strong>${n} chiến dịch</strong>${hasMetrics ? ' kèm metrics' : ' (chưa có metrics)'} — sẵn sàng phân tích.`;
-    el.style.background = '#F0FDF4'; el.style.borderColor = '#86EFAC'; el.style.color = '#166534';
+  if (el) {
+    const n = (S.campaigns || []).length;
+    if (!n) {
+      el.innerHTML = '⏳ Chưa có data — vào tab <strong>Chiến dịch</strong> để tải dữ liệu trước.';
+      el.style.background = 'var(--bg3)'; el.style.borderColor = 'var(--border)'; el.style.color = 'var(--text2)';
+    } else {
+      const hasMetrics = Object.keys(S.metrics || {}).length > 0;
+      el.innerHTML = `✅ Đã load <strong>${n} chiến dịch</strong>${hasMetrics ? ' kèm metrics' : ' (chưa có metrics)'} — chọn chiến dịch bên dưới để phân tích.`;
+      el.style.background = '#F0FDF4'; el.style.borderColor = '#86EFAC'; el.style.color = '#166534';
+    }
   }
+  // Render campaign list
+  groqRenderCampList();
+  // Auto-fill date range from current app date range
+  const { start, end } = getRange(S.dateRange);
+  const df = document.getElementById('groqDateFrom');
+  const dt = document.getElementById('groqDateTo');
+  if (df && !df.value) df.value = start;
+  if (dt && !dt.value) dt.value = end;
+}
+
+function groqRenderCampList() {
+  const el = document.getElementById('groqCampList');
+  if (!el) return;
+  const camps = S.campaigns || [];
+  if (!camps.length) { el.innerHTML = '<div style="padding:12px;color:var(--text2);font-size:12px;">⏳ Chưa có chiến dịch — tải dữ liệu trước</div>'; return; }
+  el.innerHTML = camps.map(c => {
+    const m = S.metrics[c.campaign_id] || {};
+    const spend = parseFloat(m.spend)||0;
+    const status = c.operation_status === 'ENABLE' ? '<span style="color:#16A34A;font-size:10px;">● Đang chạy</span>' : '<span style="color:var(--text3);font-size:10px;">● Dừng</span>';
+    const spendStr = spend > 0 ? ` — ${spend.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g,'.')}đ` : '';
+    return `<label style="display:flex;align-items:center;gap:10px;padding:8px 12px;cursor:pointer;border-bottom:1px solid var(--border);font-size:12px;" onmouseover="this.style.background='var(--bg4,var(--bg2))'" onmouseout="this.style.background=''">
+      <input type="checkbox" class="groq-camp-cb" value="${c.campaign_id}" checked style="width:14px;height:14px;cursor:pointer;flex-shrink:0;">
+      <span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${c.campaign_name}">${c.campaign_name}</span>
+      <span style="flex-shrink:0;">${status}${spendStr}</span>
+    </label>`;
+  }).join('');
+}
+
+function groqSelectAll(checked) {
+  document.querySelectorAll('.groq-camp-cb').forEach(cb => cb.checked = checked);
 }
 
 function groqSwitchTab(n) {
@@ -5199,18 +5239,19 @@ function groqSwitchTab(n) {
 }
 
 function groqBuildDataSummary() {
-  const campaigns = S.campaigns || [];
+  // Get selected campaigns
+  const selectedIds = new Set([...document.querySelectorAll('.groq-camp-cb:checked')].map(cb => cb.value));
+  const campaigns = (S.campaigns || []).filter(c => selectedIds.has(String(c.campaign_id)));
   if (!campaigns.length) return null;
-  const industry = document.getElementById('groqIndustry')?.value || '';
-  const period = document.getElementById('groqPeriod')?.value || '';
-  const note = document.getElementById('groqNote')?.value || '';
-  const industryLabel = { fmcg:'FMCG', cosmetic:'Mỹ phẩm/Làm đẹp', supplement:'Thực phẩm chức năng', bds:'Bất động sản', edu:'Giáo dục', fashion:'Thời trang', other:'Khác' }[industry] || industry;
+
+  const dateFrom = document.getElementById('groqDateFrom')?.value || '';
+  const dateTo   = document.getElementById('groqDateTo')?.value || '';
+  const note     = document.getElementById('groqNote')?.value?.trim() || '';
 
   let lines = [];
-  lines.push(`NGÀNH: ${industryLabel}`);
-  if (period) lines.push(`KỲ BÁO CÁO: ${period}`);
-  lines.push(`TỔNG SỐ CHIẾN DỊCH: ${campaigns.length}`);
-  if (note) lines.push(`GHI CHÚ: ${note}`);
+  if (dateFrom && dateTo) lines.push(`KỲ BÁO CÁO: ${dateFrom} → ${dateTo}`);
+  lines.push(`SỐ CHIẾN DỊCH ĐƯỢC CHỌN: ${campaigns.length}`);
+  if (note) lines.push(`YÊU CẦU CỤ THỂ: ${note}`);
   lines.push('');
   lines.push('=== CHI TIẾT TỪNG CHIẾN DỊCH ===');
 
@@ -5218,6 +5259,8 @@ function groqBuildDataSummary() {
     const m = S.metrics[c.campaign_id] || {};
     const spend = parseFloat(m.spend)||0;
     const imp   = parseFloat(m.impressions)||0;
+    const reach = parseFloat(m.reach)||0;
+    const freq  = parseFloat(m.frequency)||0;
     const ctr   = parseFloat(m.ctr)||0;
     const cpm   = parseFloat(m.cpm)||0;
     const kq    = parseFloat(m.real_time_result)||parseFloat(m.result)||0;
@@ -5226,20 +5269,31 @@ function groqBuildDataSummary() {
     const v2s   = parseFloat(m.video_watched_2s)||0;
     const v6s   = parseFloat(m.video_watched_6s)||0;
     const obj   = OBJ_MAP[c.objective_type] || c.objective_type || '';
-    const status= c.operation_status === 'ENABLE' ? 'Đang chạy' : (c.operation_status || '');
-    lines.push(`${i+1}. ${c.campaign_name}`);
-    lines.push(`   Mục tiêu: ${obj} | Trạng thái: ${status}`);
-    lines.push(`   Chi tiêu: ${spend.toFixed(0)} VND | CPM: ${cpm.toFixed(0)} VND | CTR: ${ctr.toFixed(2)}%`);
-    lines.push(`   Impressions: ${imp.toFixed(0)} | Clicks: ${clicks.toFixed(0)} | KQ/Lead: ${kq.toFixed(0)} | CPL: ${cpl.toFixed(0)} VND`);
-    if (v6s > 0) lines.push(`   View 2s: ${v2s.toFixed(0)} | View 6s: ${v6s.toFixed(0)}`);
+    const status= c.operation_status === 'ENABLE' ? 'Đang chạy' : (c.operation_status === 'DISABLE' ? 'Tắt' : (c.operation_status || ''));
+    lines.push(`--- Chiến dịch ${i+1}: ${c.campaign_name} ---`);
+    lines.push(`Mục tiêu: ${obj} | Trạng thái: ${status}`);
+    lines.push(`Chi tiêu: ${spend.toFixed(0)} VND`);
+    lines.push(`Impressions: ${imp.toFixed(0)} | Reach: ${reach.toFixed(0)} | Frequency: ${freq.toFixed(2)}`);
+    lines.push(`CPM: ${cpm.toFixed(0)} VND | CTR: ${ctr.toFixed(2)}% | Clicks: ${clicks.toFixed(0)}`);
+    lines.push(`KQ/Lead: ${kq.toFixed(0)} | CPL/CPA: ${cpl.toFixed(0)} VND`);
+    if (v2s > 0 || v6s > 0) {
+      const vtr2 = imp > 0 ? (v2s/imp*100).toFixed(1) : '0';
+      const vtr6 = imp > 0 ? (v6s/imp*100).toFixed(1) : '0';
+      lines.push(`View 2s: ${v2s.toFixed(0)} (VTR2s: ${vtr2}%) | View 6s: ${v6s.toFixed(0)} (VTR6s: ${vtr6}%)`);
+    }
     const ags = S.adgroups[c.campaign_id] || [];
-    ags.forEach(ag => {
-      const am = S.metrics[ag.adgroup_id] || {};
-      const as = parseFloat(am.spend)||0;
-      const akq = parseFloat(am.real_time_result)||parseFloat(am.result)||0;
-      const actr = parseFloat(am.ctr)||0;
-      if (as > 0) lines.push(`   └ Nhóm QC: ${ag.adgroup_name} | Chi tiêu: ${as.toFixed(0)} | KQ: ${akq} | CTR: ${actr.toFixed(2)}%`);
-    });
+    if (ags.length) {
+      lines.push(`Nhóm quảng cáo (${ags.length}):`);
+      ags.forEach(ag => {
+        const am = S.metrics[ag.adgroup_id] || {};
+        const as = parseFloat(am.spend)||0;
+        const akq = parseFloat(am.real_time_result)||parseFloat(am.result)||0;
+        const actr = parseFloat(am.ctr)||0;
+        const acpm = parseFloat(am.cpm)||0;
+        const acpl = parseFloat(am.cost_per_result)||0;
+        lines.push(`  • ${ag.adgroup_name}: Chi tiêu ${as.toFixed(0)}đ | CTR ${actr.toFixed(2)}% | CPM ${acpm.toFixed(0)}đ | KQ ${akq.toFixed(0)} | CPL ${acpl.toFixed(0)}đ`);
+      });
+    }
     lines.push('');
   });
   return lines.join('\n');
@@ -5248,23 +5302,65 @@ function groqBuildDataSummary() {
 async function runGroqAnalyst() {
   const key = S.config.groqKey;
   if (!key) { toast('warn', 'Chưa có Groq API key — vào Cài đặt → tab 🚀 Groq AI'); openSettings(); switchTab(5); return; }
+  const selected = [...document.querySelectorAll('.groq-camp-cb:checked')];
+  if (!selected.length) { toast('warn', 'Chọn ít nhất 1 chiến dịch để phân tích'); return; }
   const summary = groqBuildDataSummary();
   if (!summary) { toast('warn', 'Chưa có data — vào tab Chiến dịch tải dữ liệu trước'); switchLevel('campaign'); return; }
 
   const resultEl = document.getElementById('groqAnalystResult');
   resultEl.style.display = 'block';
-  resultEl.innerHTML = '<div style="text-align:center;padding:32px;color:var(--text2);"><div class="spinner" style="display:inline-block;margin-bottom:10px;"></div><br>Groq AI đang phân tích...</div>';
+  resultEl.innerHTML = '<div style="text-align:center;padding:32px;color:var(--text2);"><div class="spinner" style="display:inline-block;margin-bottom:10px;"></div><br>Groq AI đang phân tích... (khoảng 15-30 giây)</div>';
   resultEl.scrollIntoView({ behavior:'smooth', block:'nearest' });
+
+  const SYSTEM = `Bạn là chuyên gia phân tích quảng cáo TikTok Ads tại Việt Nam với nhiều năm kinh nghiệm thực chiến.
+
+## BENCHMARK THỊ TRƯỜNG VIỆT NAM (VND)
+
+**Bất động sản (BDS):** CPM tốt <60k, cảnh báo 60-100k, xấu >100k | CTR tốt >1.2%, xấu <0.7% | CPL tốt <500k, xấu >1.2tr | VTR6s tốt >20%
+**Mỹ phẩm/Làm đẹp:** CPM tốt <40k, xấu >70k | CTR tốt >2%, xấu <1% | CPL tốt <80k, xấu >180k | CPA tốt <120k | VTR6s tốt >22%
+**FMCG:** CPM tốt <35k, xấu >60k | CTR tốt >1.8%, xấu <1% | CPA tốt <80k, xấu >150k | ROAS tốt >3x, xấu <1.5x | VTR2s tốt >60%
+**Giáo dục:** CPM tốt <45k, xấu >75k | CTR tốt >1.5%, xấu <0.8% | CPL tốt <120k, xấu >250k | VTR6s tốt >25%
+**Thực phẩm chức năng:** CPM tốt <50k, xấu >90k | CTR tốt >1.5%, xấu <0.8% | CPL tốt <150k, xấu >350k | VTR3s tốt >55%
+
+**Ngưỡng chung:** Frequency >3 (7 ngày) = bắt đầu mệt mỏi, >5 = cần đổi creative ngay | CPM tăng >30% tuần = audience saturation | CTR >3% mà CVR <1% = lỗi landing page | Spend >500k mà 0 result sau 3 ngày = dừng kiểm tra tracking
+
+## CHECKLIST ĐÁNH GIÁ
+- Thiết lập: ≥2 ad group active, mỗi ad group 2-4 creative, không trùng targeting
+- Hiệu quả chi phí: CPM/CTR/CPL so với benchmark ngành
+- Phân phối: Frequency, budget concentration, CPM trend
+- Creative: VTR6s, video nào chiếm >70% spend
+- Chuyển đổi: Lead Form Rate, CVR, tracking pixel
+
+## FORMAT BÁO CÁO BẮT BUỘC
+
+## 📊 Tổng quan
+[1-2 câu: chiến dịch gì, kỳ nào, KPI tổng đạt hay chưa]
+
+## 🔍 Phân tích chi tiết
+**Chỉ số chính** — dùng ký hiệu: ✅ Tốt / ⚠️ Cần theo dõi / ❌ Chưa đạt — kèm số thực vs benchmark
+**Phân tích từng chiến dịch** — so sánh, xếp hạng hiệu quả
+**Điểm bất thường** — nếu có
+
+## 🎯 Khuyến nghị tối ưu
+- **[NGAY]** Làm trong hôm nay: dừng gì, tăng gì, sửa gì — lý do cụ thể
+- **[THEO DÕI]** 2-3 ngày tới: đang học, chưa đủ data
+- **[THỬ NGHIỆM]** Tuần tới: đề xuất test mới
+
+## 📝 Tóm tắt
+[5-8 điểm then chốt]
+
+---
+QUAN TRỌNG: Luôn dẫn số liệu cụ thể từ data. Không nói chung chung. So sánh với benchmark ngành.`;
 
   try {
     const text = await callGroq(key, [
-      { role: 'system', content: 'Bạn là chuyên gia phân tích quảng cáo TikTok Ads tại Việt Nam. Khi nhận dữ liệu chiến dịch, phân tích chi tiết và trả về báo cáo theo format:\n\n## 📊 Tổng quan\n## 🔍 Phân tích chi tiết\n## 🎯 Khuyến nghị tối ưu\n- [NGAY] ...\n- [THEO DÕI] ...\n- [THỬ NGHIỆM] ...\n## 📝 Tóm tắt\n\nLuôn dẫn số liệu cụ thể, không nói chung chung.' },
-      { role: 'user', content: `Phân tích hiệu quả quảng cáo TikTok Ads:\n\n${summary}` }
-    ]);
+      { role: 'system', content: SYSTEM },
+      { role: 'user', content: `Phân tích hiệu quả quảng cáo TikTok Ads với dữ liệu sau:\n\n${summary}` }
+    ], 4096);
     resultEl.innerHTML = `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid var(--border);">
       <strong style="color:var(--primary);font-size:14px;">🚀 Kết quả phân tích từ Groq AI</strong>
       <button class="btn btn-sm btn-ghost" onclick="groqDownload('analyst')">⬇ Tải .md</button>
-    </div><div style="font-size:13px;line-height:1.8;">${renderGroqMd(text)}</div>`;
+    </div><div style="font-size:13px;line-height:1.9;">${renderGroqMd(text)}</div>`;
     resultEl.dataset.raw = text;
   } catch(e) {
     resultEl.innerHTML = `<div style="color:var(--red);padding:12px;">❌ ${e.message||'Lỗi kết nối Groq'}</div>`;
