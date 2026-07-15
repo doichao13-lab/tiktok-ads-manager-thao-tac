@@ -768,6 +768,7 @@
       <div class="stab"        id="stab3" onclick="switchTab(3)">⚡ Demo Mode</div>
       <div class="stab"        id="stab4" onclick="switchTab(4)">☁️ Cloud Sync</div>
       <div class="stab"        id="stab5" onclick="switchTab(5)">🤖 Gemini AI</div>
+      <div class="stab"        id="stab6" onclick="switchTab(6)">🚀 Groq AI</div>
     </div>
 
     <!-- ════ TAB 1: OAuth flow ════ -->
@@ -1031,6 +1032,29 @@ while ($listener.IsListening) {
       </div>
     </div>
 
+    <!-- ════ TAB 6: Groq AI ════ -->
+    <div class="stab-panel" id="spanel6">
+      <div style="background:#F0F9FF;border:1px solid #7DD3FC;border-radius:8px;padding:11px 14px;font-size:12px;color:#0C4A6E;margin-bottom:18px;line-height:1.7;">
+        🚀 <strong>Groq AI</strong> — miễn phí, không cần thẻ tín dụng. Dùng model Llama 3 70B để:<br>
+        • <strong>Phân tích chiến dịch</strong>: đánh giá hiệu quả, benchmark, khuyến nghị tối ưu<br>
+        • <strong>Tạo content brief</strong>: kịch bản TikTok từ ý tưởng hoặc insight quảng cáo<br>
+        Lấy key miễn phí tại <a href="https://console.groq.com" target="_blank" style="color:#0369A1;font-weight:600;">console.groq.com</a> → My API Keys → Create API Key.
+      </div>
+      <div class="form-group">
+        <label class="form-label">Groq API Key</label>
+        <div style="display:flex;gap:8px;">
+          <input type="password" id="iGroqKey" class="form-input" placeholder="gsk_..." autocomplete="off" style="flex:1;" />
+          <button class="btn btn-sm" onclick="document.getElementById('iGroqKey').type=document.getElementById('iGroqKey').type==='password'?'text':'password'">👁</button>
+        </div>
+        <div class="form-hint">Dùng model <strong>llama-3.1-70b-versatile</strong> — 14,400 req/ngày miễn phí. Key lưu trên máy, không upload lên server.</div>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <button class="btn btn-primary" onclick="saveGroqKey()">💾 Lưu API Key</button>
+        <button class="btn btn-sm" onclick="testGroqKey()">⚡ Test kết nối</button>
+        <span id="groqTestStatus" style="font-size:12px;"></span>
+      </div>
+    </div>
+
   </div>
 </div>
 
@@ -1042,6 +1066,56 @@ while ($listener.IsListening) {
       <button class="modal-close" onclick="closeGemini()">✕</button>
     </div>
     <div id="geminiContent" style="overflow-y:auto;flex:1;padding:4px 2px;"></div>
+  </div>
+</div>
+
+<!-- ===================== GROQ ANALYST MODAL ===================== -->
+<div class="overlay" id="groqAnalystOverlay">
+  <div class="modal" style="max-width:720px;max-height:90vh;display:flex;flex-direction:column;">
+    <div class="modal-head" style="flex-shrink:0;">
+      <div class="modal-title">📊 Phân tích chiến dịch với Groq AI</div>
+      <button class="modal-close" onclick="document.getElementById('groqAnalystOverlay').classList.remove('open')">✕</button>
+    </div>
+    <div id="groqAnalystContent" style="overflow-y:auto;flex:1;padding:4px 2px;"></div>
+  </div>
+</div>
+
+<!-- ===================== GROQ CONTENT MODAL ===================== -->
+<div class="overlay" id="groqContentOverlay">
+  <div class="modal" style="max-width:620px;max-height:90vh;display:flex;flex-direction:column;">
+    <div class="modal-head" style="flex-shrink:0;">
+      <div class="modal-title">✏️ Tạo Content Brief TikTok</div>
+      <button class="modal-close" onclick="document.getElementById('groqContentOverlay').classList.remove('open')">✕</button>
+    </div>
+    <div style="padding:16px;flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:12px;" id="groqContentBody">
+      <div id="groqContentForm">
+        <div class="form-group">
+          <label class="form-label">Sản phẩm / Dịch vụ</label>
+          <input type="text" id="gcProduct" class="form-input" placeholder="VD: Balo học sinh, Khóa học tiếng Anh, Kem dưỡng da..." />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Mục tiêu video</label>
+          <select id="gcGoal" class="form-input">
+            <option value="awareness">Nhận diện thương hiệu (Awareness)</option>
+            <option value="conversion">Chuyển đổi / Bán hàng (Conversion)</option>
+            <option value="traffic">Tăng traffic website</option>
+            <option value="engagement">Tương tác cộng đồng</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Đối tượng mục tiêu</label>
+          <input type="text" id="gcAudience" class="form-input" placeholder="VD: Phụ huynh 28-45 tuổi, Gen Z 18-24 tuổi thích thời trang..." />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Ý tưởng / Insight (tuỳ chọn)</label>
+          <textarea id="gcInsight" rows="3" class="form-input" style="resize:vertical;" placeholder="VD: Insight từ data quảng cáo — hook cảm xúc CTR cao hơn 40%, hoặc ý tưởng nội dung bạn muốn thử..."></textarea>
+        </div>
+        <div style="display:flex;gap:8px;">
+          <button class="btn btn-primary" onclick="runGroqContent()" id="gcRunBtn">🚀 Tạo content brief</button>
+        </div>
+      </div>
+      <div id="groqContentResult" style="display:none;"></div>
+    </div>
   </div>
 </div>
 
@@ -1638,6 +1712,7 @@ while ($listener.IsListening) {
         </div>
         <div style="display:flex;gap:8px;align-items:center;">
           <div id="aiImgAttachNote" style="display:none;font-size:11px;color:var(--text2);"></div>
+          <button class="btn btn-sm" style="background:#6366F1;border-color:#6366F1;color:#fff;" onclick="runGroqAnalyst()">🚀 Chạy với Groq</button>
           <button class="btn btn-sm" onclick="aiCopyPrompt('aiReportPromptPre')">📋 Copy prompt</button>
         </div>
       </div>
@@ -1646,6 +1721,7 @@ while ($listener.IsListening) {
         <div>Mở <strong>claude.ai</strong> → tạo chat mới → paste prompt<span id="aiImgHintExtra"></span> → Claude sẽ phân tích theo chuẩn <strong>TikTok Report Analyzer</strong></div>
       </div>
       <pre id="aiReportPromptPre" class="ai-prompt-pre"></pre>
+      <div id="groqAnalystResult" style="display:none;margin-top:12px;padding:14px;background:var(--bg3);border-radius:8px;border:1px solid var(--border);font-size:13px;line-height:1.7;"></div>
     </div>
 
     <!-- Brief prompt output -->
@@ -1657,6 +1733,7 @@ while ($listener.IsListening) {
         </div>
         <div style="display:flex;gap:8px;align-items:center;">
           <div id="aiBriefImgAttachNote" style="display:none;font-size:11px;color:var(--text2);"></div>
+          <button class="btn btn-sm" style="background:#6366F1;border-color:#6366F1;color:#fff;" onclick="runGroqBrief()">🚀 Chạy với Groq</button>
           <button class="btn btn-sm" onclick="aiCopyPrompt('aiBriefPromptPre')">📋 Copy prompt</button>
         </div>
       </div>
@@ -1665,6 +1742,7 @@ while ($listener.IsListening) {
         <div>Mở <strong>claude.ai</strong> → tạo chat mới → paste prompt<span id="aiBriefImgHintExtra"></span> → Claude sẽ tạo <strong>creative brief đầy đủ</strong> cho đội content</div>
       </div>
       <pre id="aiBriefPromptPre" class="ai-prompt-pre"></pre>
+      <div id="groqBriefResult" style="display:none;margin-top:12px;padding:14px;background:var(--bg3);border-radius:8px;border:1px solid var(--border);font-size:13px;line-height:1.7;"></div>
     </div>
 
   </div>
@@ -3105,7 +3183,7 @@ let _activeTab     = 1;
 /* ─ TAB SWITCHING ─ */
 function switchTab(n) {
   _activeTab = n;
-  [1,2,3,4,5].forEach(i => {
+  [1,2,3,4,5,6].forEach(i => {
     document.getElementById('stab'+(i)).classList.toggle('active', i===n);
     document.getElementById('spanel'+i).classList.toggle('active', i===n);
   });
@@ -3386,6 +3464,9 @@ function openSettings() {
   // restore Tab 5 fields
   document.getElementById('iGeminiKey').value = S.config.geminiKey || '';
   document.getElementById('geminiTestStatus').textContent = '';
+  // restore Tab 6 fields
+  document.getElementById('iGroqKey').value = S.config.groqKey || '';
+  document.getElementById('groqTestStatus').textContent = '';
   // reset statuses
   ['exchangeStatus','manualTestStatus'].forEach(id => {
     const el = document.getElementById(id);
@@ -3418,7 +3499,7 @@ async function saveSettings() {
   const secret= document.getElementById('iSecret').value.trim();
   if (!token) { toast('warn','Chưa có Access Token — hoàn thành bước 3 trước'); return; }
 
-  S.config = { token, proxy, appId, secret, advIds: _advIds, geminiKey: S.config.geminiKey || '' };
+  S.config = { token, proxy, appId, secret, advIds: _advIds, geminiKey: S.config.geminiKey || '', groqKey: S.config.groqKey || '' };
   S.demo   = false;
   localStorage.setItem('tt_cfg',  JSON.stringify(S.config));
   localStorage.setItem('tt_demo', '0');
@@ -3438,7 +3519,7 @@ async function saveManual() {
   const proxy = document.getElementById('iProxyManual').value.trim();
   if (!token) { toast('warn','Vui lòng nhập Access Token'); return; }
 
-  S.config = { token, proxy, advIds: _advIdsManual, advNames: _advNamesManual, geminiKey: S.config.geminiKey || '' };
+  S.config = { token, proxy, advIds: _advIdsManual, advNames: _advNamesManual, geminiKey: S.config.geminiKey || '', groqKey: S.config.groqKey || '' };
   S.demo   = false;
   localStorage.setItem('tt_cfg',  JSON.stringify(S.config));
   localStorage.setItem('tt_demo', '0');
@@ -5065,6 +5146,106 @@ function saveGeminiKey() {
   cfg.geminiKey = key;
   localStorage.setItem('tt_cfg', JSON.stringify(cfg));
   toast('success', 'Đã lưu Gemini API key ✓');
+}
+
+/* ══════════════════════════════════════════
+   GROQ AI
+══════════════════════════════════════════ */
+function saveGroqKey() {
+  const key = document.getElementById('iGroqKey').value.trim();
+  S.config.groqKey = key;
+  const cfg = JSON.parse(localStorage.getItem('tt_cfg') || '{}');
+  cfg.groqKey = key;
+  localStorage.setItem('tt_cfg', JSON.stringify(cfg));
+  toast('success', 'Đã lưu Groq API key ✓');
+}
+
+async function testGroqKey() {
+  const key = document.getElementById('iGroqKey').value.trim();
+  const el = document.getElementById('groqTestStatus');
+  if (!key) { el.textContent = '⚠ Nhập API key trước'; el.style.color='var(--red)'; return; }
+  el.textContent = 'Đang kiểm tra...'; el.style.color = 'var(--text2)';
+  try {
+    await callGroq(key, [{ role:'user', content:'Hello' }], 10);
+    el.textContent = '✅ Kết nối thành công! (llama-3.1-70b-versatile)'; el.style.color = '#16A34A';
+  } catch(e) { el.textContent = '❌ ' + e.message; el.style.color='var(--red)'; }
+}
+
+async function callGroq(key, messages, maxTokens = 2048) {
+  const r = await fetchWithTimeout('https://api.groq.com/openai/v1/chat/completions', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + key },
+    body: JSON.stringify({ model: 'llama-3.1-70b-versatile', messages, max_tokens: maxTokens, temperature: 0.7 })
+  }, 30000);
+  const d = await r.json();
+  if (d.error) throw new Error(d.error.message || JSON.stringify(d.error));
+  return d.choices?.[0]?.message?.content || '';
+}
+
+async function runGroqAnalyst() {
+  const key = S.config.groqKey;
+  if (!key) { toast('warn', 'Chưa có Groq API key — vào Cài đặt → tab 🚀 Groq AI'); openSettings(); switchTab(6); return; }
+  const prompt = document.getElementById('aiReportPromptPre')?.textContent?.trim();
+  if (!prompt) { toast('warn', 'Tạo prompt trước bằng nút "Tạo prompt phân tích"'); return; }
+  const resultEl = document.getElementById('groqAnalystResult');
+  resultEl.style.display = 'block';
+  resultEl.innerHTML = '<div style="text-align:center;padding:24px;color:var(--text2);"><div class="spinner" style="display:inline-block;margin-bottom:8px;"></div><br>Groq AI đang phân tích...</div>';
+  try {
+    const text = await callGroq(key, [
+      { role: 'system', content: 'Bạn là chuyên gia phân tích quảng cáo TikTok Ads tại Việt Nam. Phân tích chi tiết, dẫn số liệu cụ thể, đưa khuyến nghị có độ ưu tiên [NGAY]/[THEO DÕI]/[THỬ NGHIỆM].' },
+      { role: 'user', content: prompt }
+    ]);
+    resultEl.innerHTML = '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;"><strong style="color:var(--primary);">🚀 Kết quả từ Groq AI</strong><button class="btn btn-sm btn-ghost" onclick="groqDownload(\'analyst\')">⬇ Tải xuống</button></div>' + renderGroqMd(text);
+    resultEl.dataset.raw = text;
+  } catch(e) {
+    resultEl.innerHTML = '<div style="color:var(--red);">❌ ' + (e.message || 'Lỗi kết nối Groq') + '</div>';
+  }
+}
+
+async function runGroqBrief() {
+  const key = S.config.groqKey;
+  if (!key) { toast('warn', 'Chưa có Groq API key — vào Cài đặt → tab 🚀 Groq AI'); openSettings(); switchTab(6); return; }
+  const prompt = document.getElementById('aiBriefPromptPre')?.textContent?.trim();
+  if (!prompt) { toast('warn', 'Tạo prompt trước bằng nút "Tạo prompt brief"'); return; }
+  const resultEl = document.getElementById('groqBriefResult');
+  resultEl.style.display = 'block';
+  resultEl.innerHTML = '<div style="text-align:center;padding:24px;color:var(--text2);"><div class="spinner" style="display:inline-block;margin-bottom:8px;"></div><br>Groq AI đang tạo content brief...</div>';
+  try {
+    const text = await callGroq(key, [
+      { role: 'system', content: 'Bạn là chuyên gia sáng tạo content TikTok tại Việt Nam. Tạo creative brief đầy đủ gồm: Big Idea, Hook 3 giây, Timeline kịch bản, Tone & Mood, CTA, Hashtag gợi ý.' },
+      { role: 'user', content: prompt }
+    ]);
+    resultEl.innerHTML = '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;"><strong style="color:#7C3AED;">✏️ Content Brief từ Groq AI</strong><button class="btn btn-sm btn-ghost" onclick="groqDownload(\'brief\')">⬇ Tải xuống</button></div>' + renderGroqMd(text);
+    resultEl.dataset.raw = text;
+  } catch(e) {
+    resultEl.innerHTML = '<div style="color:var(--red);">❌ ' + (e.message || 'Lỗi kết nối Groq') + '</div>';
+  }
+}
+
+function renderGroqMd(text) {
+  return text
+    .replace(/^### (.+)/gm, '<h4 style="margin:14px 0 4px;font-size:13px;color:var(--primary);font-weight:700;">$1</h4>')
+    .replace(/^## (.+)/gm, '<h3 style="margin:16px 0 5px;font-size:14px;color:var(--primary);font-weight:700;border-bottom:1px solid var(--border);padding-bottom:4px;">$1</h3>')
+    .replace(/^# (.+)/gm, '<h2 style="margin:18px 0 6px;font-size:15px;font-weight:800;">$1</h2>')
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    .replace(/\*(.+?)\*/g, '<em>$1</em>')
+    .replace(/^- (.+)/gm, '<li style="margin:3px 0;">$1</li>')
+    .replace(/^(\d+)\. (.+)/gm, '<li style="margin:3px 0;list-style-type:decimal;">$2</li>')
+    .replace(/(<li.*<\/li>\n?)+/g, s => `<ul style="margin:4px 0 8px 18px;padding:0;">${s}</ul>`)
+    .replace(/\n\n/g, '<br><br>')
+    .replace(/\n/g, '<br>');
+}
+
+function groqDownload(type) {
+  const id = type === 'analyst' ? 'groqAnalystResult' : 'groqBriefResult';
+  const el = document.getElementById(id);
+  const text = el?.dataset?.raw || '';
+  if (!text) return;
+  const filename = type === 'analyst' ? 'phan-tich-tiktok-' : 'content-brief-tiktok-';
+  const d = new Date(); const ds = d.getFullYear()+''+String(d.getMonth()+1).padStart(2,'0')+String(d.getDate()).padStart(2,'0');
+  const blob = new Blob([text], { type: 'text/markdown;charset=utf-8' });
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+  a.download = filename + ds + '.md'; a.click(); URL.revokeObjectURL(a.href);
 }
 
 const GEMINI_MODELS = [
