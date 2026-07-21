@@ -2789,7 +2789,7 @@ function updateSummary() {
   let totalSpend = 0, totalBudget = 0;
   cs.forEach(c => {
     totalSpend  += parseFloat(S.metrics[c.campaign_id]?.spend || 0);
-    totalBudget += parseFloat(c.budget || 0);
+    if (c.operation_status === 'ENABLE') totalBudget += parseFloat(c.budget || 0);
   });
 
   // Use agCount from quick background fetch if available, else count loaded adgroups
