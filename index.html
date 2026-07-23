@@ -1760,7 +1760,7 @@ const COLS = {
   reach:        { label: 'Reach',       metric: 'reach',                  icon: '👁' },
   video_2s:     { label: 'View 2s',     metric: 'video_watched_2s',  icon: '▶' },
   video_6s:     { label: 'View 6s',     metric: 'video_watched_6s',  icon: '▶▶' },
-  conversion:   { label: 'Kết quả', metric: 'real_time_result', metricFallback: 'result', metricFallback2: 'total_form_submission', icon: '✅', note: 'Dùng real_time_result → result → total_form_submission (fallback). Nếu = 0: TikTok Public API không trả về lead data cho token này.' },
+  conversion:   { label: 'Kết quả', metric: 'real_time_result', metricFallback: 'result', icon: '✅', note: 'Dùng real_time_result → result. Nếu = 0 với Lead Form/Conversion Web: TikTok Public API không cấp lead data qua token này.' },
   cpl:          { label: 'Giá/KQ',     metric: 'cost_per_result',        icon: '💰' },
   purchase:     { label: 'Mua hàng',    metric: 'complete_payment',  icon: '🛒' },
   click_to_web: { label: 'Click Web',   metric: 'clicks',                 icon: '🖱' },
@@ -2133,7 +2133,7 @@ async function fetchMetrics(aid, level, ids) {
     report_type: 'BASIC',
     data_level: level === 'campaign' ? 'AUCTION_CAMPAIGN' : 'AUCTION_ADGROUP',
     dimensions: [dim],
-    metrics: ['spend','reach','video_watched_2s','video_watched_6s','video_views_p100','real_time_result','result','cost_per_result','total_form_submission','complete_payment','clicks','follows','impressions','frequency','cpm','ctr','cpc'],
+    metrics: ['spend','reach','video_watched_2s','video_watched_6s','video_views_p100','real_time_result','result','cost_per_result','complete_payment','clicks','follows','impressions','frequency','cpm','ctr','cpc'],
     start_date: start, end_date: end, page_size: 1000,
   });
   const r = {};
@@ -3172,8 +3172,8 @@ function getKpiCurrentVal(cid, m, objType) {
   const OBJ_METRIC = {
     VIDEO_VIEWS:          getKpiVidVal(cid, m),
     REACH:                n(m.reach),
-    LEAD_GENERATION:      n(m.real_time_result) || n(m.result) || n(m.total_form_submission),
-    CONVERSIONS:          n(m.real_time_result) || n(m.result) || n(m.total_form_submission),
+    LEAD_GENERATION:      n(m.real_time_result) || n(m.result),
+    CONVERSIONS:          n(m.real_time_result) || n(m.result),
     TRAFFIC:              n(m.clicks),
     ENGAGEMENT:           n(m.follows) || n(m.real_time_result),
     COMMUNITY_INTERACTION:n(m.follows) || n(m.real_time_result),
@@ -3922,12 +3922,9 @@ function fmtN(v, metric) { // full number — for metric cells
 }
 // Returns metric value, falling back to metricFallback when primary is missing/dash
 function getMetricVal(m, cl) {
-  const empty = v => v === undefined || v === null || v === '' || v === '-' || v === '0' || v === 0;
   const v = m[cl.metric];
-  if (empty(v) && cl.metricFallback) {
-    const v2 = m[cl.metricFallback];
-    if (empty(v2) && cl.metricFallback2) return m[cl.metricFallback2];
-    return v2;
+  if ((v === undefined || v === null || v === '' || v === '-') && cl.metricFallback) {
+    return m[cl.metricFallback];
   }
   return v;
 }
