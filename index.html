@@ -4791,7 +4791,10 @@ function renderAnalKPI(summary) {
   const selected = ANAL_RESULT_OPTS.filter(o => S_analResultFilter.includes(o.key));
   const colorCls = ['green','purple','orange'];
   const bigCards = selected.map((opt, i) => {
-    const val = fN(summary[opt.key], opt.key);
+    const rawVal = opt.key === 'real_time_result'
+      ? (parseFloat(summary.real_time_result) || parseFloat(summary.result) || 0)
+      : (parseFloat(summary[opt.key]) || 0);
+    const val = fN(rawVal, opt.key);
     const sub = opt.costKey
       ? `Cost/KQ: <span class="${colorCls[i]||'blue'}">${fC(summary[opt.costKey])}</span>`
       : ``;
@@ -4834,7 +4837,7 @@ async function fetchSummaryAgg(aid) {
       report_type: 'BASIC',
       data_level: 'AUCTION_ADVERTISER',
       dimensions: ['advertiser_id'],
-      metrics: ['spend','impressions','reach','clicks','cpm','ctr','frequency','real_time_result','cost_per_result','video_watched_2s','video_watched_6s','follows','complete_payment'],
+      metrics: ['spend','impressions','reach','clicks','cpm','ctr','frequency','real_time_result','result','cost_per_result','video_watched_2s','video_watched_6s','follows','complete_payment'],
       start_date: start, end_date: end,
       page_size: 1,
     });
@@ -4851,7 +4854,7 @@ async function fetchCampaignBreakdown(aid) {
       report_type: 'BASIC',
       data_level: 'AUCTION_CAMPAIGN',
       dimensions: ['campaign_id'],
-      metrics: ['spend','impressions','clicks','ctr','cpm','reach','real_time_result','cost_per_result','video_watched_2s','video_watched_6s','follows','complete_payment'],
+      metrics: ['spend','impressions','clicks','ctr','cpm','reach','real_time_result','result','cost_per_result','video_watched_2s','video_watched_6s','follows','complete_payment'],
       start_date: start, end_date: end,
       page_size: 100,
     });
@@ -4868,7 +4871,7 @@ async function fetchAdBreakdown(aid) {
       report_type: 'BASIC',
       data_level: 'AUCTION_AD',
       dimensions: ['ad_id'],
-      metrics: ['spend','impressions','clicks','ctr','cpm','real_time_result','cost_per_result','video_watched_2s','video_watched_6s','follows','complete_payment'],
+      metrics: ['spend','impressions','clicks','ctr','cpm','real_time_result','result','cost_per_result','video_watched_2s','video_watched_6s','follows','complete_payment'],
       start_date: start, end_date: end,
       page_size: 100,
     });
@@ -5157,7 +5160,8 @@ function renderCampPanel() {
       const m=r.metrics||{},cid=String((r.dimensions||{}).campaign_id||'');
       const camp=(S.campaigns||[]).find(c=>String(c.campaign_id)===cid)||{};
       const name=camp.campaign_name||('ID '+cid),obj=OBJ_MAP[camp.objective_type]||camp.objective_type||'—';
-      const resCells = resOpts.map(o=>`<td class="right perf-num">${fmtN(parseFloat(m[o.key])||0,o.key)}</td>`).join('');
+      const getResVal = (o,m) => o.key==='real_time_result' ? (parseFloat(m.real_time_result)||parseFloat(m.result)||0) : (parseFloat(m[o.key])||0);
+      const resCells = resOpts.map(o=>`<td class="right perf-num">${fmtN(getResVal(o,m),o.key)}</td>`).join('');
       return `<tr>
         <td style="color:var(--text3);font-size:11px;">${i+1}</td>
         <td class="perf-name" title="${esc(name)}">${esc(name.length>42?name.slice(0,42)+'…':name)}</td>
@@ -5205,7 +5209,8 @@ function renderAdPanel() {
       const thumbHtml=cr.thumb
         ?`<img src="${esc(cr.thumb)}" style="width:60px;height:80px;object-fit:cover;border-radius:6px;flex-shrink:0;border:1px solid var(--border);" onerror="this.outerHTML='<div style=\\'width:60px;height:80px;border-radius:6px;background:var(--bg3);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:26px;border:1px solid var(--border);\\'>🎬</div>'">`
         :`<div style="width:60px;height:80px;border-radius:6px;background:var(--bg3);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:26px;border:1px solid var(--border);">🎬</div>`;
-      const resCells = resOpts.map(o=>`<td class="right perf-num">${fmtN(parseFloat(m[o.key])||0,o.key)}</td>`).join('');
+      const getResVal = (o,m) => o.key==='real_time_result' ? (parseFloat(m.real_time_result)||parseFloat(m.result)||0) : (parseFloat(m[o.key])||0);
+      const resCells = resOpts.map(o=>`<td class="right perf-num">${fmtN(getResVal(o,m),o.key)}</td>`).join('');
       return `<tr>
         <td style="color:var(--text3);font-size:11px;">${i+1}</td>
         <td class="perf-name" title="ID: ${esc(adId)}">
