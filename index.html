@@ -599,7 +599,7 @@
 <div class="filter-bar">
   <span class="filter-label">Cột hiển thị (tối đa 5):</span>
   <div class="chips" id="chips"></div>
-  <span id="conversionNote" style="display:none;font-size:11px;color:#e07b00;margin-left:8px;" title="Dùng real_time_result (số liệu trong ngày) + fallback về result (attribution). Nếu cả hai đều 0 → TikTok không cung cấp qua Public API — xem trực tiếp trong TikTok Ads Manager.">⚠ Nếu Lead / KQ = 0 dù có chạy: xem TikTok Ads Manager để biết số liệu thực tế</span>
+  <span id="conversionNote" style="display:none;font-size:11px;color:#e07b00;margin-left:8px;" title="Dùng real_time_result (số liệu trong ngày) + fallback về result (attribution). Nếu cả hai đều 0 → TikTok không cung cấp qua Public API — xem trực tiếp trong TikTok Ads Manager.">⚠ Nếu Kết quả = 0 dù có chạy: xem TikTok Ads Manager để biết số liệu thực tế</span>
 </div>
 <!-- ===================== OBJECTIVE FILTER ===================== -->
 <div class="obj-filter-bar filter-bar" id="objFilterBar" style="display:none;">
@@ -1180,6 +1180,8 @@ while ($listener.IsListening) {
 .anal-kpi-card.big  { border-left:4px solid var(--primary); }
 .anal-kpi-card.big.green  { border-left-color:#16A34A; }
 .anal-kpi-card.big.purple { border-left-color:#7C3AED; }
+.anal-kpi-card.big.orange { border-left-color:#E05A00; }
+.anal-kpi-sub .orange { color:#E05A00; font-weight:600; }
 .anal-kpi-label  { font-size:10px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.06em;margin-bottom:5px; }
 .anal-kpi-val    { font-size:26px;font-weight:800;color:var(--text);line-height:1.15; }
 .anal-kpi-val-sm { font-size:17px;font-weight:700;color:var(--text); }
@@ -1270,6 +1272,10 @@ while ($listener.IsListening) {
         </select>
       </div>
       <button class="btn btn-sm btn-ghost" onclick="loadAnalytics()" style="margin-left:auto;">🔄 Làm mới</button>
+    </div>
+    <div class="anal-controls" style="padding-top:10px;border-top:1px solid var(--border);gap:8px;">
+      <span style="font-size:11px;color:var(--text2);white-space:nowrap;flex-shrink:0;">Kết quả cần xem:</span>
+      <div id="analResultChips" style="display:flex;gap:6px;flex-wrap:wrap;"></div>
     </div>
     <div id="analLoading" style="display:none;text-align:center;padding:48px;color:var(--text2);">
       <div class="spinner" style="display:inline-block;vertical-align:middle;margin-right:8px;"></div>Đang tải dữ liệu...
@@ -1751,7 +1757,7 @@ const COLS = {
   reach:        { label: 'Reach',       metric: 'reach',                  icon: '👁' },
   video_2s:     { label: 'View 2s',     metric: 'video_watched_2s',  icon: '▶' },
   video_6s:     { label: 'View 6s',     metric: 'video_watched_6s',  icon: '▶▶' },
-  conversion:   { label: 'Lead / KQ', metric: 'real_time_result', metricFallback: 'result', icon: '✅', note: 'Dùng real_time_result (thực tế trong ngày). Nếu trống sẽ fallback về result (attribution window). Cả hai = 0 → xem TikTok Ads Manager.' },
+  conversion:   { label: 'Kết quả', metric: 'real_time_result', metricFallback: 'result', icon: '✅', note: 'Dùng real_time_result (thực tế trong ngày). Nếu trống sẽ fallback về result (attribution window). Cả hai = 0 → xem TikTok Ads Manager.' },
   cpl:          { label: 'Giá/KQ',     metric: 'cost_per_result',        icon: '💰' },
   purchase:     { label: 'Mua hàng',    metric: 'complete_payment',  icon: '🛒' },
   click_to_web: { label: 'Click Web',   metric: 'clicks',                 icon: '🖱' },
@@ -4736,6 +4742,84 @@ let _analAdData     = [];
 let _analAdCreative = {}; // { ad_id: { name, thumb } }
 let _analCampTab    = '';
 let _analAdTab      = '';
+let _analSummary    = {};
+let S_analResultFilter = ['real_time_result'];
+
+const ANAL_RESULT_OPTS = [
+  { key: 'real_time_result',  label: 'Kết quả (API)', icon: '✅', costKey: 'cost_per_result' },
+  { key: 'video_watched_2s',  label: 'View 2s',        icon: '▶',  costKey: null },
+  { key: 'video_watched_6s',  label: 'View 6s',        icon: '▶▶', costKey: null },
+  { key: 'reach',             label: 'Reach',           icon: '👁',  costKey: null },
+  { key: 'follows',           label: 'Follow',          icon: '➕',  costKey: null },
+  { key: 'complete_payment',  label: 'Mua hàng',        icon: '🛒', costKey: null },
+  { key: 'clicks',            label: 'Click',           icon: '🖱',  costKey: null },
+];
+
+function renderAnalResultChips() {
+  const el = document.getElementById('analResultChips');
+  if (!el) return;
+  el.innerHTML = ANAL_RESULT_OPTS.map(opt => {
+    const active = S_analResultFilter.includes(opt.key);
+    return `<div class="chip${active?' active':''}" style="font-size:12px;" onclick="toggleAnalResult('${opt.key}')">${active?'✓ ':''}${opt.icon} ${opt.label}</div>`;
+  }).join('');
+}
+
+function toggleAnalResult(key) {
+  const idx = S_analResultFilter.indexOf(key);
+  if (idx >= 0) {
+    if (S_analResultFilter.length === 1) { toast('warn','Cần chọn ít nhất 1 loại kết quả'); return; }
+    S_analResultFilter.splice(idx, 1);
+  } else {
+    S_analResultFilter.push(key);
+  }
+  renderAnalResultChips();
+  reRenderAnalyticsResults();
+}
+
+function reRenderAnalyticsResults() {
+  const kpiEl = document.getElementById('analKpiContainer');
+  if (kpiEl && Object.keys(_analSummary).length) kpiEl.innerHTML = renderAnalKPI(_analSummary);
+  const campPanel = document.getElementById('analCampPanel');
+  if (campPanel) campPanel.outerHTML = renderCampPanel();
+  const adPanel = document.getElementById('analAdPanel');
+  if (adPanel) adPanel.outerHTML = renderAdPanel();
+}
+
+function renderAnalKPI(summary) {
+  const fC = v => fmtCur(parseFloat(v)||0);
+  const fN = (v,m) => fmtN(parseFloat(v)||0, m);
+  const selected = ANAL_RESULT_OPTS.filter(o => S_analResultFilter.includes(o.key));
+  const colorCls = ['green','purple','orange'];
+  const bigCards = selected.map((opt, i) => {
+    const val = fN(summary[opt.key], opt.key);
+    const sub = opt.costKey
+      ? `Cost/KQ: <span class="${colorCls[i]||'blue'}">${fC(summary[opt.costKey])}</span>`
+      : ``;
+    return `<div class="anal-kpi-card big ${colorCls[i]||''}">
+      <div class="anal-kpi-label">${opt.icon} ${opt.label}</div>
+      <div class="anal-kpi-val">${val}</div>
+      ${sub?`<div class="anal-kpi-sub">${sub}</div>`:''}
+    </div>`;
+  }).join('');
+  const colCount = 1 + selected.length;
+  return `
+    <div class="anal-kpi-big" style="grid-template-columns:repeat(${Math.min(colCount,4)},1fr)">
+      <div class="anal-kpi-card big">
+        <div class="anal-kpi-label">Chi phí</div>
+        <div class="anal-kpi-val">${fmtCurShort(parseFloat(summary.spend)||0)}</div>
+        <div class="anal-kpi-sub">Tổng ngân sách đã chi</div>
+      </div>
+      ${bigCards}
+    </div>
+    <div class="anal-kpi-small">
+      <div class="anal-kpi-card"><div class="anal-kpi-label">Impressions</div><div class="anal-kpi-val-sm">${fN(summary.impressions,'impressions')}</div></div>
+      <div class="anal-kpi-card"><div class="anal-kpi-label">Reach</div><div class="anal-kpi-val-sm">${fN(summary.reach,'reach')}</div></div>
+      <div class="anal-kpi-card"><div class="anal-kpi-label">Clicks</div><div class="anal-kpi-val-sm">${fN(summary.clicks,'clicks')}</div></div>
+      <div class="anal-kpi-card"><div class="anal-kpi-label">CPM</div><div class="anal-kpi-val-sm">${fC(summary.cpm)}</div></div>
+      <div class="anal-kpi-card"><div class="anal-kpi-label">CTR</div><div class="anal-kpi-val-sm">${(parseFloat(summary.ctr)||0).toFixed(2)}%</div></div>
+      <div class="anal-kpi-card"><div class="anal-kpi-label">Tần suất</div><div class="anal-kpi-val-sm">${(parseFloat(summary.frequency)||0).toFixed(2)}</div></div>
+    </div>`;
+}
 
 function onAnalDateChange(v) { S_analDate = v; loadAnalytics(); }
 
@@ -4750,7 +4834,7 @@ async function fetchSummaryAgg(aid) {
       report_type: 'BASIC',
       data_level: 'AUCTION_ADVERTISER',
       dimensions: ['advertiser_id'],
-      metrics: ['spend','impressions','reach','clicks','cpm','ctr','frequency','real_time_result','cost_per_result','video_watched_6s'],
+      metrics: ['spend','impressions','reach','clicks','cpm','ctr','frequency','real_time_result','cost_per_result','video_watched_2s','video_watched_6s','follows','complete_payment'],
       start_date: start, end_date: end,
       page_size: 1,
     });
@@ -4767,7 +4851,7 @@ async function fetchCampaignBreakdown(aid) {
       report_type: 'BASIC',
       data_level: 'AUCTION_CAMPAIGN',
       dimensions: ['campaign_id'],
-      metrics: ['spend','impressions','clicks','ctr','cpm','reach','real_time_result','cost_per_result','video_watched_6s'],
+      metrics: ['spend','impressions','clicks','ctr','cpm','reach','real_time_result','cost_per_result','video_watched_2s','video_watched_6s','follows','complete_payment'],
       start_date: start, end_date: end,
       page_size: 100,
     });
@@ -4784,7 +4868,7 @@ async function fetchAdBreakdown(aid) {
       report_type: 'BASIC',
       data_level: 'AUCTION_AD',
       dimensions: ['ad_id'],
-      metrics: ['spend','impressions','clicks','ctr','cpm','real_time_result','cost_per_result','video_watched_6s'],
+      metrics: ['spend','impressions','clicks','ctr','cpm','real_time_result','cost_per_result','video_watched_2s','video_watched_6s','follows','complete_payment'],
       start_date: start, end_date: end,
       page_size: 100,
     });
@@ -5059,18 +5143,21 @@ function renderCampPanel() {
     ${objTypes.map(t=>`<div class="anal-tab${_analCampTab===t?' active':''}" onclick="setCampTab(${JSON.stringify(t)})">${esc(OBJ_MAP[t]||t)}</div>`).join('')}
   </div>`;
 
+  const resOpts = ANAL_RESULT_OPTS.filter(o => S_analResultFilter.includes(o.key));
+  const resHeaders = resOpts.map(o=>`<th class="right">${o.icon} ${o.label}</th>`).join('');
   const table=rows.length?`<div class="perf-table-wrap"><table class="perf-table">
     <thead><tr>
       <th>#</th><th>Tên chiến dịch</th><th>Mục tiêu</th>
       <th class="right">Chi phí</th><th class="right">Impressions</th>
       <th class="right">Clicks</th><th class="right">CTR</th>
-      <th class="right">Lead/KQ</th><th class="right">Cost/KQ</th>
-      <th class="right">View 6s</th><th class="right">CPM</th>
+      ${resHeaders}
+      <th class="right">CPM</th>
     </tr></thead>
     <tbody>${rows.map((r,i)=>{
       const m=r.metrics||{},cid=String((r.dimensions||{}).campaign_id||'');
       const camp=(S.campaigns||[]).find(c=>String(c.campaign_id)===cid)||{};
       const name=camp.campaign_name||('ID '+cid),obj=OBJ_MAP[camp.objective_type]||camp.objective_type||'—';
+      const resCells = resOpts.map(o=>`<td class="right perf-num">${fmtN(parseFloat(m[o.key])||0,o.key)}</td>`).join('');
       return `<tr>
         <td style="color:var(--text3);font-size:11px;">${i+1}</td>
         <td class="perf-name" title="${esc(name)}">${esc(name.length>42?name.slice(0,42)+'…':name)}</td>
@@ -5079,9 +5166,7 @@ function renderCampPanel() {
         <td class="right perf-num">${fmtN(parseFloat(m.impressions)||0,'impressions')}</td>
         <td class="right perf-num">${fmtN(parseFloat(m.clicks)||0,'clicks')}</td>
         <td class="right perf-num">${(parseFloat(m.ctr)||0).toFixed(2)}%</td>
-        <td class="right perf-num">${fmtN(parseFloat(m.real_time_result)||0,'result')}</td>
-        <td class="right perf-num">${fmtCur(parseFloat(m.cost_per_result)||0)}</td>
-        <td class="right perf-num">${fmtN(parseFloat(m.video_watched_6s)||0,'video_watched_6s')}</td>
+        ${resCells}
         <td class="right perf-num">${fmtCur(parseFloat(m.cpm)||0)}</td>
       </tr>`;
     }).join('')}</tbody>
@@ -5101,14 +5186,16 @@ function setCampTab(tab) {
 
 function renderAdPanel() {
   const rows=[..._analAdData].sort((a,b)=>(parseFloat(b.metrics.spend)||0)-(parseFloat(a.metrics.spend)||0)).slice(0,50);
+  const resOpts = ANAL_RESULT_OPTS.filter(o => S_analResultFilter.includes(o.key));
+  const resHeaders = resOpts.map(o=>`<th class="right">${o.icon} ${o.label}</th>`).join('');
 
   const table=rows.length?`<div class="perf-table-wrap"><table class="perf-table">
     <thead><tr>
       <th>#</th><th>Quảng cáo</th>
       <th class="right">Chi phí</th><th class="right">Impressions</th>
       <th class="right">Clicks</th><th class="right">CTR</th>
-      <th class="right">Lead/KQ</th><th class="right">Cost/KQ</th>
-      <th class="right">View 6s</th><th class="right">CPM</th>
+      ${resHeaders}
+      <th class="right">CPM</th>
     </tr></thead>
     <tbody>${rows.map((r,i)=>{
       const m=r.metrics||{},dim=r.dimensions||{};
@@ -5118,6 +5205,7 @@ function renderAdPanel() {
       const thumbHtml=cr.thumb
         ?`<img src="${esc(cr.thumb)}" style="width:60px;height:80px;object-fit:cover;border-radius:6px;flex-shrink:0;border:1px solid var(--border);" onerror="this.outerHTML='<div style=\\'width:60px;height:80px;border-radius:6px;background:var(--bg3);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:26px;border:1px solid var(--border);\\'>🎬</div>'">`
         :`<div style="width:60px;height:80px;border-radius:6px;background:var(--bg3);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:26px;border:1px solid var(--border);">🎬</div>`;
+      const resCells = resOpts.map(o=>`<td class="right perf-num">${fmtN(parseFloat(m[o.key])||0,o.key)}</td>`).join('');
       return `<tr>
         <td style="color:var(--text3);font-size:11px;">${i+1}</td>
         <td class="perf-name" title="ID: ${esc(adId)}">
@@ -5132,9 +5220,7 @@ function renderAdPanel() {
         <td class="right perf-num">${fmtN(parseFloat(m.impressions)||0,'impressions')}</td>
         <td class="right perf-num">${fmtN(parseFloat(m.clicks)||0,'clicks')}</td>
         <td class="right perf-num">${(parseFloat(m.ctr)||0).toFixed(2)}%</td>
-        <td class="right perf-num">${fmtN(parseFloat(m.real_time_result)||0,'result')}</td>
-        <td class="right perf-num">${fmtCur(parseFloat(m.cost_per_result)||0)}</td>
-        <td class="right perf-num">${fmtN(parseFloat(m.video_watched_6s)||0,'video_watched_6s')}</td>
+        ${resCells}
         <td class="right perf-num">${fmtCur(parseFloat(m.cpm)||0)}</td>
       </tr>`;
     }).join('')}</tbody>
@@ -5588,41 +5674,15 @@ async function loadAnalytics() {
   ]);
 
   _analCampData=campBreak; _analAdData=adBreak; _analCampTab=''; _analAdTab='';
+  _analSummary = summary;
   const adIds=adBreak.map(r=>String((r.dimensions||{}).ad_id||'')).filter(Boolean);
   _analAdCreative=await fetchAdCreatives(aid||'0', adIds);
   document.getElementById('analLoading').style.display='none';
+  renderAnalResultChips();
 
   try {
-    const fC=v=>fmtCur(parseFloat(v)||0);
-    const fN=(v,m)=>fmtN(parseFloat(v)||0,m);
-
     /* ── KPI Cards ── */
-    const kpiHtml=`
-      <div class="anal-kpi-big">
-        <div class="anal-kpi-card big">
-          <div class="anal-kpi-label">Chi phí</div>
-          <div class="anal-kpi-val">${fmtCurShort(parseFloat(summary.spend)||0)}</div>
-          <div class="anal-kpi-sub">Tổng ngân sách đã chi</div>
-        </div>
-        <div class="anal-kpi-card big green">
-          <div class="anal-kpi-label">Lead / KQ</div>
-          <div class="anal-kpi-val">${fN(summary.real_time_result,'result')}</div>
-          <div class="anal-kpi-sub">Cost/KQ: <span class="green">${fC(summary.cost_per_result)}</span></div>
-        </div>
-        <div class="anal-kpi-card big purple">
-          <div class="anal-kpi-label">View 6s</div>
-          <div class="anal-kpi-val">${fN(summary.video_watched_6s,'video_watched_6s')}</div>
-          <div class="anal-kpi-sub">CPM: <span class="purple">${fC(summary.cpm)}</span></div>
-        </div>
-      </div>
-      <div class="anal-kpi-small">
-        <div class="anal-kpi-card"><div class="anal-kpi-label">Impressions</div><div class="anal-kpi-val-sm">${fN(summary.impressions,'impressions')}</div></div>
-        <div class="anal-kpi-card"><div class="anal-kpi-label">Reach</div><div class="anal-kpi-val-sm">${fN(summary.reach,'reach')}</div></div>
-        <div class="anal-kpi-card"><div class="anal-kpi-label">Clicks</div><div class="anal-kpi-val-sm">${fN(summary.clicks,'clicks')}</div></div>
-        <div class="anal-kpi-card"><div class="anal-kpi-label">CPM</div><div class="anal-kpi-val-sm">${fC(summary.cpm)}</div></div>
-        <div class="anal-kpi-card"><div class="anal-kpi-label">CTR</div><div class="anal-kpi-val-sm">${(parseFloat(summary.ctr)||0).toFixed(2)}%</div></div>
-        <div class="anal-kpi-card"><div class="anal-kpi-label">Tần suất</div><div class="anal-kpi-val-sm">${(parseFloat(summary.frequency)||0).toFixed(2)}</div></div>
-      </div>`;
+    const kpiHtml=`<div id="analKpiContainer">${renderAnalKPI(summary)}</div>`;
 
     /* ── Daily chart + Objective donut ── */
     const objDist=getObjDistribution();
