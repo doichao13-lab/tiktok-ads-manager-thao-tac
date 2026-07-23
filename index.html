@@ -215,6 +215,9 @@
     tbody tr:last-child td { border-bottom: none; }
     tbody tr:hover td { background: var(--bg3); }
 
+    /* Total row */
+    .total-row > td { background: var(--bg3) !important; border-top: 2px solid var(--border); position: sticky; bottom: 0; z-index: 1; }
+
     /* Campaign row */
     .campaign-row { cursor: pointer; }
     .campaign-row.active-row > td { background: rgba(23,71,234,.06) !important; }
@@ -2325,6 +2328,39 @@ function renderCampaignLevel() {
       toast('error', 'Lỗi hiển thị chiến dịch: ' + e.message);
     }
   });
+  tb.appendChild(makeTotalRow(list));
+}
+
+function makeTotalRow(list) {
+  const NON_SUM = new Set(['frequency','cpm','ctr','cpc','cost_per_result']);
+  const cols = colDefs();
+  let totalSpend = 0;
+  const totals = {};
+  list.forEach(c => {
+    const m = S.metrics[c.campaign_id] || {};
+    totalSpend += parseFloat(m.spend) || 0;
+    cols.forEach(cl => {
+      if (NON_SUM.has(cl.metric)) return;
+      const v = parseFloat(getMetricVal(m, cl)) || 0;
+      totals[cl.metric] = (totals[cl.metric] || 0) + v;
+    });
+  });
+  const hasData = totalSpend > 0 || Object.values(totals).some(v => v > 0);
+  const tr = document.createElement('tr');
+  tr.className = 'total-row';
+  tr.innerHTML = `
+    <td></td>
+    <td colspan="3">
+      <span style="font-size:11px;font-weight:700;color:var(--text2);">📊 Tổng ${list.length} chiến dịch</span>
+    </td>
+    <td><span class="spend-val" style="font-weight:800;">${hasData ? fmtCur(totalSpend) : '—'}</span></td>
+    ${cols.map(cl => NON_SUM.has(cl.metric)
+      ? `<td class="metric-num" style="color:var(--text3);">—</td>`
+      : `<td class="metric-num" style="font-weight:700;color:var(--text);">${hasData ? fmtN(totals[cl.metric]||0, cl.metric) : '—'}</td>`
+    ).join('')}
+    <td colspan="4"></td>
+  `;
+  return tr;
 }
 
 function renderAdGroupLevel() {
