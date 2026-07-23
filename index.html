@@ -44,6 +44,7 @@
       border-bottom: 1px solid var(--border);
       display: flex; align-items: center; padding: 0 20px; gap: 12px;
       position: sticky; top: 0; z-index: 1000;
+      box-shadow: 0 2px 8px rgba(0,0,0,.06);
     }
     .logo { display: flex; align-items: center; gap: 10px; flex: 1; }
     .logo-icon {
@@ -122,7 +123,7 @@
       background: var(--bg3); color: var(--text2); font-size: 12px;
       cursor: pointer; transition: all .15s; user-select: none; white-space: nowrap;
     }
-    .chip.active { background: rgba(23,71,234,.12); border-color: var(--primary); color: var(--primary); }
+    .chip.active { background: var(--primary); border-color: var(--primary); color: #fff; font-weight: 600; }
     .chip:hover:not(.active):not(.disabled) { border-color: #555; color: var(--text); }
     .chip.disabled { opacity: .4; cursor: not-allowed; }
 
@@ -144,8 +145,18 @@
       background: var(--bg2); border: 1px solid var(--border);
       border-radius: 12px; padding: 14px 16px;
       box-shadow: 0 1px 3px rgba(0,0,0,.06);
+      border-top-width: 3px;
+      transition: box-shadow .2s, transform .15s;
     }
-    .stat-label { font-size: 11px; color: var(--text2); margin-bottom: 6px; }
+    .stat-card:hover { box-shadow: 0 6px 16px rgba(0,0,0,.1); transform: translateY(-2px); }
+    .summary .stat-card:nth-child(1) { border-top-color: #E05A00; }
+    .summary .stat-card:nth-child(2) { border-top-color: #1747EA; }
+    .summary .stat-card:nth-child(3) { border-top-color: #7C3AED; }
+    .summary .stat-card:nth-child(4) { border-top-color: #16A34A; }
+    .summary .stat-card:nth-child(1) .stat-value { color: #E05A00; }
+    .summary .stat-card:nth-child(4) .stat-value { color: #16A34A; }
+    .stat-label { font-size: 11px; color: var(--text2); margin-bottom: 6px; display: flex; align-items: center; gap: 5px; }
+    .stat-label-icon { font-size: 14px; line-height: 1; }
     .stat-value { font-size: 22px; font-weight: 700; }
     .stat-sub { font-size: 11px; color: var(--text3); margin-top: 3px; }
 
@@ -158,20 +169,21 @@
     }
     table { width: 100%; border-collapse: collapse; min-width: 860px; }
     thead th {
-      background: var(--bg3); padding: 10px 14px;
-      text-align: left; font-size: 11px; font-weight: 600;
+      background: var(--bg4); padding: 10px 14px;
+      text-align: left; font-size: 11px; font-weight: 700;
       color: var(--text2); white-space: nowrap;
-      border-bottom: 1px solid var(--border);
+      border-bottom: 2px solid var(--border);
       position: sticky; top: 0; z-index: 2;
+      letter-spacing: .3px;
     }
     /* Campaign level: checkbox col (1st) + name col (2nd) both sticky */
     .tbl-campaign thead th:first-child {
       position: sticky; left: 0; top: 0; z-index: 3; width: 36px; min-width: 36px;
-      background: var(--bg3); text-align: center;
+      background: var(--bg4); text-align: center;
     }
     .tbl-campaign thead th:nth-child(2) {
       position: sticky; left: 36px; top: 0; z-index: 3; min-width: 240px;
-      background: var(--bg3);
+      background: var(--bg4);
     }
     .tbl-campaign tbody td:first-child {
       position: sticky; left: 0; background: var(--bg2); z-index: 1;
@@ -186,7 +198,7 @@
     /* Adgroup level: only name col (1st) sticky */
     .tbl-adgroup thead th:first-child {
       position: sticky; left: 0; top: 0; z-index: 3; min-width: 260px;
-      background: var(--bg3);
+      background: var(--bg4);
     }
     .tbl-adgroup tbody td:first-child {
       position: sticky; left: 0; background: var(--bg2); z-index: 1;
@@ -268,7 +280,7 @@
     tr:hover .edit-btn { opacity: 1; }
     .edit-btn:hover { background: var(--bg4); color: var(--text); }
     .metric-num { font-weight: 500; }
-    .spend-val { color: var(--red); font-weight: 600; }
+    .spend-val { color: #E05A00; font-weight: 600; }
     .na-cell { color: var(--text3); font-size: 11px; font-style: italic; cursor: help; border-bottom: 1px dashed var(--text3); }
     .rename-btn {
       width: 18px; height: 18px; border: none; border-radius: 4px;
@@ -444,10 +456,11 @@
     .level-tab {
       padding: 10px 18px; font-size: 13px; font-weight: 500; color: var(--text2);
       cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px;
-      white-space: nowrap; transition: color .15s;
+      white-space: nowrap; transition: color .15s, background .15s;
+      border-radius: 6px 6px 0 0;
     }
-    .level-tab.active { color: var(--red); border-bottom-color: var(--red); }
-    .level-tab:hover:not(.active) { color: var(--text); }
+    .level-tab.active { color: var(--primary); border-bottom-color: var(--primary); background: rgba(23,71,234,.06); font-weight: 600; }
+    .level-tab:hover:not(.active) { color: var(--text); background: var(--bg3); }
 
     /* ── AG LEVEL HEADER ── */
     .ag-level-head {
@@ -635,22 +648,22 @@
     <!-- Summary -->
     <div class="summary">
       <div class="stat-card">
-        <div class="stat-label">Tổng chi tiêu</div>
+        <div class="stat-label"><span class="stat-label-icon">💸</span> Tổng chi tiêu</div>
         <div class="stat-value" id="s-spend">—</div>
         <div class="stat-sub" id="s-spend-sub"></div>
       </div>
       <div class="stat-card">
-        <div class="stat-label">Chiến dịch đang chạy</div>
+        <div class="stat-label"><span class="stat-label-icon">📊</span> Chiến dịch đang chạy</div>
         <div class="stat-value" id="s-cmp">—</div>
         <div class="stat-sub" id="s-cmp-sub"></div>
       </div>
       <div class="stat-card">
-        <div class="stat-label">Nhóm QC đang chạy</div>
+        <div class="stat-label"><span class="stat-label-icon">👥</span> Nhóm QC đang chạy</div>
         <div class="stat-value" id="s-ag">—</div>
         <div class="stat-sub" id="s-ag-sub"></div>
       </div>
       <div class="stat-card">
-        <div class="stat-label">Tổng ngân sách</div>
+        <div class="stat-label"><span class="stat-label-icon">💰</span> Tổng ngân sách (đang chạy)</div>
         <div class="stat-value" id="s-budget">—</div>
         <div class="stat-sub" id="s-budget-sub"></div>
       </div>
@@ -2828,7 +2841,7 @@ function renderChips() {
     const isDisabled= !isActive && S.columns.length >= 5;
     const chip = document.createElement('div');
     chip.className = `chip ${isActive?'active':''} ${isDisabled?'disabled':''}`;
-    chip.textContent = `${c.icon} ${c.label}`;
+    chip.textContent = `${isActive ? '✓ ' : ''}${c.icon} ${c.label}`;
     if (c.note) chip.title = c.note;
     chip.onclick = () => {
       if (isDisabled) { toast('warn', 'Tối đa 5 cột'); return; }
