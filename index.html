@@ -2130,7 +2130,7 @@ async function fetchMetrics(aid, level, ids) {
     report_type: 'BASIC',
     data_level: level === 'campaign' ? 'AUCTION_CAMPAIGN' : 'AUCTION_ADGROUP',
     dimensions: [dim],
-    metrics: ['spend','reach','video_watched_2s','video_watched_6s','focused_view','real_time_result','result','cost_per_result','complete_payment','clicks','follows','impressions','frequency','cpm','ctr','cpc'],
+    metrics: ['spend','reach','video_watched_2s','video_watched_6s','video_views_p100','real_time_result','result','cost_per_result','complete_payment','clicks','follows','impressions','frequency','cpm','ctr','cpc'],
     start_date: start, end_date: end, page_size: 1000,
   });
   const r = {};
@@ -2453,7 +2453,7 @@ function makeCampaignRow(c) {
         title="Nhập KPI mục tiêu (${OBJ_MAP[c.objective_type]||c.objective_type||'KQ'})" />
       <div style="font-size:10px;color:var(--text3);margin-top:2px;text-align:right;">${getKpiLabel(c.campaign_id,c.objective_type)}</div>
       ${c.objective_type==='VIDEO_VIEWS'?`<div style="display:flex;gap:3px;margin-top:4px;" onclick="event.stopPropagation()">
-        ${['2s','6s','15s'].map(v=>`<button onclick="saveKpiVidMode('${c.campaign_id}','${v}')" style="flex:1;padding:2px 0;font-size:10px;border:1px solid var(--border);border-radius:4px;cursor:pointer;background:${(S.kpiVidMode[c.campaign_id]||'2s')===v?'var(--primary)':'var(--bg3)'};color:${(S.kpiVidMode[c.campaign_id]||'2s')===v?'#fff':'var(--text2)'};">${v}</button>`).join('')}
+        ${['2s','6s','100%'].map(v=>`<button onclick="saveKpiVidMode('${c.campaign_id}','${v}')" style="flex:1;padding:2px 0;font-size:10px;border:1px solid var(--border);border-radius:4px;cursor:pointer;background:${(S.kpiVidMode[c.campaign_id]||'2s')===v?'var(--primary)':'var(--bg3)'};color:${(S.kpiVidMode[c.campaign_id]||'2s')===v?'#fff':'var(--text2)'};">${v}</button>`).join('')}
       </div>`:''}
     </td>
     <td onclick="event.stopPropagation()" style="min-width:90px;">
@@ -2536,7 +2536,7 @@ function makeAGRow(ag) {
           title="KPI mục tiêu nhóm QC này" />
         <div style="font-size:10px;color:var(--text3);margin-top:2px;text-align:right;">${getKpiLabel(ag.adgroup_id,agObjType)}</div>
         ${agObjType==='VIDEO_VIEWS'?`<div style="display:flex;gap:3px;margin-top:4px;" onclick="event.stopPropagation()">
-          ${['2s','6s','15s'].map(v=>`<button onclick="saveKpiVidMode('${ag.adgroup_id}','${v}')" style="flex:1;padding:2px 0;font-size:10px;border:1px solid var(--border);border-radius:4px;cursor:pointer;background:${(S.kpiVidMode[ag.adgroup_id]||'2s')===v?'var(--primary)':'var(--bg3)'};color:${(S.kpiVidMode[ag.adgroup_id]||'2s')===v?'#fff':'var(--text2)'};">${v}</button>`).join('')}
+          ${['2s','6s','100%'].map(v=>`<button onclick="saveKpiVidMode('${ag.adgroup_id}','${v}')" style="flex:1;padding:2px 0;font-size:10px;border:1px solid var(--border);border-radius:4px;cursor:pointer;background:${(S.kpiVidMode[ag.adgroup_id]||'2s')===v?'var(--primary)':'var(--bg3)'};color:${(S.kpiVidMode[ag.adgroup_id]||'2s')===v?'#fff':'var(--text2)'};">${v}</button>`).join('')}
         </div>`:''}`;
       })()}
     </td>
@@ -3127,7 +3127,7 @@ function saveKpiAgEx(agid, val) {
 function getKpiVidVal(id, m) {
   const mode = S.kpiVidMode[id] || '2s';
   const n = v => parseFloat(v) || 0;
-  if (mode === '15s') return n(m.focused_view);
+  if (mode === '100%') return n(m.video_views_p100);
   if (mode === '6s')  return n(m.video_watched_6s);
   return n(m.video_watched_2s);
 }
@@ -3149,7 +3149,7 @@ function getKpiCurrentVal(cid, m, objType) {
 function getKpiLabel(id, objType) {
   if (objType === 'VIDEO_VIEWS') {
     const m = S.kpiVidMode[id] || '2s';
-    return m === '15s' ? 'View 15s' : m === '6s' ? 'View 6s' : 'View 2s';
+    return m === '100%' ? 'View 100%' : m === '6s' ? 'View 6s' : 'View 2s';
   }
   const MAP = {
     REACH:'Reach', LEAD_GENERATION:'Leads', CONVERSIONS:'Conversions',
@@ -4271,7 +4271,7 @@ const EXPORT_METS = {
     { key: 'video_views_p25',       label: 'Xem 25% video',    def: false, fmt: 'N' },
     { key: 'video_views_p50',       label: 'Xem 50% video',    def: false, fmt: 'N' },
     { key: 'video_views_p75',       label: 'Xem 75% video',    def: false, fmt: 'N' },
-    { key: 'focused_view',      label: 'Xem 100% video',   def: false, fmt: 'N' },
+    { key: 'video_views_p100',      label: 'Xem 100% video',   def: false, fmt: 'N' },
     { key: 'average_video_play',    label: 'TG phát TB (giây)',def: false, fmt: 'F' },
     { key: 'video_watched_2s_rate', label: 'Tỷ lệ xem 2 giây',def: false, fmt: '%' },
     { key: 'video_watched_6s_rate', label: 'Tỷ lệ xem 6 giây',def: false, fmt: '%' },
@@ -4795,7 +4795,7 @@ const ANAL_RESULT_OPTS = [
   { key: 'real_time_result',  label: 'Kết quả (API)', icon: '✅', costKey: 'cost_per_result' },
   { key: 'video_watched_2s',  label: 'View 2s',        icon: '▶',   costKey: null },
   { key: 'video_watched_6s',  label: 'View 6s',        icon: '▶▶',  costKey: null },
-  { key: 'focused_view',  label: 'View 15s',       icon: '▶▶▶', costKey: null },
+  { key: 'video_views_p100',  label: 'View 100%',      icon: '▶▶▶', costKey: null },
   { key: 'reach',             label: 'Reach',           icon: '👁',  costKey: null },
   { key: 'follows',           label: 'Follow',          icon: '➕',  costKey: null },
   { key: 'complete_payment',  label: 'Mua hàng',        icon: '🛒', costKey: null },
@@ -4884,7 +4884,7 @@ async function fetchSummaryAgg(aid) {
       report_type: 'BASIC',
       data_level: 'AUCTION_ADVERTISER',
       dimensions: ['advertiser_id'],
-      metrics: ['spend','impressions','reach','clicks','cpm','ctr','frequency','real_time_result','result','cost_per_result','video_watched_2s','video_watched_6s','focused_view','follows','complete_payment'],
+      metrics: ['spend','impressions','reach','clicks','cpm','ctr','frequency','real_time_result','result','cost_per_result','video_watched_2s','video_watched_6s','video_views_p100','follows','complete_payment'],
       start_date: start, end_date: end,
       page_size: 1,
     });
@@ -4901,7 +4901,7 @@ async function fetchCampaignBreakdown(aid) {
       report_type: 'BASIC',
       data_level: 'AUCTION_CAMPAIGN',
       dimensions: ['campaign_id'],
-      metrics: ['spend','impressions','clicks','ctr','cpm','reach','real_time_result','result','cost_per_result','video_watched_2s','video_watched_6s','focused_view','follows','complete_payment'],
+      metrics: ['spend','impressions','clicks','ctr','cpm','reach','real_time_result','result','cost_per_result','video_watched_2s','video_watched_6s','video_views_p100','follows','complete_payment'],
       start_date: start, end_date: end,
       page_size: 100,
     });
@@ -4918,7 +4918,7 @@ async function fetchAdBreakdown(aid) {
       report_type: 'BASIC',
       data_level: 'AUCTION_AD',
       dimensions: ['ad_id'],
-      metrics: ['spend','impressions','clicks','ctr','cpm','real_time_result','result','cost_per_result','video_watched_2s','video_watched_6s','focused_view','follows','complete_payment'],
+      metrics: ['spend','impressions','clicks','ctr','cpm','real_time_result','result','cost_per_result','video_watched_2s','video_watched_6s','video_views_p100','follows','complete_payment'],
       start_date: start, end_date: end,
       page_size: 100,
     });
