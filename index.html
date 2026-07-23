@@ -3104,25 +3104,25 @@ function saveKpi(cid, val) {
   const v = parseInt(val) || 0;
   if (v > 0) S.kpi[cid] = v; else delete S.kpi[cid];
   localStorage.setItem('tt_kpi', JSON.stringify(S.kpi));
-  renderTable();
+  render();
 }
 function saveKpiExtra(cid, val) {
   const v = parseInt(val) || 0;
   if (v > 0) S.kpiExtra[cid] = v; else delete S.kpiExtra[cid];
   localStorage.setItem('tt_kpi_ex', JSON.stringify(S.kpiExtra));
-  renderTable();
+  render();
 }
 function saveKpiAg(agid, val) {
   const v = parseInt(val) || 0;
   if (v > 0) S.kpiAg[agid] = v; else delete S.kpiAg[agid];
   localStorage.setItem('tt_kpi_ag', JSON.stringify(S.kpiAg));
-  renderTable();
+  render();
 }
 function saveKpiAgEx(agid, val) {
   const v = parseInt(val) || 0;
   if (v > 0) S.kpiAgEx[agid] = v; else delete S.kpiAgEx[agid];
   localStorage.setItem('tt_kpi_ag_ex', JSON.stringify(S.kpiAgEx));
-  renderTable();
+  render();
 }
 function getKpiVidVal(id, m) {
   const mode = S.kpiVidMode[id] || '2s';
@@ -3161,7 +3161,7 @@ function getKpiLabel(id, objType) {
 function saveKpiVidMode(id, mode) {
   S.kpiVidMode[id] = mode;
   localStorage.setItem('tt_kpi_vid', JSON.stringify(S.kpiVidMode));
-  renderTable();
+  render();
 }
 function mkProgressCell(kpi, cur, extra) {
   if (!kpi) return '<span style="color:var(--text3);font-size:12px;">—</span>';
