@@ -2134,6 +2134,15 @@ async function fetchMetrics(aid, level, ids) {
   });
   const r = {};
   (d.list || []).forEach(item => { r[item.dimensions[dim]] = item.metrics; });
+  // DEBUG: log result/real_time_result for all campaigns
+  console.group('[TikTok API] fetchMetrics —', level, start, '→', end);
+  Object.entries(r).forEach(([id, m]) => {
+    if (parseFloat(m.real_time_result) > 0 || parseFloat(m.result) > 0) {
+      console.log(`ID ${id}: real_time_result=${m.real_time_result}, result=${m.result}, spend=${m.spend}`);
+    }
+  });
+  console.log('Full list sample (first 3):', (d.list||[]).slice(0,3).map(i=>({id:i.dimensions[dim], ...i.metrics})));
+  console.groupEnd();
   return r;
 }
 
