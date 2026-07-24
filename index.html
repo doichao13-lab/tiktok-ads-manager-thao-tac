@@ -4462,14 +4462,40 @@ async function exportFetch() {
         metrics: { spend: Math.random()*5000000, impressions: Math.random()*500000, reach: Math.random()*300000, frequency: 1+Math.random()*2, clicks: Math.random()*5000, ctr: (Math.random()*2).toFixed(2), cpm: 5000+Math.random()*15000, video_play_actions: Math.random()*200000, video_watched_2s: Math.random()*150000, video_watched_6s: Math.random()*80000, result: Math.floor(Math.random()*500), cost_per_result: 5000+Math.random()*50000 }
       }));
     } else {
-      const rptData = await apiGet('/report/integrated/get/', {
-        advertiser_id: aid, report_type: 'BASIC',
-        data_level: dataLevel, dimensions: apiDims,
-        metrics: selMets, start_date: from, end_date: capTo, page_size: 1000
-      });
-      console.log('[Export] API response:', rptData.code, rptData.message, 'rows:', rptData.list?.length);
-      if (rptData.code && rptData.code !== 0) throw new Error(`API lỗi ${rptData.code}: ${rptData.message}`);
-      rptRows = rptData.list || [];
+      const needsChunk = timeDim === 'stat_time_day';
+      const fromD = new Date(from), toD = new Date(capTo);
+      const diffDays = Math.round((toD - fromD) / 86400000);
+
+      if (needsChunk && diffDays > 30) {
+        // Split into 30-day chunks (TikTok limit for stat_time_day)
+        const chunks = [];
+        let cs = new Date(fromD);
+        while (cs <= toD) {
+          const ce = new Date(cs);
+          ce.setDate(ce.getDate() + 29);
+          if (ce > toD) ce.setTime(toD.getTime());
+          chunks.push({ s: cs.toISOString().slice(0,10), e: ce.toISOString().slice(0,10) });
+          cs = new Date(ce); cs.setDate(cs.getDate() + 1);
+        }
+        for (let i = 0; i < chunks.length; i++) {
+          if (statusEl) statusEl.textContent = `⏳ Đang tải chunk ${i+1}/${chunks.length} (${chunks[i].s} → ${chunks[i].e})...`;
+          const rptData = await apiGet('/report/integrated/get/', {
+            advertiser_id: aid, report_type: 'BASIC',
+            data_level: dataLevel, dimensions: apiDims,
+            metrics: selMets, start_date: chunks[i].s, end_date: chunks[i].e, page_size: 1000
+          });
+          if (rptData.code && rptData.code !== 0) throw new Error(`[${rptData.code}] ${rptData.message}`);
+          rptRows.push(...(rptData.list || []));
+        }
+      } else {
+        const rptData = await apiGet('/report/integrated/get/', {
+          advertiser_id: aid, report_type: 'BASIC',
+          data_level: dataLevel, dimensions: apiDims,
+          metrics: selMets, start_date: from, end_date: capTo, page_size: 1000
+        });
+        if (rptData.code && rptData.code !== 0) throw new Error(`[${rptData.code}] ${rptData.message}`);
+        rptRows = rptData.list || [];
+      }
     }
 
     // Enrich with adgroup/campaign info
