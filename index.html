@@ -2327,19 +2327,32 @@ function renderCampaignLevel() {
 }
 
 function makeTotalRow(list) {
-  const NON_SUM = new Set(['frequency','cpm','ctr','cpc','cost_per_result']);
   const cols = colDefs();
-  let totalSpend = 0;
+  let totalSpend=0, totalImp=0, totalReach=0, totalClicks=0, totalResult=0;
   const totals = {};
+
   list.forEach(c => {
     const m = S.metrics[c.campaign_id] || {};
-    totalSpend += parseFloat(m.spend) || 0;
+    totalSpend  += parseFloat(m.spend) || 0;
+    totalImp    += parseFloat(m.impressions) || 0;
+    totalReach  += parseFloat(m.reach) || 0;
+    totalClicks += parseFloat(m.clicks) || 0;
+    totalResult += parseFloat(m._result) || parseFloat(m.onsite_form) || 0;
     cols.forEach(cl => {
-      if (NON_SUM.has(cl.metric)) return;
       const v = parseFloat(getMetricVal(m, cl)) || 0;
       totals[cl.metric] = (totals[cl.metric] || 0) + v;
     });
   });
+
+  // Tính lại từ tổng tử/mẫu số — không cộng giá trị đã tính của từng dòng
+  const DERIVED = {
+    frequency:      totalReach>0  ? totalImp/totalReach      : 0,
+    cpm:            totalImp>0    ? totalSpend/totalImp*1000  : 0,
+    ctr:            totalImp>0    ? totalClicks/totalImp*100  : 0,
+    cpc:            totalClicks>0 ? totalSpend/totalClicks    : 0,
+    cost_per_result:totalResult>0 ? totalSpend/totalResult    : 0,
+  };
+
   const hasData = totalSpend > 0 || Object.values(totals).some(v => v > 0);
   const tr = document.createElement('tr');
   tr.className = 'total-row';
@@ -2349,10 +2362,11 @@ function makeTotalRow(list) {
       <span style="font-size:11px;font-weight:700;color:var(--text2);">📊 Tổng ${list.length} chiến dịch</span>
     </td>
     <td><span class="spend-val" style="font-weight:800;">${hasData ? fmtCur(totalSpend) : '—'}</span></td>
-    ${cols.map(cl => NON_SUM.has(cl.metric)
-      ? `<td class="metric-num" style="color:var(--text3);">—</td>`
-      : `<td class="metric-num" style="font-weight:700;color:var(--text);">${hasData ? fmtN(totals[cl.metric]||0, cl.metric) : '—'}</td>`
-    ).join('')}
+    ${cols.map(cl => {
+      if (!hasData) return `<td class="metric-num" style="color:var(--text3);">—</td>`;
+      const val = cl.metric in DERIVED ? DERIVED[cl.metric] : (totals[cl.metric]||0);
+      return `<td class="metric-num" style="font-weight:700;color:var(--text);">${fmtN(val, cl.metric)}</td>`;
+    }).join('')}
     <td colspan="4"></td>
   `;
   return tr;
