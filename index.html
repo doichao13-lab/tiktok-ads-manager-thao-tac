@@ -4659,7 +4659,37 @@ function exportToCSV() {
     if (v == null || v === '') return '""';
     return `"${String(v).replace(/"/g,'""')}"`;
   }).join(','));
-  const csv  = '﻿' + [headers, ...csvRows].join('\n');
+
+  // Dòng tổng cộng — tính derived metrics từ tổng tử/mẫu số
+  const metCols = EX.cols.filter(c=>c.type==='met');
+  const dimCols = EX.cols.filter(c=>c.type==='dim');
+  const BASE_KEYS = ['spend','impressions','reach','clicks','result','conversion','video_watched_2s','video_watched_6s'];
+  const sums = {};
+  [...metCols.map(c=>c.key), ...BASE_KEYS].forEach(k => {
+    sums[k] = EX.rows.reduce((s,r)=>s+(parseFloat(r[k])||0), 0);
+  });
+  const imp=sums.impressions||0, spd=sums.spend||0, clk=sums.clicks||0;
+  const rch=sums.reach||0, res=sums.result||0, conv=sums.conversion||0;
+  const v2s=sums.video_watched_2s||0, v6s=sums.video_watched_6s||0;
+  const DERIVED = {
+    frequency:             rch>0 ? imp/rch          : 0,
+    ctr:                   imp>0 ? clk/imp*100       : 0,
+    cpm:                   imp>0 ? spd/imp*1000      : 0,
+    cpc:                   clk>0 ? spd/clk           : 0,
+    result_rate:           imp>0 ? res/imp*100        : 0,
+    cost_per_result:       res>0 ? spd/res            : 0,
+    cost_per_conversion:   conv>0 ? spd/conv          : 0,
+    conversion_rate:       clk>0 ? conv/clk*100       : 0,
+    video_watched_2s_rate: imp>0 ? v2s/imp*100        : 0,
+    video_watched_6s_rate: imp>0 ? v6s/imp*100        : 0,
+  };
+  const totalRowCells = EX.cols.map(c => {
+    if (c.type === 'dim') return c === dimCols[0] ? `"Tổng cộng (${EX.rows.length} dòng)"` : '""';
+    const v = c.key in DERIVED ? DERIVED[c.key] : (sums[c.key]||0);
+    return fmtRaw(v, c.fmt);
+  });
+
+  const csv  = '﻿' + [headers, ...csvRows, totalRowCells.join(',')].join('\n');
   const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
   const url  = URL.createObjectURL(blob);
   const a    = document.createElement('a');
