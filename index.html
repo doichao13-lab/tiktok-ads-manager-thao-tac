@@ -4651,7 +4651,8 @@ function exportToCSV() {
     if (fmt === '%' || fmt === 'F') return (parseFloat(v)||0).toFixed(2);
     return v != null ? String(v) : '';
   };
-  const currencyLabel = S.convertCurrency ? ' (VND)' : ' (USD)';
+  const accCurrency = (S.accounts?.find(a => a.advertiser_id === S.accountId)?.currency) || 'USD';
+  const currencyLabel = S.convertCurrency ? ' (VND)' : ` (${accCurrency})`;
   const headers = EX.cols.map(c => `"${c.label}${c.fmt === '$' ? currencyLabel : ''}"`).join(',');
   const csvRows = EX.rows.map(r => EX.cols.map(c => {
     const v = r[c.key];
@@ -4716,7 +4717,7 @@ function exportForAI() {
   const totals = {};
   metCols.forEach(c => { totals[c.key] = EX.rows.reduce((s,r)=>s+(parseFloat(r[c.key])||0),0); });
   const totRow = [...dimCols.map(()=>'TỔNG'), ...metCols.map(c=>fmtRaw(totals[c.key],c.fmt))].join('\t');
-  const cur = S.convertCurrency ? 'VND' : 'USD (nhân ~26.000 để ra VND)';
+  const cur = S.convertCurrency ? 'VND' : accCurrency;
 
   const text = [
     `BÁO CÁO QUẢNG CÁO TIKTOK`,
