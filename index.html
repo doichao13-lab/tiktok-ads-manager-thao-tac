@@ -1832,6 +1832,20 @@ const COLS = {
 
 const USD_VND_RATE = 26423; // 1 USD = 26,423 VND
 
+const KPI_METRIC_OPTIONS = [
+  { value:'auto',             label:'Auto (mục tiêu)'  },
+  { value:'spend',            label:'Chi tiêu (₫)'     },
+  { value:'reach',            label:'Reach'             },
+  { value:'impressions',      label:'Hiển thị'          },
+  { value:'video_2s',         label:'View 2s'           },
+  { value:'video_6s',         label:'View 6s'           },
+  { value:'result',           label:'Kết quả'           },
+  { value:'onsite_form',      label:'Lead Form'         },
+  { value:'complete_payment', label:'Mua hàng'          },
+  { value:'clicks',           label:'Click Web'         },
+  { value:'follows',          label:'Follow'            },
+];
+
 const OBJECTIVE_LABELS = {
   REACH: 'Reach', VIDEO_VIEWS: 'Video Views', LEAD_GENERATION: 'Lead Form',
   CONVERSIONS: 'Conversion', APP_PROMOTION: 'App Install',
@@ -1873,7 +1887,9 @@ const S = {
   kpiExtra:  JSON.parse(localStorage.getItem('tt_kpi_ex')  || '{}'), // { campaign_id: number } — KPI từ TK khác
   kpiAg:     JSON.parse(localStorage.getItem('tt_kpi_ag')  || '{}'), // { adgroup_id: number }
   kpiAgEx:   JSON.parse(localStorage.getItem('tt_kpi_ag_ex')|| '{}'), // { adgroup_id: number } — bổ sung AG
-  kpiVidMode:JSON.parse(localStorage.getItem('tt_kpi_vid') || '{}'), // { id: '2s'|'6s'|'15s' }
+  kpiVidMode: JSON.parse(localStorage.getItem('tt_kpi_vid')    || '{}'), // { id: '2s'|'6s' }
+  kpiMetric:  JSON.parse(localStorage.getItem('tt_kpi_mt')     || '{}'), // { id: 'auto'|'spend'|'reach'|... } campaigns
+  kpiAgMetric:JSON.parse(localStorage.getItem('tt_kpi_ag_mt')  || '{}'), // { id: ... } adgroups
 };
 
 /* ═══════════════════════════ API ═══════════════════════════ */
@@ -2567,16 +2583,16 @@ function makeCampaignRow(c) {
     </td>
     <td><span class="spend-val">${fmtCur(m.spend||0)}</span>${trendBadge(m.spend||0, S.prevMetrics[c.campaign_id])}</td>
     ${cols.map(cl=>`<td class="metric-num">${fmtN(getMetricVal(m,cl),cl.metric)}</td>`).join('')}
-    <td onclick="event.stopPropagation()" style="min-width:105px;">
+    <td onclick="event.stopPropagation()" style="min-width:110px;">
       <input type="number" min="0" placeholder="—"
         value="${S.kpi[c.campaign_id]||''}"
-        style="width:80px;padding:3px 6px;border:1px solid var(--border);border-radius:6px;background:var(--bg2);color:var(--text);font-size:12px;text-align:right;"
+        style="width:82px;padding:3px 6px;border:1px solid var(--border);border-radius:6px;background:var(--bg2);color:var(--text);font-size:12px;text-align:right;"
         onchange="saveKpi('${c.campaign_id}',this.value)"
-        title="Nhập KPI mục tiêu (${OBJ_MAP[c.objective_type]||c.objective_type||'KQ'})" />
-      <div style="font-size:10px;color:var(--text3);margin-top:2px;text-align:right;">${getKpiLabel(c.campaign_id,c.objective_type)}</div>
-      ${c.objective_type==='VIDEO_VIEWS'?`<div style="display:flex;gap:3px;margin-top:4px;" onclick="event.stopPropagation()">
-        ${['2s','6s'].map(v=>`<button onclick="saveKpiVidMode('${c.campaign_id}','${v}')" style="flex:1;padding:2px 0;font-size:10px;border:1px solid var(--border);border-radius:4px;cursor:pointer;background:${(S.kpiVidMode[c.campaign_id]||'2s')===v?'var(--primary)':'var(--bg3)'};color:${(S.kpiVidMode[c.campaign_id]||'2s')===v?'#fff':'var(--text2)'};">${v}</button>`).join('')}
-      </div>`:''}
+        title="Nhập KPI mục tiêu" />
+      <select onchange="saveKpiMetric('${c.campaign_id}',this.value,false)" onclick="event.stopPropagation()"
+        style="width:84px;margin-top:3px;padding:2px 3px;font-size:10px;border:1px solid var(--border);border-radius:4px;background:var(--bg3);color:var(--text2);cursor:pointer;">
+        ${KPI_METRIC_OPTIONS.map(o=>`<option value="${o.value}"${(S.kpiMetric[c.campaign_id]||'auto')===o.value?' selected':''}>${o.label}</option>`).join('')}
+      </select>
     </td>
     <td onclick="event.stopPropagation()" style="min-width:90px;">
       <input type="number" min="0" placeholder="—"
@@ -2584,9 +2600,10 @@ function makeCampaignRow(c) {
         style="width:80px;padding:3px 6px;border:1px solid var(--border);border-radius:6px;background:var(--bg2);color:#7C3AED;font-size:12px;text-align:right;"
         onchange="saveKpiExtra('${c.campaign_id}',this.value)"
         title="KPI đã chạy từ tài khoản khác (tùy chọn)" />
+      <div style="font-size:10px;color:var(--text3);margin-top:2px;text-align:right;">${getKpiLabel(c.campaign_id,c.objective_type,S.kpiMetric)}</div>
     </td>
     <td onclick="event.stopPropagation()" style="min-width:120px;">
-      ${mkProgressCell(S.kpi[c.campaign_id],getKpiCurrentVal(c.campaign_id,m,c.objective_type),S.kpiExtra[c.campaign_id]||0)}
+      ${mkProgressCell(S.kpi[c.campaign_id],getKpiCurrentVal(c.campaign_id,m,c.objective_type,S.kpiMetric),S.kpiExtra[c.campaign_id]||0,(S.kpiMetric[c.campaign_id]||'auto')==='spend')}
     </td>
     <td onclick="event.stopPropagation()">
       <button class="btn btn-sm btn-ghost" onclick="switchLevel('adgroup','${c.campaign_id}')">
@@ -2647,19 +2664,19 @@ function makeAGRow(ag) {
     </td>
     <td><span class="spend-val">${fmtCur(m.spend||0)}</span>${trendBadge(m.spend||0, S.prevMetrics[ag.adgroup_id])}</td>
     ${cols.map(cl=>`<td class="metric-num">${fmtN(getMetricVal(m,cl),cl.metric)}</td>`).join('')}
-    <td onclick="event.stopPropagation()" style="min-width:105px;">
+    <td onclick="event.stopPropagation()" style="min-width:110px;">
       ${(()=>{
         const parentCampAg=S.campaigns.find(c=>String(c.campaign_id)===String(ag.campaign_id))||{};
         const agObjType=parentCampAg.objective_type||'';
         return `<input type="number" min="0" placeholder="—"
           value="${S.kpiAg[ag.adgroup_id]||''}"
-          style="width:80px;padding:3px 6px;border:1px solid var(--border);border-radius:6px;background:var(--bg2);color:var(--text);font-size:12px;text-align:right;"
+          style="width:82px;padding:3px 6px;border:1px solid var(--border);border-radius:6px;background:var(--bg2);color:var(--text);font-size:12px;text-align:right;"
           onchange="saveKpiAg('${ag.adgroup_id}',this.value)"
           title="KPI mục tiêu nhóm QC này" />
-        <div style="font-size:10px;color:var(--text3);margin-top:2px;text-align:right;">${getKpiLabel(ag.adgroup_id,agObjType)}</div>
-        ${agObjType==='VIDEO_VIEWS'?`<div style="display:flex;gap:3px;margin-top:4px;" onclick="event.stopPropagation()">
-          ${['2s','6s'].map(v=>`<button onclick="saveKpiVidMode('${ag.adgroup_id}','${v}')" style="flex:1;padding:2px 0;font-size:10px;border:1px solid var(--border);border-radius:4px;cursor:pointer;background:${(S.kpiVidMode[ag.adgroup_id]||'2s')===v?'var(--primary)':'var(--bg3)'};color:${(S.kpiVidMode[ag.adgroup_id]||'2s')===v?'#fff':'var(--text2)'};">${v}</button>`).join('')}
-        </div>`:''}`;
+        <select onchange="saveKpiMetric('${ag.adgroup_id}',this.value,true)" onclick="event.stopPropagation()"
+          style="width:84px;margin-top:3px;padding:2px 3px;font-size:10px;border:1px solid var(--border);border-radius:4px;background:var(--bg3);color:var(--text2);cursor:pointer;">
+          ${KPI_METRIC_OPTIONS.map(o=>`<option value="${o.value}"${(S.kpiAgMetric[ag.adgroup_id]||'auto')===o.value?' selected':''}>${o.label}</option>`).join('')}
+        </select>`;
       })()}
     </td>
     <td onclick="event.stopPropagation()" style="min-width:90px;">
@@ -2668,12 +2685,13 @@ function makeAGRow(ag) {
         style="width:80px;padding:3px 6px;border:1px solid var(--border);border-radius:6px;background:var(--bg2);color:#7C3AED;font-size:12px;text-align:right;"
         onchange="saveKpiAgEx('${ag.adgroup_id}',this.value)"
         title="KPI bổ sung từ TK khác (tùy chọn)" />
+      <div style="font-size:10px;color:var(--text3);margin-top:2px;text-align:right;">${getKpiLabel(ag.adgroup_id,(S.campaigns.find(c=>String(c.campaign_id)===String(ag.campaign_id))||{}).objective_type||'',S.kpiAgMetric)}</div>
     </td>
     <td onclick="event.stopPropagation()" style="min-width:120px;">
       ${(()=>{
         const parentCamp2=S.campaigns.find(c=>String(c.campaign_id)===String(ag.campaign_id))||{};
-        const cur2=getKpiCurrentVal(ag.adgroup_id,m,parentCamp2.objective_type);
-        return mkProgressCell(S.kpiAg[ag.adgroup_id],cur2,S.kpiAgEx[ag.adgroup_id]||0);
+        const cur2=getKpiCurrentVal(ag.adgroup_id,m,parentCamp2.objective_type,S.kpiAgMetric);
+        return mkProgressCell(S.kpiAg[ag.adgroup_id],cur2,S.kpiAgEx[ag.adgroup_id]||0,(S.kpiAgMetric[ag.adgroup_id]||'auto')==='spend');
       })()}
     </td>
     <td>
@@ -3291,7 +3309,27 @@ function getKpiVidVal(id, m) {
   if (mode === '6s') return n(m.video_watched_6s);
   return n(m.video_watched_2s);
 }
-function getKpiCurrentVal(cid, m, objType) {
+function getKpiMetricVal(id, m, metricStore) {
+  const mt = (metricStore||S.kpiMetric)[id] || 'auto';
+  if (mt === 'auto') return null;
+  const n = v => parseFloat(v) || 0;
+  switch(mt) {
+    case 'spend':            return n(m.spend);
+    case 'reach':            return n(m.reach);
+    case 'impressions':      return n(m.impressions);
+    case 'video_2s':         return n(m.video_watched_2s);
+    case 'video_6s':         return n(m.video_watched_6s);
+    case 'result':           return n(m._result);
+    case 'onsite_form':      return n(m.onsite_form) || n(m._result);
+    case 'complete_payment': return n(m.complete_payment);
+    case 'clicks':           return n(m.clicks);
+    case 'follows':          return n(m.follows);
+    default:                 return null;
+  }
+}
+function getKpiCurrentVal(cid, m, objType, metricStore) {
+  const custom = getKpiMetricVal(cid, m, metricStore);
+  if (custom !== null) return custom;
   const n = v => parseFloat(v) || 0;
   const OBJ_METRIC = {
     VIDEO_VIEWS:          getKpiVidVal(cid, m),
@@ -3306,10 +3344,15 @@ function getKpiCurrentVal(cid, m, objType) {
   };
   return OBJ_METRIC[objType] ?? (n(m._result) || n(m.follows) || n(m.impressions));
 }
-function getKpiLabel(id, objType) {
+function getKpiLabel(id, objType, metricStore) {
+  const mt = (metricStore||S.kpiMetric)[id] || 'auto';
+  if (mt !== 'auto') {
+    const opt = KPI_METRIC_OPTIONS.find(o => o.value === mt);
+    return opt ? opt.label.replace(' (₫)', '') : mt;
+  }
   if (objType === 'VIDEO_VIEWS') {
-    const m = S.kpiVidMode[id] || '2s';
-    return m === '6s' ? 'View 6s' : 'View 2s';
+    const vm = S.kpiVidMode[id] || '2s';
+    return vm === '6s' ? 'View 6s' : 'View 2s';
   }
   const MAP = {
     REACH:'Reach', LEAD_GENERATION:'Leads', CONVERSIONS:'Conversions',
@@ -3323,22 +3366,29 @@ function saveKpiVidMode(id, mode) {
   localStorage.setItem('tt_kpi_vid', JSON.stringify(S.kpiVidMode));
   render();
 }
-function mkProgressCell(kpi, cur, extra) {
+function saveKpiMetric(id, val, isAg) {
+  const store = isAg ? S.kpiAgMetric : S.kpiMetric;
+  const key   = isAg ? 'tt_kpi_ag_mt' : 'tt_kpi_mt';
+  if (val && val !== 'auto') store[id] = val; else delete store[id];
+  localStorage.setItem(key, JSON.stringify(store));
+  render();
+}
+function mkProgressCell(kpi, cur, extra, isCurrency) {
   if (!kpi) return '<span style="color:var(--text3);font-size:12px;">—</span>';
   const total = parseFloat(cur || 0) + parseFloat(extra || 0);
   const pct = Math.min(Math.round(total / kpi * 100), 999);
   const fill = Math.min(pct, 100);
   const color = fill >= 100 ? '#16A34A' : fill >= 70 ? '#1747EA' : fill >= 40 ? '#D97706' : '#DC2626';
-  const extraNote = extra ? `<span style="color:#7C3AED;font-size:10px;" title="Đã bổ sung ${fmtN(extra,'')} từ TK khác"> (+${fmtN(extra,'')})</span>` : '';
+  const fmt = v => isCurrency ? fmtCurShort(v) : fmtN(v, '');
   return `<div style="display:flex;flex-direction:column;gap:3px;">
     <div style="display:flex;justify-content:space-between;font-size:11px;font-weight:600;color:${color};">
       <span>${pct}%${extra?'*':''}</span>
-      <span style="color:var(--text3);font-weight:400;">${fmtN(total,'')}/${fmtN(kpi,'')}</span>
+      <span style="color:var(--text3);font-weight:400;">${fmt(total)}/${fmt(kpi)}</span>
     </div>
     <div style="height:5px;border-radius:3px;background:var(--bg3);">
       <div style="height:100%;border-radius:3px;background:${color};width:${fill}%;transition:width .3s;"></div>
     </div>
-    ${extra?`<div style="font-size:10px;color:#7C3AED;">Đã có: ${fmtN(extra,'')} từ TK khác</div>`:''}
+    ${extra?`<div style="font-size:10px;color:#7C3AED;">Đã có: ${fmt(extra)} từ TK khác</div>`:''}
   </div>`;
 }
 
