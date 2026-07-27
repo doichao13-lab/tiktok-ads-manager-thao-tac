@@ -1821,7 +1821,7 @@ const COLS = {
   video_2s:     { label: 'View 2s',    metric: 'video_watched_2s',      icon: '▶',    tip: 'Số lượt xem video đủ 2 giây — ngưỡng engagement tối thiểu TikTok tính là "có xem".' },
   video_6s:     { label: 'View 6s',    metric: 'video_watched_6s',      icon: '▶▶',   tip: 'Số lượt xem đủ 6 giây — người xem thực sự quan tâm đến nội dung. Tỷ lệ View6s/Hiển thị là VTR 6s.' },
   conversion:   { label: 'Kết quả',   metric: '_result',                icon: '✅',   note: 'real_time_result → onsite_form (Lead Form) → result.', tip: 'Số kết quả đạt được theo mục tiêu chiến dịch (lead, lượt xem, mua hàng...). TikTok ưu tiên real_time_result.' },
-  cpl:          { label: 'Giá/KQ',    metric: 'cost_per_result',        icon: '💰',   tip: 'Chi phí trên mỗi Kết quả (Cost per Result). Ngân sách tiêu để đạt 1 đơn vị mục tiêu — số càng thấp càng hiệu quả.' },
+  cpl:          { label: 'Giá/KQ',    metric: '_cpr',                   icon: '💰',   tip: 'Chi phí trên mỗi Kết quả — tính đúng theo mục tiêu chiến dịch: Follow→giá/follow, Reach→giá/reach, LeadForm→giá/lead, VideoView→giá/lượt xem, v.v.' },
   purchase:     { label: 'Mua hàng',  metric: 'complete_payment',       icon: '🛒',   tip: 'Số lượt mua hàng hoàn tất (Complete Payment). KPI chính cho chiến dịch Product Sales / Conversion.' },
   click_to_web: { label: 'Click Web', metric: 'clicks',                 icon: '🖱',   tip: 'Số lượt click thoát ra website / landing page. Kết hợp với CTR để đánh giá chất lượng creative và CTA.' },
   follow:       { label: 'Follow',    metric: 'follows',                icon: '➕',   tip: 'Số người mới follow trang sau khi xem quảng cáo. KPI chính cho chiến dịch Community Interaction.' },
@@ -2430,8 +2430,9 @@ function makeTotalRow(list) {
     totalImp    += parseFloat(m.impressions) || 0;
     totalReach  += parseFloat(m.reach) || 0;
     totalClicks += parseFloat(m.clicks) || 0;
-    totalResult += parseFloat(m._result) || parseFloat(m.onsite_form) || 0;
+    totalResult += getCprDenominator(m, c.objective_type);
     cols.forEach(cl => {
+      if (cl.metric === '_cpr') return; // derived — don't sum
       const v = parseFloat(getMetricVal(m, cl)) || 0;
       totals[cl.metric] = (totals[cl.metric] || 0) + v;
     });
@@ -2439,11 +2440,11 @@ function makeTotalRow(list) {
 
   // Tính lại từ tổng tử/mẫu số — không cộng giá trị đã tính của từng dòng
   const DERIVED = {
-    frequency:      totalReach>0  ? totalImp/totalReach      : 0,
-    cpm:            totalImp>0    ? totalSpend/totalImp*1000  : 0,
-    ctr:            totalImp>0    ? totalClicks/totalImp*100  : 0,
-    cpc:            totalClicks>0 ? totalSpend/totalClicks    : 0,
-    cost_per_result:totalResult>0 ? totalSpend/totalResult    : 0,
+    frequency: totalReach>0  ? totalImp/totalReach     : 0,
+    cpm:       totalImp>0    ? totalSpend/totalImp*1000 : 0,
+    ctr:       totalImp>0    ? totalClicks/totalImp*100 : 0,
+    cpc:       totalClicks>0 ? totalSpend/totalClicks   : 0,
+    _cpr:      totalResult>0 ? totalSpend/totalResult   : 0,
   };
 
   const hasData = totalSpend > 0 || Object.values(totals).some(v => v > 0);
@@ -2537,6 +2538,7 @@ function makeCampaignRow(c) {
   const selected   = S.selectedCampaignIds.has(c.campaign_id);
   const isExpanded = S.expanded.has(c.campaign_id);
   const m          = S.metrics[c.campaign_id] || {};
+  const mE         = {...m, _cpr: getCostPerResult(m, c.objective_type)};
   const bmode      = c.budget_mode === 'BUDGET_MODE_DAILY' ? '/ng' : '';
   const cols       = colDefs();
   const agLoaded   = S.adgroups[c.campaign_id];
@@ -2582,7 +2584,7 @@ function makeCampaignRow(c) {
       ${pacingBar}
     </td>
     <td><span class="spend-val">${fmtCur(m.spend||0)}</span>${trendBadge(m.spend||0, S.prevMetrics[c.campaign_id])}</td>
-    ${cols.map(cl=>`<td class="metric-num">${fmtN(getMetricVal(m,cl),cl.metric)}</td>`).join('')}
+    ${cols.map(cl=>`<td class="metric-num">${fmtN(getMetricVal(mE,cl),cl.metric)}</td>`).join('')}
     <td onclick="event.stopPropagation()" style="min-width:110px;">
       <input type="number" min="0" placeholder="—"
         value="${S.kpi[c.campaign_id]||''}"
@@ -2626,6 +2628,8 @@ function makeAGRow(ag) {
   const cols   = colDefs();
   // Show parent campaign name when in flat adgroup tab view
   const parentCamp = S.campaigns.find(c => c.campaign_id === ag.campaign_id) || null;
+  const agObjType  = (parentCamp || {}).objective_type || '';
+  const mE         = {...m, _cpr: getCostPerResult(m, agObjType)};
   const parentLabel = (S.level === 'adgroup' && parentCamp) ? `<span style="color:var(--text3);font-size:10px;display:block;margin-top:1px;">📊 ${esc(parentCamp.campaign_name)}</span>` : '';
   const agDispName = (S.config.agNames||{})[ag.adgroup_id] || ag.adgroup_name;
   const agSpend  = parseFloat(m.spend) || 0;
@@ -2663,7 +2667,7 @@ function makeAGRow(ag) {
       ${agPacBar}
     </td>
     <td><span class="spend-val">${fmtCur(m.spend||0)}</span>${trendBadge(m.spend||0, S.prevMetrics[ag.adgroup_id])}</td>
-    ${cols.map(cl=>`<td class="metric-num">${fmtN(getMetricVal(m,cl),cl.metric)}</td>`).join('')}
+    ${cols.map(cl=>`<td class="metric-num">${fmtN(getMetricVal(mE,cl),cl.metric)}</td>`).join('')}
     <td onclick="event.stopPropagation()" style="min-width:110px;">
       ${(()=>{
         const parentCampAg=S.campaigns.find(c=>String(c.campaign_id)===String(ag.campaign_id))||{};
@@ -3308,6 +3312,28 @@ function getKpiVidVal(id, m) {
   const n = v => parseFloat(v) || 0;
   if (mode === '6s') return n(m.video_watched_6s);
   return n(m.video_watched_2s);
+}
+function getCprDenominator(m, objType) {
+  const n = v => parseFloat(v) || 0;
+  switch(objType) {
+    case 'REACH':                  return n(m.reach);
+    case 'VIDEO_VIEWS':            return n(m.real_time_result) || n(m.video_watched_6s) || n(m.video_watched_2s);
+    case 'LEAD_GENERATION':        return n(m.onsite_form) || n(m._result) || n(m.real_time_result);
+    case 'CONVERSIONS':            return n(m._result) || n(m.real_time_result) || n(m.result);
+    case 'TRAFFIC':                return n(m.clicks);
+    case 'ENGAGEMENT':
+    case 'COMMUNITY_INTERACTION':  return n(m.follows) || n(m.real_time_result);
+    case 'APP_PROMOTION':          return n(m.real_time_result);
+    case 'PRODUCT_SALES':
+    case 'CATALOG_SALES':          return n(m.complete_payment) || n(m.real_time_result);
+    default:                       return n(m._result) || n(m.follows) || n(m.onsite_form);
+  }
+}
+function getCostPerResult(m, objType) {
+  const spend = parseFloat(m.spend) || 0;
+  if (spend <= 0) return 0;
+  const denom = getCprDenominator(m, objType);
+  return denom > 0 ? spend / denom : 0;
 }
 function getKpiMetricVal(id, m, metricStore) {
   const mt = (metricStore||S.kpiMetric)[id] || 'auto';
@@ -4089,7 +4115,7 @@ function fmtN(v, metric) { // full number — for metric cells
   if (v === undefined || v === null || v === '' || v === '-') return '—';
   if (metric === 'frequency') return parseFloat(v).toFixed(2);
   if (metric === 'ctr') return parseFloat(v).toFixed(2) + '%';
-  if (metric === 'cpm' || metric === 'cpc' || metric === 'cost_per_result') return fmtCur(parseFloat(v) || 0);
+  if (metric === 'cpm' || metric === 'cpc' || metric === 'cost_per_result' || metric === '_cpr') return fmtCur(parseFloat(v) || 0);
   const n = parseFloat(v);
   if (isNaN(n)) return '—';
   return n.toLocaleString('vi-VN');
