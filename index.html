@@ -2205,9 +2205,11 @@ async function fetchMetrics(aid, level, ids) {
   });
   const r = {};
   (d.list || []).forEach(item => { r[item.dimensions[dim]] = item.metrics; });
-  // Synthesize _result: real_time_result → onsite_form → result
+  // Synthesize _result and cost_per_result (API value is unreliable — compute client-side)
   Object.values(r).forEach(m => {
     m._result = String(parseFloat(m.real_time_result) || parseFloat(m.onsite_form) || parseFloat(m.result) || 0);
+    const res = parseFloat(m._result);
+    m.cost_per_result = res > 0 ? String(parseFloat(m.spend) / res) : '0';
   });
   return r;
 }
@@ -4037,7 +4039,7 @@ function fmtN(v, metric) { // full number — for metric cells
   if (v === undefined || v === null || v === '' || v === '-') return '—';
   if (metric === 'frequency') return parseFloat(v).toFixed(2);
   if (metric === 'ctr') return parseFloat(v).toFixed(2) + '%';
-  if (metric === 'cpm' || metric === 'cpc') return fmtCur(parseFloat(v) || 0);
+  if (metric === 'cpm' || metric === 'cpc' || metric === 'cost_per_result') return fmtCur(parseFloat(v) || 0);
   const n = parseFloat(v);
   if (isNaN(n)) return '—';
   return n.toLocaleString('vi-VN');
