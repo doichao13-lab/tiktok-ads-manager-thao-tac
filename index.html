@@ -441,6 +441,17 @@
       .logo-title .sub { display: none; }
       .header-actions .btn:not(.btn-primary) { display: none; }
     }
+    .date-picker-panel {
+      display: none; position: absolute; top: calc(100% + 6px); left: 0; z-index: 600;
+      background: var(--bg2); border: 1px solid var(--border); border-radius: 10px;
+      padding: 14px; box-shadow: 0 8px 28px rgba(0,0,0,.18);
+      flex-direction: column; gap: 10px; min-width: 290px;
+    }
+    .date-picker-panel.open { display: flex; }
+    .date-picker-panel input[type="date"] {
+      width: 100%; padding: 6px 8px; border: 1px solid var(--border); border-radius: 6px;
+      background: var(--bg3); color: var(--text); font-size: 12px; box-sizing: border-box;
+    }
 
     /* ── OAUTH INFO BOX ── */
     .info-box {
@@ -564,16 +575,37 @@
       </div>
     </div>
   </div>
-  <div class="select-wrap">
-    <select id="dateSel" onchange="onDateChange(this.value)">
-      <option value="today">Hôm nay</option>
-      <option value="yesterday">Hôm qua</option>
-      <option value="7" selected>7 ngày qua</option>
-      <option value="14">14 ngày qua</option>
-      <option value="30">30 ngày qua</option>
-      <option value="this_month">Tháng này</option>
-      <option value="last_month">Tháng trước</option>
-    </select>
+  <div style="position:relative;">
+    <div class="select-wrap">
+      <select id="dateSel" onchange="onDateChange(this.value)">
+        <option value="today">Hôm nay</option>
+        <option value="yesterday">Hôm qua</option>
+        <option value="7" selected>7 ngày qua</option>
+        <option value="14">14 ngày qua</option>
+        <option value="30">30 ngày qua</option>
+        <option value="this_month">Tháng này</option>
+        <option value="last_month">Tháng trước</option>
+        <option value="custom">📅 Tùy chọn ngày...</option>
+      </select>
+    </div>
+    <div id="customDatePanel" class="date-picker-panel">
+      <div style="font-size:12px;font-weight:700;color:var(--text);">📅 Chọn khoảng ngày</div>
+      <div style="display:flex;gap:8px;align-items:flex-end;">
+        <div style="flex:1;">
+          <div style="font-size:11px;color:var(--text2);margin-bottom:4px;">Từ ngày</div>
+          <input type="date" id="customDateStart">
+        </div>
+        <div style="font-size:12px;color:var(--text2);padding-bottom:8px;">→</div>
+        <div style="flex:1;">
+          <div style="font-size:11px;color:var(--text2);margin-bottom:4px;">Đến ngày</div>
+          <input type="date" id="customDateEnd">
+        </div>
+      </div>
+      <div style="display:flex;gap:6px;justify-content:flex-end;">
+        <button class="btn btn-sm btn-ghost" onclick="closeCustomDatePanel()">Hủy</button>
+        <button class="btn btn-sm btn-primary" onclick="applyCustomDate()">Áp dụng</button>
+      </div>
+    </div>
   </div>
   <div class="select-wrap">
     <select id="statusSel" onchange="onStatusFilter(this.value)">
@@ -1266,16 +1298,37 @@ while ($listener.IsListening) {
   <div class="anal-section">
     <div class="anal-controls">
       <span class="anal-title">📊 Tổng quan Hiệu quả</span>
-      <div class="select-wrap">
-        <select id="analDateSel" onchange="onAnalDateChange(this.value)">
-          <option value="today">Hôm nay</option>
-          <option value="yesterday">Hôm qua</option>
-          <option value="7" selected>7 ngày qua</option>
-          <option value="14">14 ngày qua</option>
-          <option value="30">30 ngày qua</option>
-          <option value="this_month">Tháng này</option>
-          <option value="last_month">Tháng trước</option>
-        </select>
+      <div style="position:relative;">
+        <div class="select-wrap">
+          <select id="analDateSel" onchange="onAnalDateChange(this.value)">
+            <option value="today">Hôm nay</option>
+            <option value="yesterday">Hôm qua</option>
+            <option value="7" selected>7 ngày qua</option>
+            <option value="14">14 ngày qua</option>
+            <option value="30">30 ngày qua</option>
+            <option value="this_month">Tháng này</option>
+            <option value="last_month">Tháng trước</option>
+            <option value="custom">📅 Tùy chọn ngày...</option>
+          </select>
+        </div>
+        <div id="analCustomDatePanel" class="date-picker-panel">
+          <div style="font-size:12px;font-weight:700;color:var(--text);">📅 Chọn khoảng ngày</div>
+          <div style="display:flex;gap:8px;align-items:flex-end;">
+            <div style="flex:1;">
+              <div style="font-size:11px;color:var(--text2);margin-bottom:4px;">Từ ngày</div>
+              <input type="date" id="analCustomDateStart">
+            </div>
+            <div style="font-size:12px;color:var(--text2);padding-bottom:8px;">→</div>
+            <div style="flex:1;">
+              <div style="font-size:11px;color:var(--text2);margin-bottom:4px;">Đến ngày</div>
+              <input type="date" id="analCustomDateEnd">
+            </div>
+          </div>
+          <div style="display:flex;gap:6px;justify-content:flex-end;">
+            <button class="btn btn-sm btn-ghost" onclick="closeAnalCustomDatePanel()">Hủy</button>
+            <button class="btn btn-sm btn-primary" onclick="applyAnalCustomDate()">Áp dụng</button>
+          </div>
+        </div>
       </div>
       <button class="btn btn-sm btn-ghost" onclick="loadAnalytics()" style="margin-left:auto;">🔄 Làm mới</button>
     </div>
@@ -1799,7 +1852,7 @@ const S = {
     return saved.map(k => k === 'lead_form' ? 'conversion' : k).filter(k => k in {impressions:1,frequency:1,reach:1,video_2s:1,video_6s:1,conversion:1,cpl:1,purchase:1,click_to_web:1,follow:1,cpm:1,ctr:1,cpc:1});
   })(),
   view:      localStorage.getItem('tt_view') || 'desktop',
-  dateRange: '7',
+  dateRange: '7', customStart: '', customEnd: '',
   statusFilter: '',
   nameFilter:   '',
   objFilter:    '',
@@ -1929,6 +1982,7 @@ function getRange(v) {
       end:   fmt(new Date(t.getFullYear(), t.getMonth(), 0)),
     };
   }
+  if (v === 'custom') return { start: S.customStart || fmt(t), end: S.customEnd || fmt(t) };
   const d = parseInt(v) || 7;
   const s = new Date(t); s.setDate(s.getDate() - d + 1);
   return { start: fmt(s), end: fmt(t) };
@@ -1956,6 +2010,12 @@ function getPrevRange(v) {
       start: fmt(new Date(t.getFullYear(), t.getMonth()-2, 1)),
       end:   fmt(new Date(t.getFullYear(), t.getMonth()-1, 0)),
     };
+  }
+  if (v === 'custom' && S.customStart && S.customEnd) {
+    const diff = Math.round((new Date(S.customEnd) - new Date(S.customStart)) / 86400000) + 1;
+    const pe = new Date(S.customStart); pe.setDate(pe.getDate() - 1);
+    const ps = new Date(pe); ps.setDate(ps.getDate() - diff + 1);
+    return { start: fmt(ps), end: fmt(pe) };
   }
   const days = parseInt(v) || 7;
   const e = new Date(t); e.setDate(e.getDate() - days);
@@ -2959,9 +3019,41 @@ function onAccountChange(v) {
 }
 
 function onDateChange(v) {
+  if (v === 'custom') {
+    const panel = document.getElementById('customDatePanel');
+    const s = document.getElementById('customDateStart');
+    const e = document.getElementById('customDateEnd');
+    if (S.customStart) s.value = S.customStart;
+    if (S.customEnd)   e.value = S.customEnd;
+    if (!s.value || !e.value) { const r = getRange('7'); s.value = s.value || r.start; e.value = e.value || r.end; }
+    panel.classList.add('open');
+    return;
+  }
+  document.getElementById('customDatePanel').classList.remove('open');
   S.dateRange = v;
   S.metrics = {}; S.prevMetrics = {};
   renderChips(); // update conversion delay note
+  if (S.accountId) loadCampaigns(S.accountId);
+}
+
+function closeCustomDatePanel() {
+  document.getElementById('customDatePanel').classList.remove('open');
+  document.getElementById('dateSel').value = S.dateRange;
+}
+
+function applyCustomDate() {
+  const s = document.getElementById('customDateStart').value;
+  const e = document.getElementById('customDateEnd').value;
+  if (!s || !e) { toast('warn', 'Vui lòng chọn đủ ngày bắt đầu và kết thúc'); return; }
+  if (s > e) { toast('warn', 'Ngày bắt đầu phải trước ngày kết thúc'); return; }
+  S.customStart = s; S.customEnd = e; S.dateRange = 'custom';
+  const fmtLabel = v => { const p = v.split('-'); return `${p[2]}/${p[1]}`; };
+  const opt = document.querySelector('#dateSel option[value="custom"]');
+  if (opt) opt.textContent = `📅 ${fmtLabel(s)} – ${fmtLabel(e)}`;
+  document.getElementById('dateSel').value = 'custom';
+  document.getElementById('customDatePanel').classList.remove('open');
+  S.metrics = {}; S.prevMetrics = {};
+  renderChips();
   if (S.accountId) loadCampaigns(S.accountId);
 }
 
@@ -5018,7 +5110,39 @@ function renderAnalKPI(summary) {
     </div>`;
 }
 
-function onAnalDateChange(v) { S_analDate = v; loadAnalytics(); }
+function onAnalDateChange(v) {
+  if (v === 'custom') {
+    const panel = document.getElementById('analCustomDatePanel');
+    const s = document.getElementById('analCustomDateStart');
+    const e = document.getElementById('analCustomDateEnd');
+    if (S.customStart) s.value = S.customStart;
+    if (S.customEnd)   e.value = S.customEnd;
+    if (!s.value || !e.value) { const r = getRange('7'); s.value = s.value || r.start; e.value = e.value || r.end; }
+    panel.classList.add('open');
+    return;
+  }
+  document.getElementById('analCustomDatePanel').classList.remove('open');
+  S_analDate = v; loadAnalytics();
+}
+
+function closeAnalCustomDatePanel() {
+  document.getElementById('analCustomDatePanel').classList.remove('open');
+  document.getElementById('analDateSel').value = S_analDate;
+}
+
+function applyAnalCustomDate() {
+  const s = document.getElementById('analCustomDateStart').value;
+  const e = document.getElementById('analCustomDateEnd').value;
+  if (!s || !e) { toast('warn', 'Vui lòng chọn đủ ngày bắt đầu và kết thúc'); return; }
+  if (s > e) { toast('warn', 'Ngày bắt đầu phải trước ngày kết thúc'); return; }
+  S.customStart = s; S.customEnd = e; S_analDate = 'custom';
+  const fmtLabel = v => { const p = v.split('-'); return `${p[2]}/${p[1]}`; };
+  const opt = document.querySelector('#analDateSel option[value="custom"]');
+  if (opt) opt.textContent = `📅 ${fmtLabel(s)} – ${fmtLabel(e)}`;
+  document.getElementById('analDateSel').value = 'custom';
+  document.getElementById('analCustomDatePanel').classList.remove('open');
+  loadAnalytics();
+}
 
 async function fetchSummaryAgg(aid) {
   if (S.demo) {
