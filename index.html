@@ -2430,7 +2430,7 @@ function makeTotalRow(list) {
     totalImp    += parseFloat(m.impressions) || 0;
     totalReach  += parseFloat(m.reach) || 0;
     totalClicks += parseFloat(m.clicks) || 0;
-    totalResult += getCprDenominator(m, c.objective_type);
+    totalResult += getCprDenominator(m, c.objective_type, c.campaign_id);
     cols.forEach(cl => {
       if (cl.metric === '_cpr') return; // derived — don't sum
       const v = parseFloat(getMetricVal(m, cl)) || 0;
@@ -2538,7 +2538,7 @@ function makeCampaignRow(c) {
   const selected   = S.selectedCampaignIds.has(c.campaign_id);
   const isExpanded = S.expanded.has(c.campaign_id);
   const m          = S.metrics[c.campaign_id] || {};
-  const mE         = {...m, _cpr: getCostPerResult(m, c.objective_type)};
+  const mE         = {...m, _cpr: getCostPerResult(m, c.objective_type, c.campaign_id)};
   const bmode      = c.budget_mode === 'BUDGET_MODE_DAILY' ? '/ng' : '';
   const cols       = colDefs();
   const agLoaded   = S.adgroups[c.campaign_id];
@@ -2629,7 +2629,7 @@ function makeAGRow(ag) {
   // Show parent campaign name when in flat adgroup tab view
   const parentCamp = S.campaigns.find(c => c.campaign_id === ag.campaign_id) || null;
   const agObjType  = (parentCamp || {}).objective_type || '';
-  const mE         = {...m, _cpr: getCostPerResult(m, agObjType)};
+  const mE         = {...m, _cpr: getCostPerResult(m, agObjType, ag.adgroup_id)};
   const parentLabel = (S.level === 'adgroup' && parentCamp) ? `<span style="color:var(--text3);font-size:10px;display:block;margin-top:1px;">📊 ${esc(parentCamp.campaign_name)}</span>` : '';
   const agDispName = (S.config.agNames||{})[ag.adgroup_id] || ag.adgroup_name;
   const agSpend  = parseFloat(m.spend) || 0;
@@ -3313,11 +3313,11 @@ function getKpiVidVal(id, m) {
   if (mode === '6s') return n(m.video_watched_6s);
   return n(m.video_watched_2s);
 }
-function getCprDenominator(m, objType) {
+function getCprDenominator(m, objType, id) {
   const n = v => parseFloat(v) || 0;
   switch(objType) {
     case 'REACH':                  return n(m.reach);
-    case 'VIDEO_VIEWS':            return n(m.real_time_result) || n(m.video_watched_6s) || n(m.video_watched_2s);
+    case 'VIDEO_VIEWS':            return n(m.real_time_result) || getKpiVidVal(id, m);
     case 'LEAD_GENERATION':        return n(m.onsite_form) || n(m._result) || n(m.real_time_result);
     case 'CONVERSIONS':            return n(m._result) || n(m.real_time_result) || n(m.result);
     case 'TRAFFIC':                return n(m.clicks);
@@ -3329,10 +3329,10 @@ function getCprDenominator(m, objType) {
     default:                       return n(m._result) || n(m.follows) || n(m.onsite_form);
   }
 }
-function getCostPerResult(m, objType) {
+function getCostPerResult(m, objType, id) {
   const spend = parseFloat(m.spend) || 0;
   if (spend <= 0) return 0;
-  const denom = getCprDenominator(m, objType);
+  const denom = getCprDenominator(m, objType, id);
   return denom > 0 ? spend / denom : 0;
 }
 function getKpiMetricVal(id, m, metricStore) {
