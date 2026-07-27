@@ -434,6 +434,9 @@
       .summary { grid-template-columns: repeat(2,1fr); }
       select { min-width: 130px; }
     }
+    @media (max-width: 600px) {
+      .header-tagline, .header-sep { display: none; }
+    }
     @media (max-width: 480px) {
       .logo-title .sub { display: none; }
       .header-actions .btn:not(.btn-primary) { display: none; }
@@ -522,8 +525,8 @@
       <span style="font-size:15px;font-weight:800;letter-spacing:-.3px;color:var(--text);">SEONGON</span>
       <span style="font-size:10px;font-weight:500;color:var(--text2);letter-spacing:.3px;">TikTok Ads Manager</span>
     </div>
-    <div style="height:20px;width:1px;background:var(--border);margin:0 4px;"></div>
-    <div style="font-size:11px;color:var(--text2);">AI-First <span style="color:var(--accent);font-weight:600;">✦</span> Search Marketing Growth Partner</div>
+    <div class="header-sep" style="height:20px;width:1px;background:var(--border);margin:0 4px;"></div>
+    <div class="header-tagline" style="font-size:11px;color:var(--text2);white-space:nowrap;">AI-First <span style="color:var(--accent);font-weight:600;">✦</span> Search Marketing Growth Partner</div>
     <div id="demoBadge" class="demo-badge" style="display:none;">⚡ Demo</div>
   </div>
   <div class="header-actions">
