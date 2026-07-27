@@ -452,6 +452,7 @@
       width: 100%; padding: 6px 8px; border: 1px solid var(--border); border-radius: 6px;
       background: var(--bg3); color: var(--text); font-size: 12px; box-sizing: border-box;
     }
+    th[data-tt] { cursor: help; }
 
     /* ── OAUTH INFO BOX ── */
     .info-box {
@@ -525,6 +526,9 @@
   </style>
 </head>
 <body>
+
+<!-- ===================== COL TOOLTIP ===================== -->
+<div id="colTooltip" style="position:fixed;z-index:9999;display:none;pointer-events:none;max-width:260px;background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:10px 13px;box-shadow:0 4px 18px rgba(0,0,0,.18);font-size:12px;line-height:1.55;color:var(--text);"></div>
 
 <!-- ===================== HEADER ===================== -->
 <header class="header">
@@ -1811,19 +1815,19 @@ while ($listener.IsListening) {
 <script>
 /* ═══════════════════════════ COLUMN DEFINITIONS ═══════════════════════════ */
 const COLS = {
-  impressions:  { label: 'Hiển thị',   metric: 'impressions',            icon: '📺' },
-  frequency:    { label: 'Tần suất',   metric: 'frequency',              icon: '🔁' },
-  reach:        { label: 'Reach',       metric: 'reach',                  icon: '👁' },
-  video_2s:     { label: 'View 2s',     metric: 'video_watched_2s',  icon: '▶' },
-  video_6s:     { label: 'View 6s',     metric: 'video_watched_6s',  icon: '▶▶' },
-  conversion:   { label: 'Kết quả', metric: '_result', icon: '✅', note: 'real_time_result → onsite_form (Lead Form) → result.' },
-  cpl:          { label: 'Giá/KQ',     metric: 'cost_per_result',        icon: '💰' },
-  purchase:     { label: 'Mua hàng',    metric: 'complete_payment',  icon: '🛒' },
-  click_to_web: { label: 'Click Web',   metric: 'clicks',                 icon: '🖱' },
-  follow:       { label: 'Follow',      metric: 'follows',                icon: '➕' },
-  cpm:          { label: 'CPM',         metric: 'cpm',                    icon: '📊' },
-  ctr:          { label: 'CTR',         metric: 'ctr',                    icon: '🎯' },
-  cpc:          { label: 'CPC',         metric: 'cpc',                    icon: '🖱💰' },
+  impressions:  { label: 'Hiển thị',   metric: 'impressions',           icon: '📺',   tip: 'Tổng lượt hiển thị quảng cáo (không tính unique người xem). Dùng để đo độ phủ phân phối.' },
+  frequency:    { label: 'Tần suất',   metric: 'frequency',             icon: '🔁',   tip: 'Số lần trung bình 1 người thấy quảng cáo trong kỳ. >3 lần/7 ngày = nguy cơ banner blindness, cần rotate creative.' },
+  reach:        { label: 'Reach',      metric: 'reach',                 icon: '👁',   tip: 'Số người dùng độc lập đã thấy quảng cáo ít nhất 1 lần trong kỳ.' },
+  video_2s:     { label: 'View 2s',    metric: 'video_watched_2s',      icon: '▶',    tip: 'Số lượt xem video đủ 2 giây — ngưỡng engagement tối thiểu TikTok tính là "có xem".' },
+  video_6s:     { label: 'View 6s',    metric: 'video_watched_6s',      icon: '▶▶',   tip: 'Số lượt xem đủ 6 giây — người xem thực sự quan tâm đến nội dung. Tỷ lệ View6s/Hiển thị là VTR 6s.' },
+  conversion:   { label: 'Kết quả',   metric: '_result',                icon: '✅',   note: 'real_time_result → onsite_form (Lead Form) → result.', tip: 'Số kết quả đạt được theo mục tiêu chiến dịch (lead, lượt xem, mua hàng...). TikTok ưu tiên real_time_result.' },
+  cpl:          { label: 'Giá/KQ',    metric: 'cost_per_result',        icon: '💰',   tip: 'Chi phí trên mỗi Kết quả (Cost per Result). Ngân sách tiêu để đạt 1 đơn vị mục tiêu — số càng thấp càng hiệu quả.' },
+  purchase:     { label: 'Mua hàng',  metric: 'complete_payment',       icon: '🛒',   tip: 'Số lượt mua hàng hoàn tất (Complete Payment). KPI chính cho chiến dịch Product Sales / Conversion.' },
+  click_to_web: { label: 'Click Web', metric: 'clicks',                 icon: '🖱',   tip: 'Số lượt click thoát ra website / landing page. Kết hợp với CTR để đánh giá chất lượng creative và CTA.' },
+  follow:       { label: 'Follow',    metric: 'follows',                icon: '➕',   tip: 'Số người mới follow trang sau khi xem quảng cáo. KPI chính cho chiến dịch Community Interaction.' },
+  cpm:          { label: 'CPM',       metric: 'cpm',                    icon: '📊',   tip: 'Chi phí trên 1.000 lượt hiển thị (Cost per Mille). CPM cao = audience hẹp hoặc cạnh tranh đấu thầu cao.' },
+  ctr:          { label: 'CTR',       metric: 'ctr',                    icon: '🎯',   tip: 'Tỷ lệ click / lượt hiển thị (Click-Through Rate). CTR thấp = creative kém hấp dẫn, cần thay video hoặc copy.' },
+  cpc:          { label: 'CPC',       metric: 'cpc',                    icon: '🖱💰',  tip: 'Chi phí trên mỗi lượt click (Cost per Click). Phụ thuộc vào CTR và mức bid — CPC cao + CTR thấp = vấn đề creative.' },
 };
 
 const USD_VND_RATE = 26423; // 1 USD = 26,423 VND
@@ -2330,14 +2334,14 @@ function renderHead() {
     const someChecked = S.selectedCampaignIds.size > 0 && !allChecked;
     document.getElementById('tHead').innerHTML = `
       <th class="col-check"><input type="checkbox" id="selectAllCmp" ${allChecked?'checked':''} onchange="toggleSelectAll(this.checked)" title="Chọn tất cả" /></th>
-      <th>Chiến dịch</th>
-      <th>Bật / Tắt</th>
-      <th>Ngân sách</th>
-      <th>Chi tiêu</th>
-      ${cols.map(c => `<th>${c.icon} ${c.label}</th>`).join('')}
-      <th title="Mục tiêu KPI cần đạt">🎯 KPI</th>
-      <th title="KPI đã chạy từ tài khoản khác (tùy chọn)">➕ Bổ sung</th>
-      <th title="% đã đạt so với KPI (bao gồm cả Bổ sung)">📊 Tiến độ</th>
+      <th data-tt="Tên chiến dịch quảng cáo và mục tiêu (objective). Click ▶ để xem nhóm QC bên trong.">Chiến dịch</th>
+      <th data-tt="Bật hoặc tắt chiến dịch. Khi tắt, toàn bộ nhóm QC và quảng cáo bên trong sẽ dừng phân phối.">Bật / Tắt</th>
+      <th data-tt="Ngân sách tổng hoặc ngân sách ngày đã thiết lập cho chiến dịch.">Ngân sách</th>
+      <th data-tt="Tổng chi phí thực tế đã tiêu trong khoảng thời gian đang xem.">Chi tiêu</th>
+      ${cols.map(c => `<th data-tt="${(c.tip||'').replace(/"/g,'&quot;')}">${c.icon} ${c.label}</th>`).join('')}
+      <th data-tt="Mục tiêu kết quả cần đạt trong kỳ (số lead, reach, purchase...). Dùng để theo dõi tiến độ chiến dịch.">🎯 KPI</th>
+      <th data-tt="KPI đã chạy từ tài khoản quảng cáo khác (tùy chọn). Sẽ được cộng vào khi tính % tiến độ.">➕ Bổ sung</th>
+      <th data-tt="% kết quả đã đạt so với tổng KPI (Kết quả hiện tại + Bổ sung) / KPI đặt ra.">📊 Tiến độ</th>
       <th>Thao tác</th>
     `;
     // Set indeterminate state
@@ -2345,14 +2349,14 @@ function renderHead() {
     if (cb) cb.indeterminate = someChecked;
   } else {
     document.getElementById('tHead').innerHTML = `
-      <th>Nhóm quảng cáo</th>
-      <th>Bật / Tắt</th>
-      <th>Ngân sách</th>
-      <th>Chi tiêu</th>
-      ${cols.map(c => `<th>${c.icon} ${c.label}</th>`).join('')}
-      <th title="Mục tiêu KPI nhóm QC">🎯 KPI</th>
-      <th title="KPI bổ sung từ TK khác">➕ Bổ sung</th>
-      <th title="% tiến độ nhóm QC">📊 Tiến độ</th>
+      <th data-tt="Tên nhóm quảng cáo và chiến lược đấu thầu. Mỗi nhóm QC có thể chứa nhiều quảng cáo khác nhau.">Nhóm quảng cáo</th>
+      <th data-tt="Bật hoặc tắt nhóm QC. Khi tắt, tất cả quảng cáo bên trong dừng phân phối nhưng chiến dịch vẫn chạy.">Bật / Tắt</th>
+      <th data-tt="Ngân sách ngày hoặc tổng ngân sách đã thiết lập cho nhóm QC này.">Ngân sách</th>
+      <th data-tt="Tổng chi phí thực tế đã tiêu của nhóm QC trong khoảng thời gian đang xem.">Chi tiêu</th>
+      ${cols.map(c => `<th data-tt="${(c.tip||'').replace(/"/g,'&quot;')}">${c.icon} ${c.label}</th>`).join('')}
+      <th data-tt="Mục tiêu kết quả cần đạt của nhóm QC trong kỳ. Dùng để theo dõi tiến độ từng nhóm.">🎯 KPI</th>
+      <th data-tt="KPI đã chạy từ tài khoản quảng cáo khác, cộng vào khi tính % tiến độ nhóm QC.">➕ Bổ sung</th>
+      <th data-tt="% kết quả đã đạt so với tổng KPI của nhóm QC (Kết quả + Bổ sung) / KPI.">📊 Tiến độ</th>
       <th>Thao tác</th>
     `;
   }
@@ -6069,6 +6073,28 @@ async function loadAnalytics() {
 }
 
 document.addEventListener('DOMContentLoaded', init);
+
+/* ── COLUMN HEADER TOOLTIP ── */
+(function() {
+  const tip = document.getElementById('colTooltip');
+  let hideTimer;
+  document.addEventListener('mouseover', function(e) {
+    const th = e.target.closest('th[data-tt]');
+    if (!th || !th.dataset.tt) { return; }
+    clearTimeout(hideTimer);
+    tip.textContent = th.dataset.tt;
+    tip.style.display = 'block';
+    const rect = th.getBoundingClientRect();
+    const left = Math.min(rect.left, window.innerWidth - 274);
+    tip.style.left = Math.max(4, left) + 'px';
+    tip.style.top  = (rect.bottom + 5) + 'px';
+  });
+  document.addEventListener('mouseout', function(e) {
+    if (e.target.closest('th[data-tt]')) {
+      hideTimer = setTimeout(() => { tip.style.display = 'none'; }, 80);
+    }
+  });
+})();
 </script>
 </body>
 </html>
