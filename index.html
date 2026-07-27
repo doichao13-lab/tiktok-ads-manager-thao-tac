@@ -2313,7 +2313,15 @@ function renderCampaignLevel() {
   }
   if (S.objFilter) list = list.filter(c => c.objective_type === S.objFilter);
   if (!list.length) {
-    tb.innerHTML = `<tr><td colspan="20" style="text-align:center;padding:50px;color:var(--text2);">Không có chiến dịch nào</td></tr>`;
+    const isFiltered = S.nameFilter || S.objFilter || S.statusFilter;
+    tb.innerHTML = isFiltered
+      ? `<tr><td colspan="20" style="text-align:center;padding:50px;color:var(--text2);">
+           <div style="font-size:32px;margin-bottom:10px;">🔍</div>
+           <div style="font-weight:600;color:var(--text);margin-bottom:6px;">Không tìm thấy chiến dịch nào phù hợp</div>
+           <div style="font-size:12px;margin-bottom:14px;">Thử bỏ bớt bộ lọc hoặc thay đổi từ khóa tìm kiếm</div>
+           <button class="btn btn-sm" onclick="clearCampaignFilters()">✕ Xóa bộ lọc</button>
+         </td></tr>`
+      : `<tr><td colspan="20" style="text-align:center;padding:50px;color:var(--text2);">Không có chiến dịch nào</td></tr>`;
     return;
   }
   list.forEach(c => {
@@ -2962,6 +2970,13 @@ function onStatusFilter(v) {
 function onNameFilter(v) {
   S.nameFilter = v;
   render();
+}
+
+function clearCampaignFilters() {
+  S.nameFilter = ''; S.statusFilter = ''; S.objFilter = '';
+  document.getElementById('nameFilterInput').value = '';
+  document.getElementById('statusSel').value = '';
+  renderObjFilter(); render(); updateCards();
 }
 
 function renderObjFilter() {
@@ -4112,11 +4127,11 @@ const AI_INDUSTRY_LABELS = {
   edu: 'Giáo dục / Đào tạo'
 };
 const AI_INDUSTRY_BENCHMARKS = {
-  fmcg:       { cpm: '45.000–80.000đ', ctr: '1,2–2,5%', cpl: 'N/A (dùng ROAS)', freq: '≤ 3/tuần' },
-  cosmetic:   { cpm: '50.000–90.000đ', ctr: '1,5–3,0%', cpl: '80.000–200.000đ', freq: '≤ 3/tuần' },
-  supplement: { cpm: '60.000–100.000đ', ctr: '1,0–2,0%', cpl: '150.000–400.000đ', freq: '≤ 4/tuần' },
-  bds:        { cpm: '80.000–150.000đ', ctr: '0,8–1,5%', cpl: '500.000–2.000.000đ', freq: '≤ 5/tuần' },
-  edu:        { cpm: '55.000–95.000đ', ctr: '1,0–2,5%', cpl: '100.000–350.000đ', freq: '≤ 3/tuần' }
+  fmcg:       { cpm: '<35.000đ tốt / 35–60k cần theo dõi / >60.000đ xấu',   ctr: '>1,8% tốt / 1,0–1,8% cần theo dõi / <1,0% xấu',  cpl: 'N/A — dùng ROAS (≥3 tốt / 1,5–3 theo dõi / <1,5 xấu); CPA tốt <80.000đ', freq: '≤ 3/tuần' },
+  cosmetic:   { cpm: '<40.000đ tốt / 40–70k cần theo dõi / >70.000đ xấu',   ctr: '>2,0% tốt / 1,0–2,0% cần theo dõi / <1,0% xấu',  cpl: '<80.000đ tốt / 80–180k cần theo dõi / >180.000đ xấu',   freq: '≤ 3/tuần' },
+  supplement: { cpm: '<50.000đ tốt / 50–90k cần theo dõi / >90.000đ xấu',   ctr: '>1,5% tốt / 0,8–1,5% cần theo dõi / <0,8% xấu',  cpl: '<150.000đ tốt / 150–350k cần theo dõi / >350.000đ xấu', freq: '≤ 3/tuần' },
+  bds:        { cpm: '<60.000đ tốt / 60–100k cần theo dõi / >100.000đ xấu', ctr: '>1,2% tốt / 0,7–1,2% cần theo dõi / <0,7% xấu',  cpl: '<500.000đ tốt / 500k–1,2tr cần theo dõi / >1.200.000đ xấu', freq: '≤ 5/tuần (BDS chấp nhận cao hơn)' },
+  edu:        { cpm: '<45.000đ tốt / 45–75k cần theo dõi / >75.000đ xấu',   ctr: '>1,5% tốt / 0,8–1,5% cần theo dõi / <0,8% xấu',  cpl: '<120.000đ tốt / 120–250k cần theo dõi / >250.000đ xấu', freq: '≤ 3/tuần' }
 };
 const AI_BRIEF_INDUSTRY_TONE = {
   cosmetic: 'Fresh, Glow, Empowering', fmcg: 'Warm, Craving, Familiar',
