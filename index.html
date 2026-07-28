@@ -657,6 +657,7 @@
   <div class="level-tab" id="ltabExport" onclick="switchLevel('export')">📋 Xuất báo cáo</div>
   <div class="level-tab" id="ltabAI" onclick="switchLevel('ai')">🤖 Trợ lý AI</div>
   <div class="level-tab" id="ltabVideo" onclick="switchLevel('video')">⬇ Tải Video</div>
+  <div class="level-tab" id="ltabCreate" onclick="switchLevel('create')">➕ Tạo chiến dịch</div>
 </div>
 
 <!-- ===================== MAIN ===================== -->
@@ -1802,6 +1803,286 @@ while ($listener.IsListening) {
         🤖 Tạo Brief prompt
       </button>
 
+    </div>
+  </div>
+
+</div>
+</div>
+
+<!-- ===================== TẠO CHIẾN DỊCH ===================== -->
+<style>
+  .create-section { padding:24px 32px; max-width:760px; }
+  .create-steps { display:flex; gap:0; margin-bottom:28px; }
+  .create-step {
+    flex:1; display:flex; flex-direction:column; align-items:center; gap:6px;
+    position:relative; cursor:pointer;
+  }
+  .create-step:not(:last-child)::after {
+    content:''; position:absolute; top:16px; left:calc(50% + 16px);
+    width:calc(100% - 32px); height:2px; background:var(--border); z-index:0;
+  }
+  .create-step.done::after { background:var(--primary); }
+  .create-step-num {
+    width:32px; height:32px; border-radius:50%; display:flex; align-items:center;
+    justify-content:center; font-size:13px; font-weight:700; z-index:1;
+    background:var(--bg3); border:2px solid var(--border); color:var(--text2);
+    transition:.2s;
+  }
+  .create-step.active .create-step-num { background:var(--primary); border-color:var(--primary); color:#fff; }
+  .create-step.done .create-step-num { background:var(--primary); border-color:var(--primary); color:#fff; }
+  .create-step-label { font-size:11px; color:var(--text2); font-weight:500; white-space:nowrap; }
+  .create-step.active .create-step-label { color:var(--primary); font-weight:700; }
+  .create-panel { display:none; }
+  .create-panel.active { display:block; }
+  .create-card {
+    background:var(--bg2); border:1px solid var(--border); border-radius:14px;
+    padding:24px; box-shadow:0 1px 4px rgba(0,0,0,.06);
+  }
+  .create-card h3 { font-size:15px; font-weight:700; margin-bottom:18px; }
+  .form-row { display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:14px; }
+  .form-row.full { grid-template-columns:1fr; }
+  .form-group { display:flex; flex-direction:column; gap:5px; }
+  .form-group label { font-size:12px; font-weight:600; color:var(--text2); }
+  .form-group input, .form-group select, .form-group textarea {
+    padding:8px 11px; border:1px solid var(--border); border-radius:8px;
+    background:var(--bg3); color:var(--text); font-size:13px; font-family:inherit;
+    transition:border-color .15s;
+  }
+  .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+    outline:none; border-color:var(--primary);
+  }
+  .form-group .hint { font-size:11px; color:var(--text3); margin-top:2px; }
+  .budget-mode-group { display:flex; gap:10px; }
+  .budget-mode-opt {
+    flex:1; padding:10px; border:2px solid var(--border); border-radius:9px;
+    cursor:pointer; text-align:center; transition:.15s;
+  }
+  .budget-mode-opt.active { border-color:var(--primary); background:rgba(23,71,234,.06); }
+  .budget-mode-opt .bmo-label { font-size:12px; font-weight:600; }
+  .budget-mode-opt .bmo-desc { font-size:11px; color:var(--text2); margin-top:2px; }
+  .create-actions { display:flex; gap:10px; justify-content:flex-end; margin-top:20px; }
+  .create-result {
+    margin-top:16px; padding:14px 16px; border-radius:10px;
+    font-size:13px; line-height:1.6; display:none;
+  }
+  .create-result.success { background:#ECFDF5; border:1px solid #6EE7B7; color:#065F46; }
+  .create-result.error { background:#FEF2F2; border:1px solid #FCA5A5; color:#991B1B; }
+  .step-summary {
+    background:var(--bg3); border:1px solid var(--border); border-radius:8px;
+    padding:12px 14px; font-size:12px; color:var(--text2); margin-bottom:16px;
+    line-height:1.8;
+  }
+  .step-summary strong { color:var(--text); }
+</style>
+
+<div id="createSection" style="display:none;">
+<div class="create-section">
+
+  <div style="margin-bottom:20px;">
+    <div style="font-size:18px;font-weight:700;margin-bottom:4px;">➕ Tạo chiến dịch mới</div>
+    <div style="font-size:13px;color:var(--text2);">Tạo Campaign và Ad Group trực tiếp lên TikTok Ads.</div>
+  </div>
+
+  <!-- Step indicator -->
+  <div class="create-steps" id="createSteps">
+    <div class="create-step active" id="cstep1" onclick="createGoStep(1)">
+      <div class="create-step-num">1</div>
+      <div class="create-step-label">Chiến dịch</div>
+    </div>
+    <div class="create-step" id="cstep2" onclick="createGoStep(2)">
+      <div class="create-step-num">2</div>
+      <div class="create-step-label">Nhóm QC</div>
+    </div>
+    <div class="create-step" id="cstep3">
+      <div class="create-step-num">✓</div>
+      <div class="create-step-label">Hoàn thành</div>
+    </div>
+  </div>
+
+  <!-- PANEL 1: Campaign -->
+  <div class="create-panel active" id="cpanel1">
+    <div class="create-card">
+      <h3>📊 Thông tin chiến dịch</h3>
+
+      <div class="form-row full">
+        <div class="form-group">
+          <label>Tên chiến dịch <span style="color:var(--danger)">*</span></label>
+          <input type="text" id="cc_name" placeholder="VD: [Tháng 8] Sản phẩm X - Lead Form" />
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>Mục tiêu chiến dịch <span style="color:var(--danger)">*</span></label>
+          <select id="cc_objective">
+            <option value="TRAFFIC">Click to Web (Traffic)</option>
+            <option value="LEAD_GENERATION" selected>Lead Form</option>
+            <option value="VIDEO_VIEWS">Lượt xem Video</option>
+            <option value="REACH">Reach (Tiếp cận)</option>
+            <option value="CONVERSIONS">Conversion (Chuyển đổi)</option>
+            <option value="PRODUCT_SALES">TikTok Shop (Product Sales)</option>
+            <option value="COMMUNITY_INTERACTION">Follow / Tương tác</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Trạng thái ban đầu</label>
+          <select id="cc_status">
+            <option value="DISABLE">Tạm dừng (an toàn hơn)</option>
+            <option value="ENABLE">Kích hoạt ngay</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-group" style="margin-bottom:14px;">
+        <label>Loại ngân sách chiến dịch</label>
+        <div class="budget-mode-group" id="cc_budget_mode_group">
+          <div class="budget-mode-opt active" data-val="BUDGET_MODE_INFINITE" onclick="selectBudgetMode(this,'cc')">
+            <div class="bmo-label">Không giới hạn</div>
+            <div class="bmo-desc">Kiểm soát ở cấp nhóm QC</div>
+          </div>
+          <div class="budget-mode-opt" data-val="BUDGET_MODE_DAILY" onclick="selectBudgetMode(this,'cc')">
+            <div class="bmo-label">Theo ngày</div>
+            <div class="bmo-desc">Giới hạn chi tiêu mỗi ngày</div>
+          </div>
+          <div class="budget-mode-opt" data-val="BUDGET_MODE_TOTAL" onclick="selectBudgetMode(this,'cc')">
+            <div class="bmo-label">Tổng ngân sách</div>
+            <div class="bmo-desc">Giới hạn toàn chiến dịch</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-row" id="cc_budget_row" style="display:none;">
+        <div class="form-group">
+          <label>Ngân sách (VND) <span style="color:var(--danger)">*</span></label>
+          <input type="number" id="cc_budget" placeholder="VD: 500000" min="0" />
+          <span class="hint">Tối thiểu 50,000 VND/ngày</span>
+        </div>
+      </div>
+
+      <div id="cc_result" class="create-result"></div>
+
+      <div class="create-actions">
+        <button class="btn" onclick="switchLevel('campaign')">Huỷ</button>
+        <button class="btn btn-primary" onclick="doCreateCampaign()">
+          Tạo chiến dịch →
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- PANEL 2: Ad Group -->
+  <div class="create-panel" id="cpanel2">
+    <div class="step-summary" id="ag_campaign_summary"></div>
+    <div class="create-card">
+      <h3>👥 Thông tin nhóm quảng cáo</h3>
+
+      <div class="form-row full">
+        <div class="form-group">
+          <label>Tên nhóm quảng cáo <span style="color:var(--danger)">*</span></label>
+          <input type="text" id="ag_name" placeholder="VD: [Nhóm 1] Nữ 25-34 - HCM" />
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>Vị trí đặt quảng cáo</label>
+          <select id="ag_placement">
+            <option value="PLACEMENT_TIKTOK">TikTok (khuyến nghị)</option>
+            <option value="PLACEMENT_PANGLE">Pangle</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Mục tiêu tối ưu</label>
+          <select id="ag_optimization">
+            <option value="CLICK">Click</option>
+            <option value="REACH">Reach</option>
+            <option value="VIDEO_VIEW">Video View</option>
+            <option value="CONVERT">Convert</option>
+            <option value="LEAD_GENERATION">Lead Generation</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>Giới tính</label>
+          <select id="ag_gender">
+            <option value="GENDER_UNLIMITED">Tất cả</option>
+            <option value="GENDER_MALE">Nam</option>
+            <option value="GENDER_FEMALE">Nữ</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Độ tuổi</label>
+          <select id="ag_age" multiple size="4" style="height:auto;">
+            <option value="AGE_13_17">13–17</option>
+            <option value="AGE_18_24" selected>18–24</option>
+            <option value="AGE_25_34" selected>25–34</option>
+            <option value="AGE_35_44">35–44</option>
+            <option value="AGE_45_100">45+</option>
+          </select>
+          <span class="hint">Giữ Ctrl/Cmd để chọn nhiều</span>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>Ngày bắt đầu <span style="color:var(--danger)">*</span></label>
+          <input type="date" id="ag_start" />
+        </div>
+        <div class="form-group">
+          <label>Ngày kết thúc (tuỳ chọn)</label>
+          <input type="date" id="ag_end" />
+        </div>
+      </div>
+
+      <div class="form-group" style="margin-bottom:14px;">
+        <label>Loại ngân sách nhóm QC</label>
+        <div class="budget-mode-group" id="ag_budget_mode_group">
+          <div class="budget-mode-opt active" data-val="BUDGET_MODE_DAILY" onclick="selectBudgetMode(this,'ag')">
+            <div class="bmo-label">Theo ngày</div>
+            <div class="bmo-desc">Chi tiêu mỗi ngày</div>
+          </div>
+          <div class="budget-mode-opt" data-val="BUDGET_MODE_TOTAL" onclick="selectBudgetMode(this,'ag')">
+            <div class="bmo-label">Tổng ngân sách</div>
+            <div class="bmo-desc">Toàn bộ nhóm QC</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>Ngân sách (VND) <span style="color:var(--danger)">*</span></label>
+          <input type="number" id="ag_budget" placeholder="VD: 200000" min="0" />
+          <span class="hint">Tối thiểu 20,000 VND/ngày</span>
+        </div>
+        <div class="form-group">
+          <label>Giá thầu (VND, tuỳ chọn)</label>
+          <input type="number" id="ag_bid" placeholder="Để trống = tự động" min="0" />
+        </div>
+      </div>
+
+      <div id="ag_result" class="create-result"></div>
+
+      <div class="create-actions">
+        <button class="btn" onclick="createGoStep(1)">← Quay lại</button>
+        <button class="btn btn-primary" onclick="doCreateAdGroup()">
+          Tạo nhóm QC →
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- PANEL 3: Done -->
+  <div class="create-panel" id="cpanel3">
+    <div class="create-card" style="text-align:center;padding:40px;">
+      <div style="font-size:56px;margin-bottom:16px;">🎉</div>
+      <div style="font-size:20px;font-weight:700;margin-bottom:10px;">Tạo thành công!</div>
+      <div id="done_summary" style="font-size:13px;color:var(--text2);line-height:1.8;margin-bottom:24px;"></div>
+      <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">
+        <button class="btn btn-primary" onclick="switchLevel('campaign');loadDashboard()">📊 Xem danh sách chiến dịch</button>
+        <button class="btn" onclick="createReset()">➕ Tạo chiến dịch mới</button>
+      </div>
     </div>
   </div>
 
@@ -3141,6 +3422,7 @@ function switchLevel(level, campaignId) {
   const aiSec       = document.getElementById('aiSection');
   const videoSec    = document.getElementById('videoSection');
   const analyticsSec= document.getElementById('analyticsSection');
+  const createSec   = document.getElementById('createSection');
   const vd = document.getElementById('viewDesktop');
   const vm = document.getElementById('viewMobile');
   const lt1 = document.getElementById('ltabCampaign');
@@ -3149,6 +3431,7 @@ function switchLevel(level, campaignId) {
   const lt4 = document.getElementById('ltabExport');
   const lt5 = document.getElementById('ltabAI');
   const lt6 = document.getElementById('ltabVideo');
+  const lt7 = document.getElementById('ltabCreate');
   const agHead = document.getElementById('agLevelHead');
   const nfw    = document.getElementById('nameFilterWrap');
 
@@ -3157,7 +3440,19 @@ function switchLevel(level, campaignId) {
   if (aiSec)        aiSec.style.display        = 'none';
   if (videoSec)     videoSec.style.display     = 'none';
   if (analyticsSec) analyticsSec.style.display = 'none';
-  [lt1,lt2,lt3,lt4,lt5,lt6].forEach(t => t && t.classList.remove('active'));
+  if (createSec)    createSec.style.display    = 'none';
+  [lt1,lt2,lt3,lt4,lt5,lt6,lt7].forEach(t => t && t.classList.remove('active'));
+
+  if (level === 'create') {
+    if (createSec) createSec.style.display = '';
+    if (vd) vd.style.display = 'none';
+    if (vm) vm.style.display = 'none';
+    if (lt7) lt7.classList.add('active');
+    if (agHead) agHead.style.display = 'none';
+    if (nfw)    nfw.style.display    = 'none';
+    createInitDate();
+    return;
+  }
 
   if (level === 'export') {
     if (exportSec) exportSec.style.display = '';
@@ -6152,6 +6447,207 @@ async function loadAnalytics() {
 }
 
 document.addEventListener('DOMContentLoaded', init);
+
+/* ═══════════════════ TẠO CHIẾN DỊCH ═══════════════════ */
+
+// State tạm cho flow tạo campaign
+const CC = { campaignId: null, campaignName: '', budgetMode: 'BUDGET_MODE_INFINITE', agBudgetMode: 'BUDGET_MODE_DAILY' };
+
+function createInitDate() {
+  const today = new Date().toISOString().slice(0, 10);
+  const el = document.getElementById('ag_start');
+  if (el && !el.value) el.value = today;
+}
+
+function selectBudgetMode(el, prefix) {
+  const group = document.getElementById(prefix + '_budget_mode_group');
+  group.querySelectorAll('.budget-mode-opt').forEach(o => o.classList.remove('active'));
+  el.classList.add('active');
+  const val = el.dataset.val;
+  if (prefix === 'cc') {
+    CC.budgetMode = val;
+    const row = document.getElementById('cc_budget_row');
+    if (row) row.style.display = val === 'BUDGET_MODE_INFINITE' ? 'none' : '';
+  } else {
+    CC.agBudgetMode = val;
+  }
+}
+
+function createGoStep(step) {
+  [1, 2, 3].forEach(i => {
+    const panel = document.getElementById('cpanel' + i);
+    const stepEl = document.getElementById('cstep' + i);
+    if (panel) panel.classList.toggle('active', i === step);
+    if (stepEl) {
+      stepEl.classList.toggle('active', i === step);
+      if (i < step) stepEl.classList.add('done');
+      else stepEl.classList.remove('done');
+    }
+  });
+}
+
+function createShowResult(elId, type, msg) {
+  const el = document.getElementById(elId);
+  if (!el) return;
+  el.className = 'create-result ' + type;
+  el.innerHTML = msg;
+  el.style.display = 'block';
+}
+
+async function doCreateCampaign() {
+  const name = (document.getElementById('cc_name').value || '').trim();
+  const objective = document.getElementById('cc_objective').value;
+  const status = document.getElementById('cc_status').value;
+  const budgetMode = CC.budgetMode;
+
+  if (!name) { createShowResult('cc_result', 'error', '⚠ Vui lòng nhập tên chiến dịch.'); return; }
+  if (!S.accountId) { createShowResult('cc_result', 'error', '⚠ Chưa chọn tài khoản quảng cáo. Vui lòng vào Cài đặt và tải lại.'); return; }
+
+  const body = {
+    advertiser_id: S.accountId,
+    campaign_name: name,
+    objective_type: objective,
+    budget_mode: budgetMode,
+    operation_status: status,
+  };
+
+  if (budgetMode !== 'BUDGET_MODE_INFINITE') {
+    const budget = parseFloat(document.getElementById('cc_budget').value);
+    if (!budget || budget <= 0) { createShowResult('cc_result', 'error', '⚠ Vui lòng nhập ngân sách hợp lệ.'); return; }
+    body.budget = budget;
+  }
+
+  const btn = document.querySelector('#cpanel1 .btn-primary');
+  const origText = btn.innerHTML;
+  btn.innerHTML = '⏳ Đang tạo...';
+  btn.disabled = true;
+
+  try {
+    const data = await apiPost('/campaign/create/', body);
+    CC.campaignId = String(data.campaign_id);
+    CC.campaignName = name;
+    createShowResult('cc_result', 'success', `✅ Tạo chiến dịch thành công! ID: <strong>${CC.campaignId}</strong>`);
+
+    // Cập nhật summary cho bước 2
+    const summaryEl = document.getElementById('ag_campaign_summary');
+    if (summaryEl) {
+      summaryEl.innerHTML = `<strong>Chiến dịch:</strong> ${name} &nbsp;|&nbsp; <strong>Mục tiêu:</strong> ${objective} &nbsp;|&nbsp; <strong>ID:</strong> ${CC.campaignId}`;
+    }
+
+    setTimeout(() => createGoStep(2), 800);
+  } catch(e) {
+    createShowResult('cc_result', 'error', `❌ Lỗi: ${e.message}`);
+  } finally {
+    btn.innerHTML = origText;
+    btn.disabled = false;
+  }
+}
+
+async function doCreateAdGroup() {
+  if (!CC.campaignId) { createShowResult('ag_result', 'error', '⚠ Chưa có Campaign ID — hãy tạo chiến dịch trước.'); return; }
+
+  const name = (document.getElementById('ag_name').value || '').trim();
+  const placement = document.getElementById('ag_placement').value;
+  const optimization = document.getElementById('ag_optimization').value;
+  const gender = document.getElementById('ag_gender').value;
+  const ageEl = document.getElementById('ag_age');
+  const ages = [...ageEl.selectedOptions].map(o => o.value);
+  const startDate = document.getElementById('ag_start').value;
+  const endDate = document.getElementById('ag_end').value;
+  const budget = parseFloat(document.getElementById('ag_budget').value);
+  const bid = parseFloat(document.getElementById('ag_bid').value);
+
+  if (!name) { createShowResult('ag_result', 'error', '⚠ Vui lòng nhập tên nhóm quảng cáo.'); return; }
+  if (!startDate) { createShowResult('ag_result', 'error', '⚠ Vui lòng chọn ngày bắt đầu.'); return; }
+  if (!budget || budget <= 0) { createShowResult('ag_result', 'error', '⚠ Vui lòng nhập ngân sách hợp lệ.'); return; }
+
+  const body = {
+    advertiser_id: S.accountId,
+    campaign_id: CC.campaignId,
+    adgroup_name: name,
+    placement_type: 'PLACEMENT_TYPE_NORMAL',
+    placements: [placement],
+    budget_mode: CC.agBudgetMode,
+    budget: budget,
+    schedule_type: 'SCHEDULE_START_END',
+    schedule_start_time: startDate + ' 00:00:00',
+    optimization_goal: optimization,
+    location_ids: ['VN'],
+    operation_status: 'DISABLE',
+  };
+
+  if (endDate) body.schedule_end_time = endDate + ' 23:59:59';
+  if (gender !== 'GENDER_UNLIMITED') body.gender = gender;
+  if (ages.length > 0) body.age_groups = ages;
+  if (bid > 0) body.bid_price = bid;
+
+  const btn = document.querySelector('#cpanel2 .btn-primary');
+  const origText = btn.innerHTML;
+  btn.innerHTML = '⏳ Đang tạo...';
+  btn.disabled = true;
+
+  try {
+    const data = await apiPost('/adgroup/create/', body);
+    const agId = String(data.adgroup_id);
+
+    const doneEl = document.getElementById('done_summary');
+    if (doneEl) {
+      doneEl.innerHTML = `
+        <strong>Chiến dịch:</strong> ${CC.campaignName}<br>
+        <strong>Campaign ID:</strong> ${CC.campaignId}<br>
+        <strong>Nhóm QC:</strong> ${name}<br>
+        <strong>Ad Group ID:</strong> ${agId}<br>
+        <br>
+        <span style="color:#059669;">Cả hai được tạo với trạng thái <strong>Tạm dừng</strong> — vào TikTok Ads Manager để thêm creative và kích hoạt.</span>
+      `;
+    }
+
+    createGoStep(3);
+    document.getElementById('cstep1').classList.add('done');
+    document.getElementById('cstep2').classList.add('done');
+  } catch(e) {
+    createShowResult('ag_result', 'error', `❌ Lỗi: ${e.message}`);
+  } finally {
+    btn.innerHTML = origText;
+    btn.disabled = false;
+  }
+}
+
+function createReset() {
+  CC.campaignId = null;
+  CC.campaignName = '';
+  CC.budgetMode = 'BUDGET_MODE_INFINITE';
+  CC.agBudgetMode = 'BUDGET_MODE_DAILY';
+
+  ['cc_name','ag_name','cc_budget','ag_budget','ag_bid','ag_end'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+  document.getElementById('cc_objective').value = 'LEAD_GENERATION';
+  document.getElementById('cc_status').value = 'DISABLE';
+  document.getElementById('ag_placement').value = 'PLACEMENT_TIKTOK';
+  document.getElementById('ag_optimization').value = 'CLICK';
+  document.getElementById('ag_gender').value = 'GENDER_UNLIMITED';
+
+  // Reset budget mode buttons
+  document.querySelectorAll('#cc_budget_mode_group .budget-mode-opt').forEach((o, i) => {
+    o.classList.toggle('active', i === 0);
+  });
+  document.getElementById('cc_budget_row').style.display = 'none';
+  document.querySelectorAll('#ag_budget_mode_group .budget-mode-opt').forEach((o, i) => {
+    o.classList.toggle('active', i === 0);
+  });
+
+  ['cc_result','ag_result'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.style.display = 'none';
+  });
+
+  createInitDate();
+  createGoStep(1);
+  document.getElementById('cstep1').classList.remove('done');
+  document.getElementById('cstep2').classList.remove('done');
+}
 
 /* ── COLUMN HEADER TOOLTIP ── */
 (function() {
