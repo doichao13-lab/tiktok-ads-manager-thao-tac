@@ -6625,6 +6625,8 @@ async function doCreateAdGroup() {
   if (!startDate) { createShowResult('ag_result', 'error', '⚠ Vui lòng chọn ngày bắt đầu.'); return; }
   if (!budget || budget <= 0) { createShowResult('ag_result', 'error', '⚠ Vui lòng nhập ngân sách hợp lệ.'); return; }
 
+  const BILLING_MAP = { CLICK:'CPC', REACH:'CPM', VIDEO_VIEW:'CPV', CONVERT:'OCPM', LEAD_GENERATION:'OCPM' };
+
   const body = {
     advertiser_id: S.accountId,
     campaign_id: CC.campaignId,
@@ -6636,6 +6638,7 @@ async function doCreateAdGroup() {
     schedule_type: 'SCHEDULE_START_END',
     schedule_start_time: startDate + ' 00:00:00',
     optimization_goal: optimization,
+    billing_event: BILLING_MAP[optimization] || 'CPM',
     location_ids: locations.length ? locations : ['1562822'],
     operation_status: 'DISABLE',
   };
