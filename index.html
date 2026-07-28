@@ -1883,6 +1883,24 @@ while ($listener.IsListening) {
     <div style="font-size:13px;color:var(--text2);">Tạo Campaign và Ad Group trực tiếp lên TikTok Ads.</div>
   </div>
 
+  <!-- AI PARSE BOX -->
+  <div style="background:linear-gradient(135deg,#EEF2FF,#F0FDF4);border:1.5px solid #A5B4FC;border-radius:14px;padding:18px 20px;margin-bottom:24px;">
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+      <span style="font-size:18px;">🤖</span>
+      <span style="font-size:14px;font-weight:700;color:#3730A3;">Điền form bằng AI</span>
+      <span style="font-size:11px;color:#6366F1;background:#E0E7FF;padding:2px 8px;border-radius:20px;">Groq AI</span>
+    </div>
+    <textarea id="ai_brief_input" rows="3"
+      placeholder="Mô tả chiến dịch bằng ngôn ngữ tự nhiên...&#10;VD: Khách TMU viện quốc tế, ngân sách 200k/ngày, mục tiêu lead form, tuổi 18-24 và 45-54, giới tính full, giá thầu 80k, chạy TikTok"
+      style="width:100%;padding:10px 12px;border:1px solid #C7D2FE;border-radius:8px;background:#fff;color:var(--text);font-size:13px;font-family:inherit;resize:vertical;box-sizing:border-box;line-height:1.5;"></textarea>
+    <div style="display:flex;align-items:center;gap:10px;margin-top:10px;">
+      <button class="btn btn-primary" onclick="aiParseAndFill()" id="aiParseBtn" style="background:#4F46E5;border-color:#4F46E5;">
+        ✨ AI điền form tự động
+      </button>
+      <span id="aiParseStatus" style="font-size:12px;color:var(--text2);"></span>
+    </div>
+  </div>
+
   <!-- Step indicator -->
   <div class="create-steps" id="createSteps">
     <div class="create-step active" id="cstep1" onclick="createGoStep(1)">
@@ -6610,6 +6628,120 @@ async function doCreateAdGroup() {
   } finally {
     btn.innerHTML = origText;
     btn.disabled = false;
+  }
+}
+
+async function aiParseAndFill() {
+  const text = (document.getElementById('ai_brief_input').value || '').trim();
+  if (!text) { showToast('Vui lòng nhập mô tả chiến dịch trước.', 'warn'); return; }
+
+  const key = S.config.groqKey;
+  if (!key) {
+    showToast('Chưa có Groq API Key — vào Cài đặt → tab Groq AI để thêm.', 'warn');
+    return;
+  }
+
+  const btn = document.getElementById('aiParseBtn');
+  const status = document.getElementById('aiParseStatus');
+  btn.disabled = true; btn.innerHTML = '⏳ Đang phân tích...';
+  status.textContent = '';
+
+  const prompt = `Bạn là assistant phân tích yêu cầu tạo chiến dịch quảng cáo TikTok.
+Người dùng mô tả chiến dịch bằng tiếng Việt. Hãy trích xuất thông tin và trả về JSON theo đúng format sau, KHÔNG thêm bất kỳ text nào ngoài JSON:
+
+{
+  "campaign_name": "tên chiến dịch (nếu có tên khách hàng thì dùng, nếu không thì để rỗng)",
+  "objective": "một trong: TRAFFIC | LEAD_GENERATION | VIDEO_VIEWS | REACH | CONVERSIONS | PRODUCT_SALES | COMMUNITY_INTERACTION",
+  "budget_mode": "BUDGET_MODE_DAILY | BUDGET_MODE_TOTAL | BUDGET_MODE_INFINITE",
+  "budget": số tiền ngân sách (VND, nếu không có thì 0),
+  "status": "DISABLE | ENABLE",
+  "adgroup_name": "tên nhóm QC (nếu không có thì để rỗng)",
+  "placement": "PLACEMENT_TIKTOK | PLACEMENT_PANGLE",
+  "gender": "GENDER_UNLIMITED | GENDER_MALE | GENDER_FEMALE",
+  "ages": ["AGE_13_17","AGE_18_24","AGE_25_34","AGE_35_44","AGE_45_100"] (chỉ các nhóm được đề cập),
+  "optimization": "CLICK | REACH | VIDEO_VIEW | CONVERT | LEAD_GENERATION",
+  "ag_budget_mode": "BUDGET_MODE_DAILY | BUDGET_MODE_TOTAL",
+  "ag_budget": số tiền ngân sách nhóm QC (VND, nếu không có thì 0),
+  "bid": số tiền giá thầu (VND, nếu không có thì 0)
+}
+
+Quy tắc mapping:
+- "lead form", "hứng lead", "lead generation" → LEAD_GENERATION
+- "traffic", "click web", "website" → TRAFFIC
+- "reach", "tiếp cận" → REACH
+- "video view", "lượt xem" → VIDEO_VIEWS
+- "conversion", "chuyển đổi" → CONVERSIONS
+- "shop", "product sales", "tiktok shop" → PRODUCT_SALES
+- "full", "tất cả", "toàn bộ" giới tính → GENDER_UNLIMITED
+- "nam" → GENDER_MALE, "nữ" → GENDER_FEMALE
+- "45-54", "45+" → AGE_45_100; "18-24" → AGE_18_24; "25-34" → AGE_25_34; "35-44" → AGE_35_44; "13-17" → AGE_13_17
+- "chạy hết", "tất cả vị trí", "mọi vị trí" → PLACEMENT_TIKTOK (mặc định)
+- "pangle" → PLACEMENT_PANGLE
+- Ngân sách: "200k" = 200000, "1tr" = 1000000, "500k" = 500000
+- Nếu không rõ status → DISABLE (an toàn)
+- Nếu không rõ optimization: LEAD_GENERATION → LEAD_GENERATION, TRAFFIC → CLICK, REACH → REACH, VIDEO_VIEWS → VIDEO_VIEW, CONVERSIONS → CONVERT
+
+Mô tả chiến dịch: "${text.replace(/"/g, "'")}"`;
+
+  try {
+    const raw = await callGroq(key, [{ role: 'user', content: prompt }], 512);
+
+    // Lấy JSON từ response (đôi khi có markdown code block)
+    const jsonMatch = raw.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) throw new Error('AI không trả về JSON hợp lệ');
+    const p = JSON.parse(jsonMatch[0]);
+
+    // ── Điền Campaign form ──
+    if (p.campaign_name) document.getElementById('cc_name').value = p.campaign_name;
+    if (p.objective) document.getElementById('cc_objective').value = p.objective;
+    if (p.status) document.getElementById('cc_status').value = p.status;
+
+    // Budget mode campaign
+    if (p.budget_mode) {
+      const opts = document.querySelectorAll('#cc_budget_mode_group .budget-mode-opt');
+      opts.forEach(o => {
+        o.classList.toggle('active', o.dataset.val === p.budget_mode);
+      });
+      CC.budgetMode = p.budget_mode;
+      const row = document.getElementById('cc_budget_row');
+      if (row) row.style.display = p.budget_mode === 'BUDGET_MODE_INFINITE' ? 'none' : '';
+    }
+    if (p.budget > 0) document.getElementById('cc_budget').value = p.budget;
+
+    // ── Điền Ad Group form ──
+    if (p.adgroup_name) document.getElementById('ag_name').value = p.adgroup_name;
+    if (p.placement) document.getElementById('ag_placement').value = p.placement;
+    if (p.gender) document.getElementById('ag_gender').value = p.gender;
+    if (p.optimization) document.getElementById('ag_optimization').value = p.optimization;
+    if (p.bid > 0) document.getElementById('ag_bid').value = p.bid;
+
+    // Age groups (multi-select)
+    if (p.ages && p.ages.length) {
+      const ageEl = document.getElementById('ag_age');
+      [...ageEl.options].forEach(o => {
+        o.selected = p.ages.includes(o.value);
+      });
+    }
+
+    // Budget mode adgroup
+    if (p.ag_budget_mode) {
+      const opts = document.querySelectorAll('#ag_budget_mode_group .budget-mode-opt');
+      opts.forEach(o => o.classList.toggle('active', o.dataset.val === p.ag_budget_mode));
+      CC.agBudgetMode = p.ag_budget_mode;
+    }
+    if (p.ag_budget > 0) document.getElementById('ag_budget').value = p.ag_budget;
+    else if (p.budget > 0 && (!p.ag_budget || p.ag_budget === 0)) {
+      // Nếu chỉ có 1 số ngân sách → dùng cho adgroup
+      document.getElementById('ag_budget').value = p.budget;
+    }
+
+    status.innerHTML = '<span style="color:#16A34A;">✅ Đã điền xong! Kiểm tra lại rồi bấm Tạo chiến dịch.</span>';
+    showToast('AI đã điền form — kiểm tra lại các thông tin trước khi tạo.', 'ok');
+  } catch(e) {
+    status.innerHTML = `<span style="color:var(--danger);">❌ ${e.message}</span>`;
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '✨ AI điền form tự động';
   }
 }
 
