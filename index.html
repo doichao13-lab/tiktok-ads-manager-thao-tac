@@ -6633,11 +6633,11 @@ async function doCreateAdGroup() {
 
 async function aiParseAndFill() {
   const text = (document.getElementById('ai_brief_input').value || '').trim();
-  if (!text) { showToast('Vui lòng nhập mô tả chiến dịch trước.', 'warn'); return; }
+  if (!text) { toast('warn', 'Vui lòng nhập mô tả chiến dịch trước.'); return; }
 
   const key = S.config.groqKey;
   if (!key) {
-    showToast('Chưa có Groq API Key — vào Cài đặt → tab Groq AI để thêm.', 'warn');
+    toast('warn', 'Chưa có Groq API Key — vào Cài đặt → tab Groq AI để thêm.');
     return;
   }
 
@@ -6736,7 +6736,7 @@ Mô tả chiến dịch: "${text.replace(/"/g, "'")}"`;
     }
 
     status.innerHTML = '<span style="color:#16A34A;">✅ Đã điền xong! Kiểm tra lại rồi bấm Tạo chiến dịch.</span>';
-    showToast('AI đã điền form — kiểm tra lại các thông tin trước khi tạo.', 'ok');
+    toast('ok', 'AI đã điền form — kiểm tra lại các thông tin trước khi tạo.');
   } catch(e) {
     status.innerHTML = `<span style="color:var(--danger);">❌ ${e.message}</span>`;
   } finally {
