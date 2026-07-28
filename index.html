@@ -2046,23 +2046,45 @@ while ($listener.IsListening) {
       <div class="form-row full">
         <div class="form-group">
           <label>Khu vực (địa lý)</label>
-          <select id="ag_locations" multiple size="5" style="height:auto;">
-            <option value="1562822" selected>🇻🇳 Toàn quốc Việt Nam</option>
-            <option value="1581130">Hà Nội</option>
-            <option value="1566083">TP. Hồ Chí Minh</option>
-            <option value="1583992">Đà Nẵng</option>
-            <option value="1581298">Hải Phòng</option>
-            <option value="1584611">Cần Thơ</option>
-            <option value="1586203">Bình Dương</option>
-            <option value="1582645">Đồng Nai</option>
-            <option value="1580240">Nghệ An</option>
-            <option value="1574023">Thanh Hóa</option>
-            <option value="1570360">Khánh Hòa (Nha Trang)</option>
-            <option value="1563281">Bà Rịa - Vũng Tàu</option>
-            <option value="1580923">Quảng Ninh</option>
-            <option value="1574023">Thái Nguyên</option>
-          </select>
-          <span class="hint">Giữ Ctrl/Cmd để chọn nhiều tỉnh thành. Mặc định = Toàn quốc.</span>
+          <div id="ag_locations" style="border:1px solid var(--border);border-radius:8px;background:var(--bg3);padding:8px 12px;display:flex;flex-wrap:wrap;gap:6px;">
+            <label style="display:flex;align-items:center;gap:5px;font-size:12px;font-weight:400;cursor:pointer;padding:3px 8px;border-radius:6px;border:1px solid var(--border);background:var(--bg2);">
+              <input type="checkbox" class="loc-cb" value="1562822" checked> 🇻🇳 Toàn quốc
+            </label>
+            <label style="display:flex;align-items:center;gap:5px;font-size:12px;font-weight:400;cursor:pointer;padding:3px 8px;border-radius:6px;border:1px solid var(--border);background:var(--bg2);">
+              <input type="checkbox" class="loc-cb" value="1581130"> Hà Nội
+            </label>
+            <label style="display:flex;align-items:center;gap:5px;font-size:12px;font-weight:400;cursor:pointer;padding:3px 8px;border-radius:6px;border:1px solid var(--border);background:var(--bg2);">
+              <input type="checkbox" class="loc-cb" value="1566083"> TP. Hồ Chí Minh
+            </label>
+            <label style="display:flex;align-items:center;gap:5px;font-size:12px;font-weight:400;cursor:pointer;padding:3px 8px;border-radius:6px;border:1px solid var(--border);background:var(--bg2);">
+              <input type="checkbox" class="loc-cb" value="1583992"> Đà Nẵng
+            </label>
+            <label style="display:flex;align-items:center;gap:5px;font-size:12px;font-weight:400;cursor:pointer;padding:3px 8px;border-radius:6px;border:1px solid var(--border);background:var(--bg2);">
+              <input type="checkbox" class="loc-cb" value="1581298"> Hải Phòng
+            </label>
+            <label style="display:flex;align-items:center;gap:5px;font-size:12px;font-weight:400;cursor:pointer;padding:3px 8px;border-radius:6px;border:1px solid var(--border);background:var(--bg2);">
+              <input type="checkbox" class="loc-cb" value="1584611"> Cần Thơ
+            </label>
+            <label style="display:flex;align-items:center;gap:5px;font-size:12px;font-weight:400;cursor:pointer;padding:3px 8px;border-radius:6px;border:1px solid var(--border);background:var(--bg2);">
+              <input type="checkbox" class="loc-cb" value="1586203"> Bình Dương
+            </label>
+            <label style="display:flex;align-items:center;gap:5px;font-size:12px;font-weight:400;cursor:pointer;padding:3px 8px;border-radius:6px;border:1px solid var(--border);background:var(--bg2);">
+              <input type="checkbox" class="loc-cb" value="1582645"> Đồng Nai
+            </label>
+            <label style="display:flex;align-items:center;gap:5px;font-size:12px;font-weight:400;cursor:pointer;padding:3px 8px;border-radius:6px;border:1px solid var(--border);background:var(--bg2);">
+              <input type="checkbox" class="loc-cb" value="1570360"> Khánh Hòa
+            </label>
+            <label style="display:flex;align-items:center;gap:5px;font-size:12px;font-weight:400;cursor:pointer;padding:3px 8px;border-radius:6px;border:1px solid var(--border);background:var(--bg2);">
+              <input type="checkbox" class="loc-cb" value="1563281"> Vũng Tàu
+            </label>
+            <label style="display:flex;align-items:center;gap:5px;font-size:12px;font-weight:400;cursor:pointer;padding:3px 8px;border-radius:6px;border:1px solid var(--border);background:var(--bg2);">
+              <input type="checkbox" class="loc-cb" value="1580923"> Quảng Ninh
+            </label>
+            <label style="display:flex;align-items:center;gap:5px;font-size:12px;font-weight:400;cursor:pointer;padding:3px 8px;border-radius:6px;border:1px solid var(--border);background:var(--bg2);">
+              <input type="checkbox" class="loc-cb" value="1580240"> Nghệ An
+            </label>
+          </div>
+          <span class="hint">Tick chọn nhiều tỉnh thành. Mặc định = Toàn quốc.</span>
         </div>
       </div>
 
@@ -6597,8 +6619,7 @@ async function doCreateAdGroup() {
   const endDate = document.getElementById('ag_end').value;
   const budget = parseFloat(document.getElementById('ag_budget').value);
   const bid = parseFloat(document.getElementById('ag_bid').value);
-  const locEl = document.getElementById('ag_locations');
-  const locations = [...locEl.selectedOptions].map(o => parseInt(o.value));
+  const locations = [...document.querySelectorAll('#ag_locations .loc-cb:checked')].map(cb => cb.value);
 
   if (!name) { createShowResult('ag_result', 'error', '⚠ Vui lòng nhập tên nhóm quảng cáo.'); return; }
   if (!startDate) { createShowResult('ag_result', 'error', '⚠ Vui lòng chọn ngày bắt đầu.'); return; }
@@ -6615,7 +6636,7 @@ async function doCreateAdGroup() {
     schedule_type: 'SCHEDULE_START_END',
     schedule_start_time: startDate + ' 00:00:00',
     optimization_goal: optimization,
-    location_ids: locations.length ? locations : [1562822],
+    location_ids: locations.length ? locations : ['1562822'],
     operation_status: 'DISABLE',
   };
 
@@ -6750,11 +6771,11 @@ Mô tả chiến dịch: "${text.replace(/"/g, "'")}"`;
       });
     }
 
-    // Locations (multi-select)
+    // Locations (checkboxes)
     if (p.locations && p.locations.length) {
-      const locEl = document.getElementById('ag_locations');
-      [...locEl.options].forEach(o => {
-        o.selected = p.locations.map(String).includes(o.value);
+      const locStrings = p.locations.map(String);
+      document.querySelectorAll('#ag_locations .loc-cb').forEach(cb => {
+        cb.checked = locStrings.includes(cb.value);
       });
     }
 
@@ -6795,8 +6816,7 @@ function createReset() {
   document.getElementById('ag_placement').value = 'PLACEMENT_TIKTOK';
   document.getElementById('ag_optimization').value = 'CLICK';
   document.getElementById('ag_gender').value = 'GENDER_UNLIMITED';
-  const locEl = document.getElementById('ag_locations');
-  [...locEl.options].forEach(o => { o.selected = o.value === '1562822'; });
+  document.querySelectorAll('#ag_locations .loc-cb').forEach(cb => { cb.checked = cb.value === '1562822'; });
 
   // Reset budget mode buttons
   document.querySelectorAll('#cc_budget_mode_group .budget-mode-opt').forEach((o, i) => {
