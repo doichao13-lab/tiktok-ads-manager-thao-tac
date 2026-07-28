@@ -1958,7 +1958,7 @@ while ($listener.IsListening) {
             <div class="bmo-label">Không giới hạn</div>
             <div class="bmo-desc">Kiểm soát ở cấp nhóm QC</div>
           </div>
-          <div class="budget-mode-opt" data-val="BUDGET_MODE_DAILY" onclick="selectBudgetMode(this,'cc')">
+          <div class="budget-mode-opt" data-val="BUDGET_MODE_DAY" onclick="selectBudgetMode(this,'cc')">
             <div class="bmo-label">Theo ngày</div>
             <div class="bmo-desc">Giới hạn chi tiêu mỗi ngày</div>
           </div>
@@ -2057,7 +2057,7 @@ while ($listener.IsListening) {
       <div class="form-group" style="margin-bottom:14px;">
         <label>Loại ngân sách nhóm QC</label>
         <div class="budget-mode-group" id="ag_budget_mode_group">
-          <div class="budget-mode-opt active" data-val="BUDGET_MODE_DAILY" onclick="selectBudgetMode(this,'ag')">
+          <div class="budget-mode-opt active" data-val="BUDGET_MODE_DAY" onclick="selectBudgetMode(this,'ag')">
             <div class="bmo-label">Theo ngày</div>
             <div class="bmo-desc">Chi tiêu mỗi ngày</div>
           </div>
@@ -2838,7 +2838,7 @@ function makeCampaignRow(c) {
   const isExpanded = S.expanded.has(c.campaign_id);
   const m          = S.metrics[c.campaign_id] || {};
   const mE         = {...m, _cpr: getCostPerResult(m, c.objective_type, c.campaign_id)};
-  const bmode      = c.budget_mode === 'BUDGET_MODE_DAILY' ? '/ng' : '';
+  const bmode      = (c.budget_mode === 'BUDGET_MODE_DAILY' || c.budget_mode === 'BUDGET_MODE_DAY') ? '/ng' : '';
   const cols       = colDefs();
   const agLoaded   = S.adgroups[c.campaign_id];
   const agCount    = agLoaded ? agLoaded.length : '?';
@@ -2922,7 +2922,7 @@ function makeAGRow(ag) {
   tr.dataset.cpar = ag.campaign_id;
   const active = ag.operation_status === 'ENABLE';
   const m      = S.metrics[ag.adgroup_id] || {};
-  const bmode  = ag.budget_mode === 'BUDGET_MODE_DAILY' ? '/ng' : '';
+  const bmode  = (ag.budget_mode === 'BUDGET_MODE_DAILY' || ag.budget_mode === 'BUDGET_MODE_DAY') ? '/ng' : '';
   const bidLabel = ag.bid_type === 'BID_TYPE_CUSTOM_BID' ? fmtCur(ag.bid_price) : 'Auto';
   const cols   = colDefs();
   // Show parent campaign name when in flat adgroup tab view
@@ -6469,7 +6469,7 @@ document.addEventListener('DOMContentLoaded', init);
 /* ═══════════════════ TẠO CHIẾN DỊCH ═══════════════════ */
 
 // State tạm cho flow tạo campaign
-const CC = { campaignId: null, campaignName: '', budgetMode: 'BUDGET_MODE_INFINITE', agBudgetMode: 'BUDGET_MODE_DAILY' };
+const CC = { campaignId: null, campaignName: '', budgetMode: 'BUDGET_MODE_INFINITE', agBudgetMode: 'BUDGET_MODE_DAY' };
 
 function createInitDate() {
   const today = new Date().toISOString().slice(0, 10);
@@ -6652,7 +6652,7 @@ Người dùng mô tả chiến dịch bằng tiếng Việt. Hãy trích xuất
 {
   "campaign_name": "tên chiến dịch (nếu có tên khách hàng thì dùng, nếu không thì để rỗng)",
   "objective": "một trong: TRAFFIC | LEAD_GENERATION | VIDEO_VIEWS | REACH | CONVERSIONS | PRODUCT_SALES | COMMUNITY_INTERACTION",
-  "budget_mode": "BUDGET_MODE_DAILY | BUDGET_MODE_TOTAL | BUDGET_MODE_INFINITE",
+  "budget_mode": "BUDGET_MODE_DAY | BUDGET_MODE_TOTAL | BUDGET_MODE_INFINITE",
   "budget": số tiền ngân sách (VND, nếu không có thì 0),
   "status": "DISABLE | ENABLE",
   "adgroup_name": "tên nhóm QC (nếu không có thì để rỗng)",
@@ -6660,7 +6660,7 @@ Người dùng mô tả chiến dịch bằng tiếng Việt. Hãy trích xuất
   "gender": "GENDER_UNLIMITED | GENDER_MALE | GENDER_FEMALE",
   "ages": ["AGE_13_17","AGE_18_24","AGE_25_34","AGE_35_44","AGE_45_100"] (chỉ các nhóm được đề cập),
   "optimization": "CLICK | REACH | VIDEO_VIEW | CONVERT | LEAD_GENERATION",
-  "ag_budget_mode": "BUDGET_MODE_DAILY | BUDGET_MODE_TOTAL",
+  "ag_budget_mode": "BUDGET_MODE_DAY | BUDGET_MODE_TOTAL",
   "ag_budget": số tiền ngân sách nhóm QC (VND, nếu không có thì 0),
   "bid": số tiền giá thầu (VND, nếu không có thì 0)
 }
@@ -6749,7 +6749,7 @@ function createReset() {
   CC.campaignId = null;
   CC.campaignName = '';
   CC.budgetMode = 'BUDGET_MODE_INFINITE';
-  CC.agBudgetMode = 'BUDGET_MODE_DAILY';
+  CC.agBudgetMode = 'BUDGET_MODE_DAY';
 
   ['cc_name','ag_name','cc_budget','ag_budget','ag_bid','ag_end'].forEach(id => {
     const el = document.getElementById(id);
