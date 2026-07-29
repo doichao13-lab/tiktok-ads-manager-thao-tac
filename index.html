@@ -5629,7 +5629,7 @@ async function fetchAdBreakdown(aid) {
       advertiser_id: aid,
       report_type: 'BASIC',
       data_level: 'AUCTION_AD',
-      dimensions: ['ad_id','ad_name'],
+      dimensions: ['ad_id'],
       metrics: ['spend','impressions','clicks','ctr','cpm','real_time_result','result','cost_per_result','video_watched_2s','video_watched_6s','follows','complete_payment'],
       start_date: start, end_date: end,
       page_size: 100,
@@ -5649,7 +5649,7 @@ async function fetchAdCreatives(aid, adIds) {
     const map = {};
     const adToVid = {};
     const adToImgId = {};
-    const adToSparkItem = {}; // { adId: { item_id, identity_id, identity_type } }
+    const adToSparkItem = {};
     const allVids = [];
     const allImgIds = [];
     for (const ad of (d.list || [])) {
@@ -5720,6 +5720,22 @@ async function fetchAdCreatives(aid, adIds) {
         for (const img of (imgData.list || [])) { imgMap[img.image_id] = img.image_url; }
         for (const [adId, imgId] of Object.entries(adToImgId)) {
           if (imgMap[imgId]) map[adId].thumb = imgMap[imgId];
+        }
+      } catch {}
+    }
+    // Secondary fetch: get names for ads not returned by ad_ids query (paused/archived)
+    const missingIds = adIds.filter(id => !map[id]);
+    if (missingIds.length > 0) {
+      try {
+        const d2 = await apiGet('/ad/get/', {
+          advertiser_id: aid,
+          page_size: 100,
+          fields: ['ad_id','ad_name'],
+        });
+        for (const ad of (d2.list || [])) {
+          const adId = String(ad.ad_id);
+          if (!map[adId]) map[adId] = { name: ad.ad_name || '', thumb: '', previewUrl: '' };
+          else if (!map[adId].name) map[adId].name = ad.ad_name || '';
         }
       } catch {}
     }
@@ -5964,7 +5980,7 @@ function renderAdPanel() {
       const m=r.metrics||{},dim=r.dimensions||{};
       const adId=String(dim.ad_id||'');
       const cr=_analAdCreative[adId]||{};
-      const adName=cr.name||dim.ad_name||('Ad …'+adId.slice(-8));
+      const adName=cr.name||('Quảng cáo …'+adId.slice(-6));
       const thumbHtml=cr.thumb
         ?`<img src="${esc(cr.thumb)}" style="width:60px;height:80px;object-fit:cover;border-radius:6px;flex-shrink:0;border:1px solid var(--border);" onerror="this.outerHTML='<div style=\\'width:60px;height:80px;border-radius:6px;background:var(--bg3);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:26px;border:1px solid var(--border);\\'>🎬</div>'">`
         :`<div style="width:60px;height:80px;border-radius:6px;background:var(--bg3);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:26px;border:1px solid var(--border);">🎬</div>`;
