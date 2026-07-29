@@ -6892,11 +6892,7 @@ async function doCreateAdGroup() {
   if (!name) { createShowResult('ag_result', 'error', '⚠ Vui lòng nhập tên nhóm quảng cáo.'); return; }
   if (!startDate) { createShowResult('ag_result', 'error', '⚠ Vui lòng chọn ngày bắt đầu.'); return; }
   if (!budget || budget <= 0) { createShowResult('ag_result', 'error', '⚠ Vui lòng nhập ngân sách hợp lệ.'); return; }
-  // OCPM objectives (Lead Gen, Convert) require a bid price (cost per conversion)
-  if (isOCPM && (!bid || bid <= 0)) {
-    createShowResult('ag_result', 'error', '⚠ Mục tiêu này yêu cầu nhập Giá thầu (cost per conversion). Ví dụ: 150000 VND.');
-    return;
-  }
+  // For OCPM: bid is optional — if provided use BID_TYPE_CUSTOM, else BID_TYPE_MAX_CONVERSION
 
   const BILLING_MAP = BILLING_MAP_PRE;
   // Map campaign objective → promotion_type (required by TikTok API)
