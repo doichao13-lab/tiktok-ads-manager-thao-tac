@@ -5886,9 +5886,8 @@ async function fetchProvinceMap(aid) {
   try {
     const d = await apiGet('/tool/region/', {
       advertiser_id: aid,
-      placement_type: 'PLACEMENT_TIKTOK',
+      placements: 'PLACEMENT_TIKTOK',
       level: 'PROVINCE',
-      region_codes: ['VN'],
     });
     const map = {};
     (d.regions || []).forEach(r => { map[String(r.region_id)] = r.region_name; });
@@ -6665,12 +6664,19 @@ async function loadTikTokRegions() {
   if (_ttRegionCache || S.demo || !S.accountId) return;
   try {
     const [countryData, provData] = await Promise.all([
-      apiGet('/tool/region/', { advertiser_id: S.accountId, placement_type: 'PLACEMENT_TIKTOK', level: 'COUNTRY', region_codes: ['VN'] }),
-      apiGet('/tool/region/', { advertiser_id: S.accountId, placement_type: 'PLACEMENT_TIKTOK', level: 'PROVINCE', region_codes: ['VN'] }),
+      apiGet('/tool/region/', { advertiser_id: S.accountId, placements: 'PLACEMENT_TIKTOK', level: 'COUNTRY' }),
+      apiGet('/tool/region/', { advertiser_id: S.accountId, placements: 'PLACEMENT_TIKTOK', level: 'PROVINCE' }),
     ]);
-    const countryId = String(((countryData.regions || [])[0] || {}).region_id || '');
+    // Find Vietnam by region_code or name
+    const allCountries = countryData.regions || [];
+    const vnCountry = allCountries.find(r =>
+      r.region_code === 'VN' ||
+      (r.region_name || '').toLowerCase().includes('viet')
+    );
+    const countryId = vnCountry ? String(vnCountry.region_id) : '';
     const provinces = (provData.regions || []).map(r => ({ id: String(r.region_id), name: r.region_name }));
     _ttRegionCache = { countryId, provinces };
+    console.log('[regions] loaded:', { countryId, provinceCount: provinces.length, sample: provinces.slice(0, 3) });
     buildLocationChips();
   } catch(e) { console.log('[regions] fetch failed:', e.message); }
 }
@@ -6684,22 +6690,35 @@ function buildLocationChips() {
   const container = document.getElementById('ag_locations');
   if (!container) return;
 
-  // Build province map: name → id
+  // Build province map: normalized name → id (lowercase, strip diacritics not needed - just try multiple strategies)
   const provMap = {};
   r.provinces.forEach(p => { provMap[p.name] = p.id; });
 
-  // Match top provinces
+  // Fuzzy match: exact → prefixed → contains
+  function matchProv(displayName) {
+    if (provMap[displayName]) return provMap[displayName];
+    for (const prefix of ['Thành phố ', 'Tỉnh ', 'TP. ']) {
+      if (provMap[prefix + displayName]) return provMap[prefix + displayName];
+    }
+    // TikTok name contains our keyword (e.g. "Thành phố Hồ Chí Minh" ⊇ "Hồ Chí Minh")
+    const lower = displayName.toLowerCase();
+    for (const [k, v] of Object.entries(provMap)) {
+      if (k.toLowerCase().includes(lower)) return v;
+    }
+    return '';
+  }
+
   const chips = TOP_PROVINCES.map(name => {
-    const id = provMap[name] || provMap[name.replace('Hồ Chí Minh','TP. Hồ Chí Minh')] || '';
+    const id = matchProv(name);
     if (!id) return '';
     return `<label class="loc-chip-lbl"><input type="checkbox" class="loc-cb" value="${id}"> ${name}</label>`;
   }).filter(Boolean);
 
   const vnChip = r.countryId
     ? `<label class="loc-chip-lbl"><input type="checkbox" class="loc-cb" value="${r.countryId}" checked> 🇻🇳 Toàn quốc</label>`
-    : `<label class="loc-chip-lbl"><input type="checkbox" class="loc-cb" value="1562822" checked> 🇻🇳 Toàn quốc</label>`;
+    : '';
 
-  container.innerHTML = vnChip + chips.join('');
+  container.innerHTML = (vnChip || '') + chips.join('');
 }
 
 /* ── Objective visual picker ── */
@@ -6856,7 +6875,6 @@ async function doCreateAdGroup() {
   const endDate = document.getElementById('ag_end').value;
   const budget = parseFloat(document.getElementById('ag_budget').value);
   const bid = parseFloat(document.getElementById('ag_bid').value);
-  const locations = [...document.querySelectorAll('#ag_locations .loc-cb:checked')].map(cb => cb.value);
 
   if (!name) { createShowResult('ag_result', 'error', '⚠ Vui lòng nhập tên nhóm quảng cáo.'); return; }
   if (!startDate) { createShowResult('ag_result', 'error', '⚠ Vui lòng chọn ngày bắt đầu.'); return; }
@@ -6871,6 +6889,31 @@ async function doCreateAdGroup() {
     LEAD_GENERATION:'LEAD_GENERATION', PRODUCT_SALES:'PRODUCT_SHOPPING',
   };
 
+  // Ensure TikTok region IDs are loaded (not GeoNames hardcoded IDs)
+  if (!_ttRegionCache && !S.demo) {
+    createShowResult('ag_result', 'error', '⚠ Đang tải danh sách khu vực từ TikTok... Vui lòng thử lại sau vài giây.');
+    loadTikTokRegions();
+    return;
+  }
+
+  // Filter checked locations to valid TikTok IDs only
+  const allValidIds = _ttRegionCache
+    ? new Set([_ttRegionCache.countryId, ..._ttRegionCache.provinces.map(p => p.id)].filter(Boolean))
+    : null;
+  const rawLocations = [...document.querySelectorAll('#ag_locations .loc-cb:checked')].map(cb => cb.value).filter(Boolean);
+  const validLocations = allValidIds ? rawLocations.filter(id => allValidIds.has(id)) : rawLocations;
+  // Fallback to country if nothing valid checked
+  const finalLocations = validLocations.length
+    ? validLocations
+    : (_ttRegionCache && _ttRegionCache.countryId ? [_ttRegionCache.countryId] : []);
+
+  if (!finalLocations.length) {
+    createShowResult('ag_result', 'error', '⚠ Không tìm thấy khu vực hợp lệ. Vui lòng chọn lại hoặc tải lại trang.');
+    return;
+  }
+
+  const billingEvent = BILLING_MAP[optimization] || 'CPM';
+
   const body = {
     advertiser_id: S.accountId,
     campaign_id: CC.campaignId,
@@ -6883,15 +6926,22 @@ async function doCreateAdGroup() {
     schedule_type: endDate ? 'SCHEDULE_START_END' : 'SCHEDULE_FROM_NOW',
     schedule_start_time: startDate + ' 00:00:00',
     optimization_goal: optimization,
-    billing_event: BILLING_MAP[optimization] || 'CPM',
-    location_ids: locations.length ? locations : ['1562822'],
+    billing_event: billingEvent,
+    location_ids: finalLocations,
     operation_status: 'DISABLE',
   };
+
+  // bid_type is required when billing_event is OCPM
+  if (billingEvent === 'OCPM') {
+    body.bid_type = bid > 0 ? 'BID_TYPE_CUSTOM' : 'BID_TYPE_NO_BID';
+  }
 
   if (endDate) body.schedule_end_time = endDate + ' 23:59:59';
   if (gender !== 'GENDER_UNLIMITED') body.gender = gender;
   if (ages.length > 0) body.age_groups = ages;
   if (bid > 0) body.bid_price = bid;
+
+  console.log('[adgroup] body =', JSON.stringify(body, null, 2));
 
   const btn = document.querySelector('#cpanel2 .btn-primary');
   const origText = btn.innerHTML;
