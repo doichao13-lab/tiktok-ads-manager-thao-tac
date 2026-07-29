@@ -6836,7 +6836,7 @@ async function doCreateAdGroup() {
     promotion_type: PROMO_MAP[objective] || 'WEBSITE',
     budget_mode: CC.agBudgetMode,
     budget: budget,
-    schedule_type: 'SCHEDULE_START_END',
+    schedule_type: endDate ? 'SCHEDULE_START_END' : 'SCHEDULE_FROM_NOW',
     schedule_start_time: startDate + ' 00:00:00',
     optimization_goal: optimization,
     billing_event: BILLING_MAP[optimization] || 'CPM',
