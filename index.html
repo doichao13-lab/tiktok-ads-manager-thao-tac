@@ -3634,6 +3634,7 @@ function switchLevel(level, campaignId) {
     syncObjChips();
     syncAgeChips();
     syncGenderChips();
+    loadTikTokRegions();
     return;
   }
 
@@ -6656,6 +6657,49 @@ function createInitDate() {
   const today = new Date().toISOString().slice(0, 10);
   const el = document.getElementById('ag_start');
   if (el && !el.value) el.value = today;
+}
+
+/* ── Load TikTok region IDs (country + province) ── */
+let _ttRegionCache = null;
+async function loadTikTokRegions() {
+  if (_ttRegionCache || S.demo || !S.accountId) return;
+  try {
+    const [countryData, provData] = await Promise.all([
+      apiGet('/tool/region/', { advertiser_id: S.accountId, placement_type: 'PLACEMENT_TIKTOK', level: 'COUNTRY', region_codes: ['VN'] }),
+      apiGet('/tool/region/', { advertiser_id: S.accountId, placement_type: 'PLACEMENT_TIKTOK', level: 'PROVINCE', region_codes: ['VN'] }),
+    ]);
+    const countryId = String(((countryData.regions || [])[0] || {}).region_id || '');
+    const provinces = (provData.regions || []).map(r => ({ id: String(r.region_id), name: r.region_name }));
+    _ttRegionCache = { countryId, provinces };
+    buildLocationChips();
+  } catch(e) { console.log('[regions] fetch failed:', e.message); }
+}
+
+// Top provinces to show (by name matching)
+const TOP_PROVINCES = ['Hà Nội','Hồ Chí Minh','Đà Nẵng','Hải Phòng','Cần Thơ','Bình Dương','Đồng Nai','Khánh Hòa','Bà Rịa - Vũng Tàu','Quảng Ninh','Nghệ An'];
+
+function buildLocationChips() {
+  const r = _ttRegionCache;
+  if (!r) return;
+  const container = document.getElementById('ag_locations');
+  if (!container) return;
+
+  // Build province map: name → id
+  const provMap = {};
+  r.provinces.forEach(p => { provMap[p.name] = p.id; });
+
+  // Match top provinces
+  const chips = TOP_PROVINCES.map(name => {
+    const id = provMap[name] || provMap[name.replace('Hồ Chí Minh','TP. Hồ Chí Minh')] || '';
+    if (!id) return '';
+    return `<label class="loc-chip-lbl"><input type="checkbox" class="loc-cb" value="${id}"> ${name}</label>`;
+  }).filter(Boolean);
+
+  const vnChip = r.countryId
+    ? `<label class="loc-chip-lbl"><input type="checkbox" class="loc-cb" value="${r.countryId}" checked> 🇻🇳 Toàn quốc</label>`
+    : `<label class="loc-chip-lbl"><input type="checkbox" class="loc-cb" value="1562822" checked> 🇻🇳 Toàn quốc</label>`;
+
+  container.innerHTML = vnChip + chips.join('');
 }
 
 /* ── Objective visual picker ── */
