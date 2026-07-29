@@ -2446,7 +2446,7 @@ async function apiPost(path, body = {}) {
     body: JSON.stringify(body),
   });
   const d = await r.json();
-  if (d.code !== 0) throw new Error(d.message || `API error ${d.code}`);
+  if (d.code !== 0) throw new Error(`[${d.code}] ${d.message || 'API error'}`);
   return d.data;
 }
 
@@ -6942,16 +6942,6 @@ async function doCreateAdGroup() {
     budget_mode: CC.agBudgetMode,
     budget: budget,
     schedule_type: endDate ? 'SCHEDULE_START_END' : 'SCHEDULE_FROM_NOW',
-    schedule_start_time: (() => {
-      const now = new Date();
-      const d = new Date(startDate + 'T00:00:00');
-      if (d.toDateString() === now.toDateString()) {
-        // Start date is today — use current time + 5 min to avoid "earlier than current time" error
-        const t = new Date(now.getTime() + 5 * 60 * 1000);
-        return `${startDate} ${String(t.getHours()).padStart(2,'0')}:${String(t.getMinutes()).padStart(2,'0')}:00`;
-      }
-      return startDate + ' 00:00:00';
-    })(),
     optimization_goal: optimization,
     billing_event: billingEvent,
     location_ids: finalLocations,
@@ -6967,7 +6957,16 @@ async function doCreateAdGroup() {
     body.bid_price = bid;
   }
 
-  if (endDate) body.schedule_end_time = endDate + ' 23:59:59';
+  // schedule_start_time only needed for SCHEDULE_START_END
+  if (endDate) {
+    const now = new Date();
+    const sd = new Date(startDate + 'T00:00:00');
+    const st = sd.toDateString() === now.toDateString()
+      ? (() => { const t = new Date(now.getTime() + 5*60*1000); return `${startDate} ${String(t.getHours()).padStart(2,'0')}:${String(t.getMinutes()).padStart(2,'0')}:00`; })()
+      : startDate + ' 00:00:00';
+    body.schedule_start_time = st;
+    body.schedule_end_time = endDate + ' 23:59:59';
+  }
   if (gender !== 'GENDER_UNLIMITED') body.gender = gender;
   if (ages.length > 0) body.age_groups = ages;
 
