@@ -6886,11 +6886,19 @@ async function doCreateAdGroup() {
   const budget = parseFloat(document.getElementById('ag_budget').value);
   const bid = parseFloat(document.getElementById('ag_bid').value);
 
+  const BILLING_MAP_PRE = { CLICK:'CPC', REACH:'CPM', VIDEO_VIEW:'CPV', CONVERT:'OCPM', LEAD_GENERATION:'OCPM' };
+  const isOCPM = BILLING_MAP_PRE[optimization] === 'OCPM';
+
   if (!name) { createShowResult('ag_result', 'error', '⚠ Vui lòng nhập tên nhóm quảng cáo.'); return; }
   if (!startDate) { createShowResult('ag_result', 'error', '⚠ Vui lòng chọn ngày bắt đầu.'); return; }
   if (!budget || budget <= 0) { createShowResult('ag_result', 'error', '⚠ Vui lòng nhập ngân sách hợp lệ.'); return; }
+  // OCPM objectives (Lead Gen, Convert) require a bid price (cost per conversion)
+  if (isOCPM && (!bid || bid <= 0)) {
+    createShowResult('ag_result', 'error', '⚠ Mục tiêu này yêu cầu nhập Giá thầu (cost per conversion). Ví dụ: 150000 VND.');
+    return;
+  }
 
-  const BILLING_MAP = { CLICK:'CPC', REACH:'CPM', VIDEO_VIEW:'CPV', CONVERT:'OCPM', LEAD_GENERATION:'OCPM' };
+  const BILLING_MAP = BILLING_MAP_PRE;
   // Map campaign objective → promotion_type (required by TikTok API)
   const objective = document.getElementById('cc_objective').value;
   const PROMO_MAP = {
@@ -6951,11 +6959,13 @@ async function doCreateAdGroup() {
   };
 
   // OCPM requires bid_type; use NO_BID (auto) to avoid minimum bid validation issues
+  // OCPM requires BID_TYPE_CUSTOM + bid_price (NO_BID not supported for Lead Gen/Convert)
   if (billingEvent === 'OCPM') {
-    body.bid_type = 'BID_TYPE_NO_BID';
+    body.bid_type = 'BID_TYPE_CUSTOM';
+    body.bid_price = bid;
+  } else if (bid > 0) {
+    body.bid_price = bid;
   }
-  // bid_price only for non-OCPM (CPC/CPM/CPV)
-  if (bid > 0 && billingEvent !== 'OCPM') body.bid_price = bid;
 
   if (endDate) body.schedule_end_time = endDate + ' 23:59:59';
   if (gender !== 'GENDER_UNLIMITED') body.gender = gender;
