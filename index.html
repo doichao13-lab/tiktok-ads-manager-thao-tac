@@ -6819,6 +6819,13 @@ async function doCreateAdGroup() {
   if (!budget || budget <= 0) { createShowResult('ag_result', 'error', '⚠ Vui lòng nhập ngân sách hợp lệ.'); return; }
 
   const BILLING_MAP = { CLICK:'CPC', REACH:'CPM', VIDEO_VIEW:'CPV', CONVERT:'OCPM', LEAD_GENERATION:'OCPM' };
+  // Map campaign objective → promotion_type (required by TikTok API)
+  const objective = document.getElementById('cc_objective').value;
+  const PROMO_MAP = {
+    TRAFFIC:'WEBSITE', CONVERSIONS:'WEBSITE', REACH:'WEBSITE',
+    VIDEO_VIEWS:'VIDEO', COMMUNITY_INTERACTION:'TIKTOK_HOMEPAGE',
+    LEAD_GENERATION:'LEAD_GENERATION', PRODUCT_SALES:'PRODUCT_SHOPPING',
+  };
 
   const body = {
     advertiser_id: S.accountId,
@@ -6826,6 +6833,7 @@ async function doCreateAdGroup() {
     adgroup_name: name,
     placement_type: 'PLACEMENT_TYPE_NORMAL',
     placements: [placement],
+    promotion_type: PROMO_MAP[objective] || 'WEBSITE',
     budget_mode: CC.agBudgetMode,
     budget: budget,
     schedule_type: 'SCHEDULE_START_END',
