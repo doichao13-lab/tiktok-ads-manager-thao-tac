@@ -6942,29 +6942,29 @@ async function doCreateAdGroup() {
     budget_mode: CC.agBudgetMode,
     budget: budget,
     schedule_type: endDate ? 'SCHEDULE_START_END' : 'SCHEDULE_FROM_NOW',
+    schedule_start_time: (() => {
+      const now = new Date();
+      const sd = new Date(startDate + 'T00:00:00');
+      if (sd.toDateString() === now.toDateString()) {
+        const t = new Date(now.getTime() + 5 * 60 * 1000);
+        return `${startDate} ${String(t.getHours()).padStart(2,'0')}:${String(t.getMinutes()).padStart(2,'0')}:00`;
+      }
+      return startDate + ' 00:00:00';
+    })(),
     optimization_goal: optimization,
     billing_event: billingEvent,
     location_ids: finalLocations,
     operation_status: 'DISABLE',
   };
 
-  // OCPM requires bid_type; use NO_BID (auto) to avoid minimum bid validation issues
-  // OCPM requires BID_TYPE_CUSTOM + bid_price (NO_BID not supported for Lead Gen/Convert)
   if (billingEvent === 'OCPM') {
-    body.bid_type = 'BID_TYPE_CUSTOM';
+    body.bid_type = 'BID_TYPE_CUSTOM_BID';
     body.bid_price = bid;
   } else if (bid > 0) {
     body.bid_price = bid;
   }
 
-  // schedule_start_time only needed for SCHEDULE_START_END
   if (endDate) {
-    const now = new Date();
-    const sd = new Date(startDate + 'T00:00:00');
-    const st = sd.toDateString() === now.toDateString()
-      ? (() => { const t = new Date(now.getTime() + 5*60*1000); return `${startDate} ${String(t.getHours()).padStart(2,'0')}:${String(t.getMinutes()).padStart(2,'0')}:00`; })()
-      : startDate + ' 00:00:00';
-    body.schedule_start_time = st;
     body.schedule_end_time = endDate + ' 23:59:59';
   }
   if (gender !== 'GENDER_UNLIMITED') body.gender = gender;
