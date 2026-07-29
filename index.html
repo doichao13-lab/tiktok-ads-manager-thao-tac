@@ -6663,21 +6663,30 @@ let _ttRegionCache = null;
 async function loadTikTokRegions() {
   if (_ttRegionCache || S.demo || !S.accountId) return;
   try {
-    const [countryData, provData] = await Promise.all([
-      apiGet('/tool/region/', { advertiser_id: S.accountId, placements: 'PLACEMENT_TIKTOK', level: 'COUNTRY' }),
-      apiGet('/tool/region/', { advertiser_id: S.accountId, placements: 'PLACEMENT_TIKTOK', level: 'PROVINCE' }),
-    ]);
-    // Find Vietnam by region_code or name
-    const allCountries = countryData.regions || [];
-    const vnCountry = allCountries.find(r =>
-      r.region_code === 'VN' ||
-      (r.region_name || '').toLowerCase().includes('viet')
-    );
-    const countryId = vnCountry ? String(vnCountry.region_id) : '';
-    const provinces = (provData.regions || []).map(r => ({ id: String(r.region_id), name: r.region_name }));
-    _ttRegionCache = { countryId, provinces };
-    console.log('[regions] loaded:', { countryId, provinceCount: provinces.length, sample: provinces.slice(0, 3) });
-    buildLocationChips();
+    // Extract valid location IDs from existing ad groups (more reliable than /tool/region/)
+    const d = await apiGet('/adgroup/get/', {
+      advertiser_id: S.accountId,
+      fields: ['location_ids'],
+      page: 1,
+      page_size: 100,
+    });
+    const list = d.list || [];
+    const freq = {};
+    list.forEach(ag => (ag.location_ids || []).forEach(id => {
+      const sid = String(id);
+      freq[sid] = (freq[sid] || 0) + 1;
+    }));
+    const sorted = Object.entries(freq).sort((a, b) => b[1] - a[1]);
+    console.log('[regions] IDs from adgroups:', sorted.slice(0, 8));
+
+    if (sorted.length > 0) {
+      // Most-used ID = Vietnam country-level ID; others may be province IDs
+      const countryId = sorted[0][0];
+      _ttRegionCache = { countryId, provinces: [] };
+      buildLocationChips();
+    } else {
+      console.log('[regions] no location_ids found in existing adgroups');
+    }
   } catch(e) { console.log('[regions] fetch failed:', e.message); }
 }
 
@@ -6708,17 +6717,18 @@ function buildLocationChips() {
     return '';
   }
 
-  const chips = TOP_PROVINCES.map(name => {
+  const chips = r.provinces.length > 0 ? TOP_PROVINCES.map(name => {
     const id = matchProv(name);
     if (!id) return '';
     return `<label class="loc-chip-lbl"><input type="checkbox" class="loc-cb" value="${id}"> ${name}</label>`;
-  }).filter(Boolean);
+  }).filter(Boolean) : [];
 
   const vnChip = r.countryId
     ? `<label class="loc-chip-lbl"><input type="checkbox" class="loc-cb" value="${r.countryId}" checked> 🇻🇳 Toàn quốc</label>`
     : '';
 
-  container.innerHTML = (vnChip || '') + chips.join('');
+  container.innerHTML = (vnChip || '') + chips.join('') +
+    (chips.length === 0 && r.countryId ? '<span style="font-size:11px;color:var(--muted);margin-left:6px;">Tỉnh/thành sẽ được cập nhật sau</span>' : '');
 }
 
 /* ── Objective visual picker ── */
