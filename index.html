@@ -6934,22 +6934,32 @@ async function doCreateAdGroup() {
     budget_mode: CC.agBudgetMode,
     budget: budget,
     schedule_type: endDate ? 'SCHEDULE_START_END' : 'SCHEDULE_FROM_NOW',
-    schedule_start_time: startDate + ' 00:00:00',
+    schedule_start_time: (() => {
+      const now = new Date();
+      const d = new Date(startDate + 'T00:00:00');
+      if (d.toDateString() === now.toDateString()) {
+        // Start date is today — use current time + 5 min to avoid "earlier than current time" error
+        const t = new Date(now.getTime() + 5 * 60 * 1000);
+        return `${startDate} ${String(t.getHours()).padStart(2,'0')}:${String(t.getMinutes()).padStart(2,'0')}:00`;
+      }
+      return startDate + ' 00:00:00';
+    })(),
     optimization_goal: optimization,
     billing_event: billingEvent,
     location_ids: finalLocations,
     operation_status: 'DISABLE',
   };
 
-  // bid_type is required when billing_event is OCPM
+  // OCPM requires bid_type; use NO_BID (auto) to avoid minimum bid validation issues
   if (billingEvent === 'OCPM') {
-    body.bid_type = bid > 0 ? 'BID_TYPE_CUSTOM' : 'BID_TYPE_NO_BID';
+    body.bid_type = 'BID_TYPE_NO_BID';
   }
+  // bid_price only for non-OCPM (CPC/CPM/CPV)
+  if (bid > 0 && billingEvent !== 'OCPM') body.bid_price = bid;
 
   if (endDate) body.schedule_end_time = endDate + ' 23:59:59';
   if (gender !== 'GENDER_UNLIMITED') body.gender = gender;
   if (ages.length > 0) body.age_groups = ages;
-  if (bid > 0) body.bid_price = bid;
 
   console.log('[adgroup] body =', JSON.stringify(body, null, 2));
 
