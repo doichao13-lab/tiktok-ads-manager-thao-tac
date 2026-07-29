@@ -5612,7 +5612,7 @@ async function fetchCampaignBreakdown(aid) {
       advertiser_id: aid,
       report_type: 'BASIC',
       data_level: 'AUCTION_CAMPAIGN',
-      dimensions: ['campaign_id'],
+      dimensions: ['campaign_id','campaign_name'],
       metrics: ['spend','impressions','clicks','ctr','cpm','reach','real_time_result','result','cost_per_result','video_watched_2s','video_watched_6s','follows','complete_payment'],
       start_date: start, end_date: end,
       page_size: 100,
@@ -5629,7 +5629,7 @@ async function fetchAdBreakdown(aid) {
       advertiser_id: aid,
       report_type: 'BASIC',
       data_level: 'AUCTION_AD',
-      dimensions: ['ad_id'],
+      dimensions: ['ad_id','ad_name'],
       metrics: ['spend','impressions','clicks','ctr','cpm','real_time_result','result','cost_per_result','video_watched_2s','video_watched_6s','follows','complete_payment'],
       start_date: start, end_date: end,
       page_size: 100,
@@ -5916,9 +5916,9 @@ function renderCampPanel() {
       <th class="right">CPM</th>
     </tr></thead>
     <tbody>${rows.map((r,i)=>{
-      const m=r.metrics||{},cid=String((r.dimensions||{}).campaign_id||'');
+      const m=r.metrics||{},dim=r.dimensions||{},cid=String(dim.campaign_id||'');
       const camp=(S.campaigns||[]).find(c=>String(c.campaign_id)===cid)||{};
-      const name=camp.campaign_name||('ID '+cid),obj=OBJ_MAP[camp.objective_type]||camp.objective_type||'—';
+      const name=dim.campaign_name||camp.campaign_name||('ID '+cid),obj=OBJ_MAP[camp.objective_type]||camp.objective_type||'—';
       const getResVal = (o,m) => o.key==='real_time_result' ? (parseFloat(m._result)||parseFloat(m.onsite_form)||parseFloat(m.real_time_result)||parseFloat(m.result)||0) : (parseFloat(m[o.key])||0);
       const resCells = resOpts.map(o=>`<td class="right perf-num">${fmtN(getResVal(o,m),o.key)}</td>`).join('');
       return `<tr>
@@ -5964,7 +5964,7 @@ function renderAdPanel() {
       const m=r.metrics||{},dim=r.dimensions||{};
       const adId=String(dim.ad_id||'');
       const cr=_analAdCreative[adId]||{};
-      const adName=cr.name||('Ad …'+adId.slice(-8));
+      const adName=cr.name||dim.ad_name||('Ad …'+adId.slice(-8));
       const thumbHtml=cr.thumb
         ?`<img src="${esc(cr.thumb)}" style="width:60px;height:80px;object-fit:cover;border-radius:6px;flex-shrink:0;border:1px solid var(--border);" onerror="this.outerHTML='<div style=\\'width:60px;height:80px;border-radius:6px;background:var(--bg3);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:26px;border:1px solid var(--border);\\'>🎬</div>'">`
         :`<div style="width:60px;height:80px;border-radius:6px;background:var(--bg3);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:26px;border:1px solid var(--border);">🎬</div>`;
