@@ -6958,8 +6958,8 @@ async function doCreateAdGroup() {
   };
 
   if (billingEvent === 'OCPM') {
-    body.bid_type = 'BID_TYPE_CUSTOM_BID';
-    body.bid_price = bid;
+    body.bid_type = bid > 0 ? 'BID_TYPE_CUSTOM' : 'BID_TYPE_MAX_CONVERSION';
+    if (bid > 0) body.bid_price = Math.round(bid);
   } else if (bid > 0) {
     body.bid_price = bid;
   }
