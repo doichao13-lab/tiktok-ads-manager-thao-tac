@@ -7492,7 +7492,7 @@ function showAppSection(section) {
   document.getElementById('snavTodo').classList.toggle('active', !isAds);
   document.getElementById('platSwitch').style.display = isAds ? '' : 'none';
   // Ads elements
-  const adsEls = ['adsToolbar', 'levelBar', 'filterBar'];
+  const adsEls = ['adsToolbar', 'levelBar', 'filterBar', 'objFilterBar'];
   adsEls.forEach(id => { const el = document.getElementById(id); if (el) el.style.display = isAds ? '' : 'none'; });
   const mainEl = document.querySelector('.main');
   if (mainEl) mainEl.style.display = isAds ? '' : 'none';
