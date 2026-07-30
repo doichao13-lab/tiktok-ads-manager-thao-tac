@@ -690,6 +690,69 @@
     .dmd-input:focus { outline:none; border-color:var(--primary); background:var(--bg2); }
     .dmd-select { width:100%; padding:9px 12px; border:1px solid var(--border); border-radius:8px; font-size:14px; background:var(--bg3); color:var(--text); cursor:pointer; }
     .dmd-foot { padding:12px 20px; border-top:1px solid var(--border); display:flex; justify-content:flex-end; gap:8px; }
+    /* ── NOTES ── */
+    #section-notes { background:var(--bg); min-height:calc(100vh - 100px); }
+    .notes-wrap { max-width:1100px; margin:0 auto; padding:28px 20px; }
+    .notes-header { display:flex; align-items:flex-start; justify-content:space-between; margin-bottom:24px; flex-wrap:wrap; gap:16px; }
+    .notes-title { font-size:28px; font-weight:800; }
+    .notes-subtitle { font-size:13px; color:var(--text2); margin-top:4px; }
+    .notes-header-actions { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+    .notes-search-wrap { position:relative; }
+    .notes-search-input { padding:9px 14px 9px 36px; border:1px solid var(--border); border-radius:10px; font-size:13px; background:var(--bg2); color:var(--text); width:200px; }
+    .notes-search-input:focus { outline:none; border-color:var(--primary); }
+    .notes-search-ico { position:absolute; left:12px; top:50%; transform:translateY(-50%); font-size:13px; pointer-events:none; color:var(--text3); }
+    .notes-add-btn { padding:10px 22px; background:var(--primary); color:#fff; border:none; border-radius:10px; font-size:13px; font-weight:700; cursor:pointer; white-space:nowrap; transition:background .15s; }
+    .notes-add-btn:hover { background:var(--primary-hover); }
+    .notes-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(240px, 1fr)); gap:16px; align-items:start; }
+    .notes-section-label { grid-column:1/-1; font-size:11px; font-weight:700; color:var(--text3); text-transform:uppercase; letter-spacing:1px; margin-bottom:-4px; display:flex; align-items:center; gap:6px; }
+    .notes-section-label + .notes-section-label { margin-top:16px; }
+    .notes-empty { grid-column:1/-1; text-align:center; padding:80px 20px; }
+    .notes-empty-icon { font-size:72px; margin-bottom:16px; line-height:1; }
+    .notes-empty-text { font-size:20px; font-weight:700; color:var(--text); margin-bottom:8px; }
+    .notes-empty-sub { font-size:14px; color:var(--text2); }
+    .note-card { border-radius:18px; border:1.5px solid; padding:0; cursor:pointer; transition:all .2s; position:relative; overflow:hidden; display:flex; flex-direction:column; }
+    .note-card:hover { box-shadow:0 10px 36px rgba(0,0,0,.13); transform:translateY(-3px); }
+    .note-card-top { padding:16px 16px 10px; flex:1; }
+    .note-card-pin { position:absolute; top:12px; right:12px; font-size:15px; }
+    .note-card-title { font-size:15px; font-weight:700; color:var(--text); margin-bottom:8px; line-height:1.35; padding-right:26px; word-break:break-word; }
+    .note-card-preview { font-size:13px; color:var(--text2); line-height:1.65; display:-webkit-box; -webkit-line-clamp:6; -webkit-box-orient:vertical; overflow:hidden; word-break:break-word; }
+    .note-card-img { width:100%; height:140px; object-fit:cover; display:block; }
+    .note-card-footer { padding:10px 14px; border-top:1px solid rgba(0,0,0,.07); display:flex; align-items:center; justify-content:space-between; }
+    .note-card-date { font-size:11px; color:var(--text3); }
+    .note-card-actions { display:flex; gap:2px; opacity:0; transition:opacity .18s; }
+    .note-card:hover .note-card-actions { opacity:1; }
+    .note-card-act { padding:5px 7px; border:none; border-radius:7px; background:transparent; cursor:pointer; font-size:14px; color:var(--text3); transition:.15s; line-height:1; }
+    .note-card-act:hover { background:rgba(0,0,0,.09); color:var(--text); }
+    .note-modal-bg { display:none; position:fixed; inset:0; background:rgba(0,0,0,.55); z-index:9600; align-items:center; justify-content:center; padding:16px; }
+    .note-modal-bg.open { display:flex; }
+    .note-modal-box { border-radius:20px; width:740px; max-width:100%; max-height:92vh; display:flex; flex-direction:column; box-shadow:0 28px 90px rgba(0,0,0,.32); overflow:hidden; transition:background .2s; background:#fff; }
+    .nmd-head { padding:22px 22px 0; display:flex; align-items:center; gap:12px; }
+    .nmd-title-input { flex:1; border:none; font-size:22px; font-weight:800; color:var(--text); background:transparent; outline:none; padding:0; font-family:inherit; }
+    .nmd-title-input::placeholder { color:var(--text3); font-weight:400; }
+    .nmd-close-btn { width:34px; height:34px; border:none; border-radius:50%; background:rgba(0,0,0,.07); color:var(--text2); cursor:pointer; font-size:16px; display:flex; align-items:center; justify-content:center; transition:.15s; flex-shrink:0; }
+    .nmd-close-btn:hover { background:rgba(0,0,0,.14); color:var(--text); }
+    .nmd-toolbar { padding:10px 22px; border-bottom:1px solid rgba(0,0,0,.08); display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap; }
+    .nmd-fmt-btns { display:flex; align-items:center; gap:2px; }
+    .nmd-fmt-btn { padding:6px 10px; border:none; border-radius:8px; background:transparent; cursor:pointer; font-size:13px; color:var(--text2); transition:.15s; min-width:32px; height:32px; display:flex; align-items:center; justify-content:center; font-family:inherit; }
+    .nmd-fmt-btn:hover { background:rgba(0,0,0,.08); color:var(--text); }
+    .nmd-sep { width:1px; height:20px; background:rgba(0,0,0,.12); margin:0 4px; flex-shrink:0; }
+    .nmd-colors { display:flex; align-items:center; gap:8px; }
+    .nmd-color-lbl { font-size:12px; color:var(--text2); }
+    .nmd-colors-row { display:flex; gap:6px; }
+    .nmd-color-dot { width:22px; height:22px; border-radius:50%; cursor:pointer; border:2.5px solid transparent; transition:all .15s; box-shadow:0 0 0 1px rgba(0,0,0,.12); }
+    .nmd-color-dot:hover { transform:scale(1.15); }
+    .nmd-color-dot.active { border-color:var(--primary); transform:scale(1.2); box-shadow:0 0 0 2px rgba(23,71,234,.3); }
+    .nmd-editor-wrap { flex:1; overflow-y:auto; padding:12px 22px 16px; }
+    .nmd-editor { min-height:240px; outline:none; font-size:15px; line-height:1.75; color:var(--text); caret-color:var(--primary); word-break:break-word; }
+    .nmd-editor:empty::before { content:attr(placeholder); color:var(--text3); pointer-events:none; display:block; }
+    .nmd-editor h2 { font-size:20px; font-weight:800; margin:14px 0 6px; color:var(--text); }
+    .nmd-editor h3 { font-size:16px; font-weight:700; margin:10px 0 4px; color:var(--text); }
+    .nmd-editor img { max-width:100%; border-radius:10px; margin:10px 0; display:block; box-shadow:0 2px 12px rgba(0,0,0,.1); }
+    .nmd-editor p { margin:2px 0; }
+    .nmd-editor ul, .nmd-editor ol { padding-left:22px; margin:4px 0; }
+    .nmd-foot { padding:14px 22px; border-top:1px solid rgba(0,0,0,.08); display:flex; align-items:center; justify-content:space-between; flex-shrink:0; }
+    .nmd-date-info { font-size:12px; color:var(--text3); }
+    .nmd-foot-right { display:flex; gap:8px; }
 
     /* AI modal */
     .ai-modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,.55); z-index:9000; align-items:center; justify-content:center; }
@@ -731,6 +794,7 @@
   <button class="snav-btn active" id="snavAds" onclick="showAppSection('ads')">📢 Quảng cáo</button>
   <button class="snav-btn" id="snavTodo" onclick="showAppSection('todo')">✅ Todo List</button>
   <button class="snav-btn" id="snavDocs" onclick="showAppSection('docs')">📚 Tài liệu</button>
+  <button class="snav-btn" id="snavNotes" onclick="showAppSection('notes')">📝 Ghi chú</button>
   <div class="plat-switch" id="platSwitch">
     <button class="plat-btn active" id="platTiktok" onclick="showPlatform('tiktok')" style="display:flex;align-items:center;gap:6px;">
       <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" style="flex-shrink:0;"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-2.88 2.5 2.89 2.89 0 0 1-2.89-2.89 2.89 2.89 0 0 1 2.89-2.89c.28 0 .54.04.79.1V9.01a6.33 6.33 0 0 0-.79-.05 6.34 6.34 0 0 0-6.34 6.34 6.34 6.34 0 0 0 6.34 6.34 6.34 6.34 0 0 0 6.33-6.34V9.69a8.28 8.28 0 0 0 4.84 1.55V7.79a4.85 4.85 0 0 1-1.07-.1z"/></svg>
@@ -2719,6 +2783,77 @@ while ($listener.IsListening) {
     <div class="dmd-foot">
       <button class="btn btn-sm btn-ghost" onclick="closeDocModal()">Hủy</button>
       <button class="btn btn-sm btn-primary" onclick="saveDoc()">💾 Lưu</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== NOTES SECTION ===================== -->
+<div id="section-notes" style="display:none;">
+  <div class="notes-wrap">
+    <div class="notes-header">
+      <div>
+        <div class="notes-title">✏️ Ghi chú</div>
+        <div class="notes-subtitle" id="notesSubtitle">0 ghi chú</div>
+      </div>
+      <div class="notes-header-actions">
+        <div class="notes-search-wrap">
+          <span class="notes-search-ico">🔍</span>
+          <input class="notes-search-input" id="notesSearch" type="text" placeholder="Tìm ghi chú..." oninput="renderNotes()">
+        </div>
+        <button class="notes-add-btn" onclick="openNoteModal()">+ Ghi chú mới</button>
+      </div>
+    </div>
+    <div class="notes-grid" id="notesGrid">
+      <div class="notes-empty">
+        <div class="notes-empty-icon">✏️</div>
+        <div class="notes-empty-text">Chưa có ghi chú nào</div>
+        <div class="notes-empty-sub">Nhấn "+ Ghi chú mới" để bắt đầu</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Notes editor modal -->
+<div class="note-modal-bg" id="noteModalBg">
+  <div class="note-modal-box" id="noteModalBox">
+    <!-- Header: title + close -->
+    <div class="nmd-head">
+      <input class="nmd-title-input" id="nmd_title" type="text" placeholder="Tiêu đề ghi chú..." maxlength="200">
+      <button class="nmd-close-btn" onclick="closeNoteModal()">✕</button>
+    </div>
+
+    <!-- Formatting toolbar -->
+    <div class="nmd-toolbar">
+      <div class="nmd-fmt-btns">
+        <button class="nmd-fmt-btn" onclick="noteFormat('bold')" title="Đậm (Ctrl+B)"><b>B</b></button>
+        <button class="nmd-fmt-btn" onclick="noteFormat('italic')" title="Nghiêng (Ctrl+I)"><i>I</i></button>
+        <button class="nmd-fmt-btn" onclick="noteFormat('underline')" title="Gạch chân (Ctrl+U)"><u>U</u></button>
+        <div class="nmd-sep"></div>
+        <button class="nmd-fmt-btn" onclick="noteFormatBlock('h2')" title="Tiêu đề lớn" style="font-weight:800;font-size:12px;">H1</button>
+        <button class="nmd-fmt-btn" onclick="noteFormatBlock('h3')" title="Tiêu đề nhỏ" style="font-weight:700;font-size:11px;">H2</button>
+        <button class="nmd-fmt-btn" onclick="noteFormatBlock('p')" title="Đoạn văn thường" style="font-size:12px;">¶</button>
+        <div class="nmd-sep"></div>
+        <button class="nmd-fmt-btn" onclick="document.getElementById('nmd_img_input').click()" title="Chèn hình ảnh" style="font-size:16px;">🖼</button>
+        <input type="file" id="nmd_img_input" accept="image/*" style="display:none" onchange="insertNoteImage(this)">
+      </div>
+      <div class="nmd-colors">
+        <span class="nmd-color-lbl">Màu nền:</span>
+        <div id="nmd_colors_row" class="nmd-colors-row"></div>
+      </div>
+    </div>
+
+    <!-- Editor -->
+    <div class="nmd-editor-wrap">
+      <div class="nmd-editor" id="nmd_editor" contenteditable="true" placeholder="Bắt đầu viết ghi chú của bạn... Bạn có thể dùng Ctrl+B (đậm), Ctrl+I (nghiêng), Ctrl+U (gạch chân)"></div>
+    </div>
+
+    <!-- Footer -->
+    <div class="nmd-foot">
+      <span class="nmd-date-info" id="nmd_date_info"></span>
+      <div class="nmd-foot-right">
+        <button class="btn btn-sm btn-ghost" onclick="closeNoteModal()">Hủy</button>
+        <button class="btn btn-sm btn-primary" onclick="saveNote()">💾 Lưu ghi chú</button>
+      </div>
     </div>
   </div>
 </div>
@@ -7667,23 +7802,25 @@ let _currentPlatform = 'tiktok';
 
 function showAppSection(section) {
   _currentSection = section;
-  const isAds = section === 'ads';
-  const isTodo = section === 'todo';
-  const isDocs = section === 'docs';
+  const isAds   = section === 'ads';
+  const isTodo  = section === 'todo';
+  const isDocs  = section === 'docs';
+  const isNotes = section === 'notes';
   document.getElementById('snavAds').classList.toggle('active', isAds);
   document.getElementById('snavTodo').classList.toggle('active', isTodo);
   document.getElementById('snavDocs').classList.toggle('active', isDocs);
+  document.getElementById('snavNotes').classList.toggle('active', isNotes);
   document.getElementById('platSwitch').style.display = isAds ? '' : 'none';
-  // Ads elements
   const adsEls = ['adsToolbar', 'levelBar', 'filterBar', 'objFilterBar'];
   adsEls.forEach(id => { const el = document.getElementById(id); if (el) el.style.display = isAds ? '' : 'none'; });
   const mainEl = document.querySelector('.main');
   if (mainEl) mainEl.style.display = isAds ? '' : 'none';
-  // Section visibility
-  document.getElementById('section-todo').style.display = isTodo ? '' : 'none';
-  document.getElementById('section-docs').style.display = isDocs ? '' : 'none';
-  if (isTodo) { renderTodo(); updateTodayCard(); }
-  else if (isDocs) { renderDocs(); updateDocsChart(); }
+  document.getElementById('section-todo').style.display  = isTodo  ? '' : 'none';
+  document.getElementById('section-docs').style.display  = isDocs  ? '' : 'none';
+  document.getElementById('section-notes').style.display = isNotes ? '' : 'none';
+  if (isTodo)  { renderTodo(); updateTodayCard(); }
+  else if (isDocs)  { renderDocs(); updateDocsChart(); }
+  else if (isNotes) { renderNotes(); }
   else showPlatform(_currentPlatform);
 }
 
@@ -8218,6 +8355,244 @@ function updateDocsChart() {
       <span class="docs-bar-cnt">${cnt}</span>
     </div>`).join('') : emptyMsg;
 }
+
+/* ═══════════════════ NOTES ═══════════════════ */
+let notes = JSON.parse(localStorage.getItem('notes_items') || '[]');
+let _editNoteId = null;
+let _noteColor = 'default';
+
+const NOTE_COLOR_MAP = {
+  default: { bg:'#FFFFFF',        border:'#E2E8F0', dark:false, label:'Trắng'     },
+  yellow:  { bg:'#FEFCE8',        border:'#FDE68A', dark:false, label:'Vàng'      },
+  green:   { bg:'#F0FDF4',        border:'#A7F3D0', dark:false, label:'Xanh lá'   },
+  blue:    { bg:'#EFF6FF',        border:'#BFDBFE', dark:false, label:'Xanh'      },
+  pink:    { bg:'#FFF1F2',        border:'#FECDD3', dark:false, label:'Hồng'      },
+  purple:  { bg:'#FAF5FF',        border:'#DDD6FE', dark:false, label:'Tím'       },
+  orange:  { bg:'#FFF7ED',        border:'#FED7AA', dark:false, label:'Cam'       },
+  teal:    { bg:'#F0FDFA',        border:'#99F6E4', dark:false, label:'Ngọc'      },
+  charcoal:{ bg:'#1E293B',        border:'#334155', dark:true,  label:'Đen'       },
+  navy:    { bg:'#0F172A',        border:'#1E3A5F', dark:true,  label:'Tối'       },
+};
+
+function saveNotes() { localStorage.setItem('notes_items', JSON.stringify(notes)); }
+
+function openNoteModal(id) {
+  _editNoteId = id || null;
+  const n = id ? notes.find(x => x.id === id) : null;
+  document.getElementById('nmd_title').value = n ? n.title : '';
+  document.getElementById('nmd_editor').innerHTML = n ? n.content : '';
+  document.getElementById('nmd_date_info').textContent = n
+    ? 'Cập nhật: ' + new Date(n.updatedAt || n.createdAt).toLocaleString('vi-VN')
+    : '';
+  _noteColor = n ? (n.color || 'default') : 'default';
+  renderNoteColorPicker();
+  applyNoteColorToModal(_noteColor);
+  document.getElementById('noteModalBg').classList.add('open');
+  setTimeout(() => { const e = document.getElementById('nmd_editor'); e && e.focus(); }, 120);
+}
+
+function closeNoteModal() { document.getElementById('noteModalBg').classList.remove('open'); }
+
+function saveNote() {
+  const title   = (document.getElementById('nmd_title').value || '').trim();
+  const content = document.getElementById('nmd_editor').innerHTML.trim();
+  if (!title && (!content || content === '<br>')) { alert('Vui lòng nhập tiêu đề hoặc nội dung!'); return; }
+  const now = new Date().toISOString();
+  if (_editNoteId) {
+    const idx = notes.findIndex(x => x.id === _editNoteId);
+    if (idx >= 0) notes[idx] = { ...notes[idx], title, content, color: _noteColor, updatedAt: now };
+  } else {
+    notes.unshift({ id: 'note_' + Date.now(), title, content, color: _noteColor, pinned: false, createdAt: now, updatedAt: now });
+  }
+  saveNotes();
+  closeNoteModal();
+  renderNotes();
+}
+
+function deleteNote(id) {
+  if (!confirm('Xóa ghi chú này?')) return;
+  notes = notes.filter(x => x.id !== id);
+  saveNotes();
+  renderNotes();
+}
+
+function toggleNotePin(id) {
+  const n = notes.find(x => x.id === id);
+  if (n) { n.pinned = !n.pinned; saveNotes(); renderNotes(); }
+}
+
+function noteFormat(cmd) {
+  document.execCommand(cmd, false, null);
+  document.getElementById('nmd_editor').focus();
+}
+
+function noteFormatBlock(tag) {
+  document.execCommand('formatBlock', false, tag);
+  document.getElementById('nmd_editor').focus();
+}
+
+function insertNoteImage(input) {
+  const file = input.files[0];
+  if (!file) return;
+  input.value = '';
+  compressNoteImage(file).then(dataUrl => {
+    const editor = document.getElementById('nmd_editor');
+    editor.focus();
+    const img = document.createElement('img');
+    img.src = dataUrl;
+    img.style.cssText = 'max-width:100%;border-radius:10px;margin:10px 0;display:block;box-shadow:0 2px 12px rgba(0,0,0,.1)';
+    const sel = window.getSelection();
+    if (sel && sel.rangeCount > 0) {
+      const range = sel.getRangeAt(0);
+      range.collapse(false);
+      range.insertNode(img);
+      const newRange = document.createRange();
+      newRange.setStartAfter(img);
+      newRange.collapse(true);
+      sel.removeAllRanges();
+      sel.addRange(newRange);
+    } else {
+      editor.appendChild(img);
+    }
+  });
+}
+
+function compressNoteImage(file, maxW = 1000, quality = 0.78) {
+  return new Promise(resolve => {
+    const reader = new FileReader();
+    reader.onload = e => {
+      const imgEl = new Image();
+      imgEl.onload = () => {
+        const scale = Math.min(1, maxW / imgEl.width);
+        const canvas = document.createElement('canvas');
+        canvas.width  = Math.round(imgEl.width  * scale);
+        canvas.height = Math.round(imgEl.height * scale);
+        canvas.getContext('2d').drawImage(imgEl, 0, 0, canvas.width, canvas.height);
+        resolve(canvas.toDataURL('image/jpeg', quality));
+      };
+      imgEl.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+function renderNoteColorPicker() {
+  const row = document.getElementById('nmd_colors_row');
+  if (!row) return;
+  row.innerHTML = Object.entries(NOTE_COLOR_MAP).map(([key, c]) =>
+    `<div class="nmd-color-dot${_noteColor===key?' active':''}"
+      style="background:${c.bg};border-color:${_noteColor===key?'var(--primary)':c.border}"
+      title="${c.label}" onclick="selectNoteColor('${key}')"></div>`
+  ).join('');
+}
+
+function selectNoteColor(key) {
+  _noteColor = key;
+  renderNoteColorPicker();
+  applyNoteColorToModal(key);
+}
+
+function applyNoteColorToModal(key) {
+  const c = NOTE_COLOR_MAP[key] || NOTE_COLOR_MAP.default;
+  const box = document.getElementById('noteModalBox');
+  if (!box) return;
+  box.style.background = c.bg;
+  box.style.color = c.dark ? '#F1F5F9' : '';
+  const editor = document.getElementById('nmd_editor');
+  if (editor) editor.style.color = c.dark ? '#E2E8F0' : '';
+  const titleInput = document.getElementById('nmd_title');
+  if (titleInput) titleInput.style.color = c.dark ? '#F1F5F9' : '';
+}
+
+function getNoteTextPreview(html, maxLen = 250) {
+  const div = document.createElement('div');
+  div.innerHTML = html;
+  return div.textContent.replace(/\s+/g,' ').trim().slice(0, maxLen);
+}
+
+function getNoteFirstImage(html) {
+  const div = document.createElement('div');
+  div.innerHTML = html;
+  const img = div.querySelector('img');
+  return img ? img.src : null;
+}
+
+function escNoteHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function updateNotesSubtitle() {
+  const sub = document.getElementById('notesSubtitle');
+  if (!sub) return;
+  const pinned = notes.filter(n => n.pinned).length;
+  sub.textContent = `${notes.length} ghi chú${pinned ? ' · ' + pinned + ' đã ghim' : ''}`;
+}
+
+function renderNoteCard(n) {
+  const c = NOTE_COLOR_MAP[n.color || 'default'] || NOTE_COLOR_MAP.default;
+  const preview = getNoteTextPreview(n.content);
+  const imgSrc  = getNoteFirstImage(n.content);
+  const dateStr = new Date(n.updatedAt || n.createdAt).toLocaleDateString('vi-VN');
+  const textColor = c.dark ? '#E2E8F0' : 'var(--text)';
+  const text2Color = c.dark ? '#94A3B8' : 'var(--text2)';
+  const text3Color = c.dark ? '#64748B' : 'var(--text3)';
+  return `<div class="note-card" style="background:${c.bg};border-color:${c.border}" onclick="openNoteModal('${n.id}')">
+    ${n.pinned ? '<div class="note-card-pin">📌</div>' : ''}
+    <div class="note-card-top">
+      ${n.title ? `<div class="note-card-title" style="color:${textColor}">${escNoteHtml(n.title)}</div>` : ''}
+      ${preview  ? `<div class="note-card-preview" style="color:${text2Color}">${escNoteHtml(preview)}</div>` : ''}
+    </div>
+    ${imgSrc ? `<img class="note-card-img" src="${imgSrc}" alt="" loading="lazy">` : ''}
+    <div class="note-card-footer" style="border-color:rgba(${c.dark?'255,255,255':'0,0,0'},.08)">
+      <span class="note-card-date" style="color:${text3Color}">${dateStr}</span>
+      <div class="note-card-actions">
+        <button class="note-card-act" onclick="event.stopPropagation();toggleNotePin('${n.id}')" title="${n.pinned?'Bỏ ghim':'Ghim'}">${n.pinned?'📌':'📍'}</button>
+        <button class="note-card-act" onclick="event.stopPropagation();openNoteModal('${n.id}')" title="Chỉnh sửa">✏️</button>
+        <button class="note-card-act" onclick="event.stopPropagation();deleteNote('${n.id}')" title="Xóa">🗑</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+function renderNotes() {
+  const grid = document.getElementById('notesGrid');
+  if (!grid) return;
+  updateNotesSubtitle();
+  const search = (document.getElementById('notesSearch')?.value || '').toLowerCase();
+  const filtered = notes.filter(n => {
+    if (!search) return true;
+    return (n.title + ' ' + getNoteTextPreview(n.content)).toLowerCase().includes(search);
+  });
+  if (!filtered.length) {
+    grid.innerHTML = `<div class="notes-empty">
+      <div class="notes-empty-icon">${search ? '🔍' : '✏️'}</div>
+      <div class="notes-empty-text">${search ? 'Không tìm thấy ghi chú' : 'Chưa có ghi chú nào'}</div>
+      <div class="notes-empty-sub">${search ? 'Thử từ khóa khác' : 'Nhấn "+ Ghi chú mới" để bắt đầu'}</div>
+    </div>`;
+    return;
+  }
+  const pinned   = filtered.filter(n => n.pinned);
+  const unpinned = filtered.filter(n => !n.pinned);
+  let html = '';
+  if (pinned.length) {
+    html += `<div class="notes-section-label">📌 Đã ghim</div>`;
+    html += pinned.map(renderNoteCard).join('');
+  }
+  if (unpinned.length) {
+    if (pinned.length) html += `<div class="notes-section-label">📋 Tất cả ghi chú</div>`;
+    html += unpinned.map(renderNoteCard).join('');
+  }
+  grid.innerHTML = html;
+}
+
+/* Ctrl+Enter to save note */
+document.addEventListener('keydown', function(e) {
+  const bg = document.getElementById('noteModalBg');
+  if (bg && bg.classList.contains('open')) {
+    if (e.key === 'Escape') { closeNoteModal(); return; }
+    if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); saveNote(); }
+  }
+});
 
 /* ── COLUMN HEADER TOOLTIP ── */
 (function() {
