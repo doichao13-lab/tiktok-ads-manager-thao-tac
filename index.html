@@ -4021,6 +4021,7 @@ function clearCampaignFilters() {
 function renderObjFilter() {
   const bar = document.getElementById('objFilterBar');
   if (!bar) return;
+  if (_currentSection !== 'ads') { bar.style.display = 'none'; return; }
   if (S.level !== 'campaign' || !S.campaigns.length) { bar.style.display = 'none'; return; }
   const types = [...new Set(S.campaigns.map(c => c.objective_type).filter(Boolean))];
   if (types.length <= 1) { bar.style.display = 'none'; return; }
@@ -4984,7 +4985,7 @@ function copyCloudUrl() {
 function showDashboard() {
   document.getElementById('setupScreen').style.display = 'none';
   document.getElementById('dashboard').style.display   = '';
-  document.getElementById('levelBar').style.display    = '';
+  if (_currentSection === 'ads') document.getElementById('levelBar').style.display = '';
   if (!S.demo && S.config.token) document.getElementById('shareBtn').style.display = '';
 }
 
@@ -8017,10 +8018,6 @@ document.addEventListener('DOMContentLoaded', () => {
   showPlatform('tiktok');
 });
 
-/* ── COLUMN HEADER TOOLTIP ── */
-(function() {
-  const tip = document.getElementById('colTooltip');
-  let hideTimer;
 /* ═══════════════════ DOCUMENT LIBRARY ═══════════════════ */
 let docs = JSON.parse(localStorage.getItem('docs_items') || '[]');
 let _editDocId = null;
@@ -8222,6 +8219,10 @@ function updateDocsChart() {
     </div>`).join('') : emptyMsg;
 }
 
+/* ── COLUMN HEADER TOOLTIP ── */
+(function() {
+  const tip = document.getElementById('colTooltip');
+  let hideTimer;
   document.addEventListener('mouseover', function(e) {
     const th = e.target.closest('th[data-tt]');
     if (!th || !th.dataset.tt) { return; }
