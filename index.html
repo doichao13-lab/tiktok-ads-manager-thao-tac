@@ -2110,7 +2110,7 @@ while ($listener.IsListening) {
               </div>
               <div class="form-group">
                 <label>Mục tiêu tối ưu</label>
-                <select id="ag_optimization">
+                <select id="ag_optimization" onchange="onOptimizationChange(this.value)">
                   <option value="CLICK">Click (CPC)</option>
                   <option value="REACH">Reach (CPM)</option>
                   <option value="VIDEO_VIEW">Video View (CPV)</option>
@@ -2211,8 +2211,24 @@ while ($listener.IsListening) {
                 <span class="hint">Tối thiểu 20,000 VND/ngày</span>
               </div>
               <div class="form-group">
-                <label>Giá thầu (VND, tuỳ chọn)</label>
+                <label id="ag_bid_label">Giá thầu (VND, tuỳ chọn)</label>
                 <input type="number" id="ag_bid" placeholder="Để trống = tự động" min="0" />
+              </div>
+            </div>
+            <!-- Frequency cap: chỉ hiện khi optimization = REACH -->
+            <div class="form-row" id="ag_freq_row" style="display:none;margin-bottom:8px;">
+              <div class="form-group">
+                <label>Tần suất tối đa / người <span style="color:var(--danger)">*</span></label>
+                <input type="number" id="ag_freq" value="2" min="1" max="20" />
+                <span class="hint">Số lần hiển thị tối đa cho mỗi người</span>
+              </div>
+              <div class="form-group">
+                <label>Trong vòng (ngày)</label>
+                <select id="ag_freq_schedule">
+                  <option value="1">1 ngày</option>
+                  <option value="7" selected>7 ngày</option>
+                  <option value="30">30 ngày</option>
+                </select>
               </div>
             </div>
             <div class="form-row" style="margin-bottom:0;">
@@ -2618,8 +2634,8 @@ async function fetchAccounts() {
   if (!ids.length) return [];
   const customNames = { ...SEONGON_NAMES, ...(S.config.advNames || {}) };
 
-  // Try to get names from API
-  let apiNames = {};
+  // Try to get names + currency from API
+  let apiNames = {}, apiCurrencies = {};
   try {
     const d = await apiGet('/advertiser/info/', {
       advertiser_ids: ids,
@@ -2629,6 +2645,7 @@ async function fetchAccounts() {
     list.forEach(a => {
       const sid = String(a.advertiser_id);
       if (a.advertiser_name && a.advertiser_name !== sid) apiNames[sid] = a.advertiser_name;
+      if (a.currency) apiCurrencies[sid] = a.currency;
     });
   } catch(e) { /* silent — fall back to custom names or ID */ }
 
@@ -2638,7 +2655,7 @@ async function fetchAccounts() {
     return {
       advertiser_id: sid,
       advertiser_name: name || `TK ...${sid.slice(-6)}`,
-      currency: 'VND',
+      currency: apiCurrencies[sid] || 'VND',
       balance: 0,
     };
   });
@@ -4544,6 +4561,20 @@ function cvt(v) {
   const n = parseFloat(v) || 0;
   if (!S.convertCurrency) return n;
   return n * getRate();
+}
+
+function getAccountCurrency() {
+  return S.accounts?.find(a => a.advertiser_id === S.accountId)?.currency || 'VND';
+}
+
+// User always enters VND; convert to account currency before sending to API
+function vndToApiAmount(vnd) {
+  const currency = getAccountCurrency();
+  if (currency !== 'VND') {
+    const rate = parseFloat(document.getElementById('rateInput')?.value) || USD_VND_RATE;
+    return Math.round((vnd / rate) * 100) / 100;
+  }
+  return Math.round(vnd);
 }
 
 function toggleConvert() {
@@ -6823,6 +6854,21 @@ function createShowResult(elId, type, msg) {
   el.style.display = 'block';
 }
 
+function onOptimizationChange(val) {
+  const freqRow = document.getElementById('ag_freq_row');
+  const bidLabel = document.getElementById('ag_bid_label');
+  const isReach = val === 'REACH';
+  const isOCPM = val === 'CONVERT' || val === 'LEAD_GENERATION';
+  if (freqRow) freqRow.style.display = isReach ? 'flex' : 'none';
+  if (bidLabel) {
+    if (isOCPM) bidLabel.textContent = 'Giá thầu CPA (VND, tuỳ chọn)';
+    else if (isReach) bidLabel.textContent = 'Giá thầu CPM (VND) *';
+    else if (val === 'CLICK') bidLabel.textContent = 'Giá thầu CPC (VND) *';
+    else if (val === 'VIDEO_VIEW') bidLabel.textContent = 'Giá thầu CPV (VND) *';
+    else bidLabel.textContent = 'Giá thầu (VND)';
+  }
+}
+
 async function doCreateCampaign() {
   const name = (document.getElementById('cc_name').value || '').trim();
   const objective = document.getElementById('cc_objective').value;
@@ -6843,7 +6889,7 @@ async function doCreateCampaign() {
   if (budgetMode !== 'BUDGET_MODE_INFINITE') {
     const budget = parseFloat(document.getElementById('cc_budget').value);
     if (!budget || budget <= 0) { createShowResult('cc_result', 'error', '⚠ Vui lòng nhập ngân sách hợp lệ.'); return; }
-    body.budget = budget;
+    body.budget = vndToApiAmount(budget);
   }
 
   const btn = document.querySelector('#cpanel1 .btn-primary');
@@ -6883,16 +6929,23 @@ async function doCreateAdGroup() {
   const ages = [...ageEl.selectedOptions].map(o => o.value);
   const startDate = document.getElementById('ag_start').value;
   const endDate = document.getElementById('ag_end').value;
-  const budget = parseFloat(document.getElementById('ag_budget').value);
-  const bid = parseFloat(document.getElementById('ag_bid').value);
+  const budgetVnd = parseFloat(document.getElementById('ag_budget').value);
+  const bidVnd = parseFloat(document.getElementById('ag_bid').value);
 
   const BILLING_MAP_PRE = { CLICK:'CPC', REACH:'CPM', VIDEO_VIEW:'CPV', CONVERT:'OCPM', LEAD_GENERATION:'OCPM' };
   const isOCPM = BILLING_MAP_PRE[optimization] === 'OCPM';
+  const isReach = optimization === 'REACH';
 
   if (!name) { createShowResult('ag_result', 'error', '⚠ Vui lòng nhập tên nhóm quảng cáo.'); return; }
   if (!startDate) { createShowResult('ag_result', 'error', '⚠ Vui lòng chọn ngày bắt đầu.'); return; }
-  if (!budget || budget <= 0) { createShowResult('ag_result', 'error', '⚠ Vui lòng nhập ngân sách hợp lệ.'); return; }
-  // For OCPM: bid is optional — if provided use BID_TYPE_CUSTOM, else BID_TYPE_MAX_CONVERSION
+  if (!budgetVnd || budgetVnd <= 0) { createShowResult('ag_result', 'error', '⚠ Vui lòng nhập ngân sách hợp lệ.'); return; }
+  if (!isOCPM && (!bidVnd || bidVnd <= 0)) {
+    createShowResult('ag_result', 'error', '⚠ Mục tiêu này yêu cầu nhập Giá thầu (CPM/CPC/CPV).');
+    return;
+  }
+
+  const budget = vndToApiAmount(budgetVnd);
+  const bid = bidVnd > 0 ? vndToApiAmount(bidVnd) : 0;
 
   const BILLING_MAP = BILLING_MAP_PRE;
   // Map campaign objective → promotion_type (required by TikTok API)
@@ -6957,6 +7010,12 @@ async function doCreateAdGroup() {
     body.bid_type = 'BID_TYPE_MAX_CONVERSION';
   } else if (bid > 0) {
     body.bid_price = bid;
+  }
+
+  // REACH requires frequency cap
+  if (isReach) {
+    body.frequency = parseInt(document.getElementById('ag_freq')?.value) || 2;
+    body.frequency_schedule = parseInt(document.getElementById('ag_freq_schedule')?.value) || 7;
   }
 
   if (endDate) {
