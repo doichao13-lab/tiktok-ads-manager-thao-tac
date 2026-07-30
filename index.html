@@ -72,11 +72,28 @@
     .btn-ghost { background: transparent; border-color: transparent; }
     .btn-ghost:hover { background: var(--bg3); border-color: var(--border); }
 
+    /* ── SUPER NAV ── */
+    .super-nav {
+      background: var(--bg2); border-bottom: 2px solid var(--border);
+      padding: 0 20px; display: flex; align-items: center; gap: 6px; height: 44px;
+      position: sticky; top: 56px; z-index: 960;
+    }
+    .snav-btn {
+      padding: 6px 16px; border-radius: 20px; font-size: 13px; font-weight: 600;
+      border: none; background: transparent; cursor: pointer; color: var(--text2);
+      display: flex; align-items: center; gap: 6px; transition: .15s;
+    }
+    .snav-btn:hover { background: var(--bg3); color: var(--text); }
+    .snav-btn.active { background: var(--primary); color: #fff; }
+    .plat-switch { display: flex; background: var(--bg3); border-radius: 8px; padding: 2px; gap: 1px; margin-left: 12px; border-left: 1px solid var(--border); padding-left: 14px; }
+    .plat-btn { padding: 4px 14px; border-radius: 6px; font-size: 12px; font-weight: 600; border: none; background: transparent; cursor: pointer; color: var(--text2); transition: .15s; }
+    .plat-btn.active { background: var(--bg2); color: var(--text); box-shadow: 0 1px 4px rgba(0,0,0,.1); }
+
     /* ── TOOLBAR ── */
     .toolbar {
       background: var(--bg2); border-bottom: 1px solid var(--border);
       padding: 10px 20px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
-      position: sticky; top: 56px; z-index: 900;
+      position: sticky; top: 100px; z-index: 900;
     }
     .name-filter-wrap { position: relative; flex: 1; min-width: 160px; max-width: 280px; }
     .name-filter-wrap::before {
@@ -114,7 +131,7 @@
     .filter-bar {
       background: var(--bg2); border-bottom: 1px solid var(--border);
       padding: 8px 20px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
-      position: sticky; top: 108px; z-index: 800;
+      position: sticky; top: 152px; z-index: 800;
     }
     .filter-label { color: var(--text2); font-size: 12px; white-space: nowrap; flex-shrink: 0; }
     .chips { display: flex; gap: 6px; flex-wrap: wrap; }
@@ -469,7 +486,7 @@
     .level-bar {
       background: var(--bg2); border-bottom: 1px solid var(--border);
       padding: 0 20px; display: flex; align-items: center;
-      position: sticky; top: 150px; z-index: 700;
+      position: sticky; top: 194px; z-index: 700;
     }
     .level-tab {
       padding: 10px 18px; font-size: 13px; font-weight: 500; color: var(--text2);
@@ -516,6 +533,105 @@
     .export-data-table td.dim-col { text-align:left; max-width:200px; overflow:hidden; text-overflow:ellipsis; }
     .export-data-table tbody tr:hover { background:var(--bg2); }
     .export-data-table tfoot td { background:var(--bg3); font-weight:700; border-top:2px solid var(--border); }
+    /* ── TODO LIST ── */
+    #section-todo { background:var(--bg); min-height:calc(100vh - 100px); }
+    .todo-wrap { max-width:860px; margin:0 auto; padding:28px 20px; }
+    .todo-title { font-size:28px; font-weight:800; display:flex; align-items:center; gap:12px; margin-bottom:4px; }
+    .todo-stats-line { font-size:13px; color:var(--text2); margin-bottom:18px; }
+    .todo-stats-line .overdue-txt { color:var(--danger); font-weight:700; }
+    .todo-today { background:var(--bg2); border:1px solid var(--border); border-radius:14px; padding:18px 22px; margin-bottom:20px; display:flex; align-items:flex-start; gap:20px; }
+    .todo-today-left { flex:1; min-width:0; }
+    .today-label { font-size:11px; font-weight:700; color:var(--text2); text-transform:uppercase; letter-spacing:.5px; margin-bottom:6px; }
+    .today-pct { font-size:38px; font-weight:800; color:var(--primary); line-height:1; }
+    .today-pct-sub { font-size:13px; color:var(--text2); margin-top:2px; }
+    .today-bar-wrap { height:6px; background:var(--bg3); border-radius:3px; margin-top:12px; overflow:hidden; }
+    .today-bar { height:100%; background:var(--primary); border-radius:3px; transition:width .4s; }
+    .today-overdue { font-size:12px; color:var(--danger); font-weight:700; margin-top:8px; }
+    .todo-today-right { display:flex; gap:28px; text-align:center; padding-top:2px; }
+    .today-stat { }
+    .today-stat-num { font-size:28px; font-weight:700; line-height:1; }
+    .today-stat-lbl { font-size:11px; color:var(--text2); margin-top:4px; }
+    .period-tabs { display:flex; gap:8px; margin-bottom:16px; }
+    .period-tab { padding:8px 18px; border-radius:22px; font-size:13px; font-weight:500; border:1px solid var(--border); background:var(--bg2); cursor:pointer; color:var(--text2); transition:.15s; display:flex; align-items:center; gap:6px; }
+    .period-tab:hover { background:var(--bg3); }
+    .period-tab.active { background:var(--primary); border-color:var(--primary); color:#fff; font-weight:600; }
+    .todo-search-row { display:flex; gap:10px; margin-bottom:12px; }
+    .todo-search-input { flex:1; padding:10px 14px 10px 36px; border:1px solid var(--border); border-radius:10px; font-size:13px; background:var(--bg2); color:var(--text); }
+    .todo-search-input:focus { outline:none; border-color:var(--primary); }
+    .todo-search-wrap { flex:1; position:relative; }
+    .todo-search-ico { position:absolute; left:12px; top:50%; transform:translateY(-50%); font-size:14px; pointer-events:none; }
+    .todo-add-btn { padding:10px 22px; background:var(--primary); color:#fff; border:none; border-radius:10px; font-size:13px; font-weight:700; cursor:pointer; white-space:nowrap; transition:background .15s; }
+    .todo-add-btn:hover { background:var(--primary-hover); }
+    .todo-filter-card { background:var(--bg2); border:1px solid var(--border); border-radius:10px; padding:12px 16px; margin-bottom:10px; }
+    .todo-filter-row { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+    .todo-filter-row + .todo-filter-row { margin-top:8px; }
+    .todo-filter-label { font-size:12px; color:var(--text2); min-width:68px; flex-shrink:0; }
+    .fchip { padding:4px 12px; border-radius:14px; font-size:12px; font-weight:500; border:1px solid var(--border); background:var(--bg3); cursor:pointer; color:var(--text2); transition:.15s; }
+    .fchip:hover { background:var(--bg4); }
+    .fchip.active { background:#111; border-color:#111; color:#fff; }
+    .fchip.fchip-high.active { background:#FEE2E2; border-color:#FCA5A5; color:#991B1B; }
+    .fchip.fchip-medium.active { background:#FEF9C3; border-color:#FDE047; color:#854D0E; }
+    .fchip.fchip-low.active { background:#DBEAFE; border-color:#93C5FD; color:#1E40AF; }
+    .todo-tag-row { background:var(--bg2); border:1px solid var(--border); border-radius:10px; padding:12px 16px; margin-bottom:16px; display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+    .todo-task-card { background:var(--bg2); border:1px solid var(--border); border-radius:12px; padding:16px; margin-bottom:10px; transition:box-shadow .15s; }
+    .todo-task-card:hover { box-shadow:0 2px 12px rgba(0,0,0,.08); }
+    .todo-task-card.is-overdue { border-left:4px solid var(--danger); }
+    .task-main-row { display:flex; align-items:flex-start; gap:12px; }
+    .task-cb { width:20px; height:20px; border-radius:5px; border:2px solid var(--border); flex-shrink:0; cursor:pointer; display:flex; align-items:center; justify-content:center; background:var(--bg2); margin-top:1px; transition:.15s; }
+    .task-cb.checked { background:var(--green); border-color:var(--green); }
+    .task-cb.checked::after { content:'✓'; color:#fff; font-size:12px; font-weight:800; }
+    .task-body { flex:1; min-width:0; }
+    .task-title-txt { font-size:15px; font-weight:600; color:var(--text); }
+    .task-title-txt.done { text-decoration:line-through; color:var(--text3); }
+    .task-meta-row { display:flex; align-items:center; gap:6px; flex-wrap:wrap; margin-top:6px; }
+    .pbadge { padding:2px 10px; border-radius:12px; font-size:11px; font-weight:600; }
+    .pbadge.high { background:#FEE2E2; color:#991B1B; }
+    .pbadge.medium { background:#FEF9C3; color:#854D0E; }
+    .pbadge.low { background:#DBEAFE; color:#1E40AF; }
+    .dbadge { padding:2px 10px; border-radius:12px; font-size:11px; border:1px solid var(--border); color:var(--text2); display:flex; align-items:center; gap:4px; }
+    .dbadge.overdue { background:#FEE2E2; border-color:#FCA5A5; color:#991B1B; font-weight:700; }
+    .tagbadge { padding:2px 10px; border-radius:12px; font-size:11px; background:var(--bg3); color:var(--text2); }
+    .task-actions-col { display:flex; align-items:center; gap:4px; flex-shrink:0; }
+    .task-sub-count { font-size:12px; color:var(--text2); cursor:pointer; padding:3px 8px; border-radius:6px; display:flex; align-items:center; gap:3px; }
+    .task-sub-count:hover { background:var(--bg3); }
+    .task-act-btn { padding:4px 7px; border:none; border-radius:6px; background:transparent; cursor:pointer; font-size:14px; color:var(--text3); transition:.15s; }
+    .task-act-btn:hover { background:var(--bg3); color:var(--text); }
+    .task-prog-wrap { margin-top:10px; }
+    .task-prog-lbl { font-size:11px; color:var(--text2); margin-bottom:4px; }
+    .task-prog-bar-bg { height:4px; background:var(--bg3); border-radius:2px; overflow:hidden; }
+    .task-prog-bar { height:100%; border-radius:2px; transition:width .3s; }
+    .task-prog-bar.full { background:var(--green); }
+    .task-prog-bar.part { background:#D97706; }
+    .task-subtasks-list { margin-top:12px; padding-top:10px; border-top:1px solid var(--bg3); display:flex; flex-direction:column; gap:4px; }
+    .subtask-row { display:flex; align-items:center; gap:8px; font-size:13px; }
+    .subtask-cb { width:16px; height:16px; border-radius:4px; border:1.5px solid var(--border); flex-shrink:0; cursor:pointer; display:flex; align-items:center; justify-content:center; }
+    .subtask-cb.checked { background:var(--green); border-color:var(--green); }
+    .subtask-cb.checked::after { content:'✓'; color:#fff; font-size:9px; font-weight:800; }
+    .subtask-title { flex:1; }
+    .subtask-title.done { text-decoration:line-through; color:var(--text3); }
+    /* Todo modal */
+    .todo-modal-bg { display:none; position:fixed; inset:0; background:rgba(0,0,0,.5); z-index:9500; align-items:center; justify-content:center; }
+    .todo-modal-bg.open { display:flex; }
+    .todo-modal-box { background:var(--bg2); border-radius:14px; width:520px; max-width:95vw; max-height:90vh; overflow-y:auto; box-shadow:0 20px 60px rgba(0,0,0,.3); }
+    .tmd-head { padding:18px 20px 14px; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; }
+    .tmd-body { padding:18px 20px; }
+    .tmd-group { margin-bottom:14px; }
+    .tmd-label { font-size:11px; font-weight:700; color:var(--text2); margin-bottom:6px; display:block; text-transform:uppercase; letter-spacing:.4px; }
+    .tmd-input { width:100%; padding:9px 12px; border:1px solid var(--border); border-radius:8px; font-size:14px; background:var(--bg3); color:var(--text); }
+    .tmd-input:focus { outline:none; border-color:var(--primary); background:var(--bg2); }
+    .tmd-select { width:100%; padding:9px 12px; border:1px solid var(--border); border-radius:8px; font-size:14px; background:var(--bg3); color:var(--text); cursor:pointer; }
+    .tmd-foot { padding:12px 20px; border-top:1px solid var(--border); display:flex; justify-content:flex-end; gap:8px; }
+    .subtask-edit-list { display:flex; flex-direction:column; gap:6px; }
+    .subtask-edit-row { display:flex; align-items:center; gap:8px; }
+    .subtask-edit-row input { flex:1; padding:7px 10px; border:1px solid var(--border); border-radius:6px; font-size:13px; background:var(--bg3); color:var(--text); }
+    .subtask-edit-row input:focus { outline:none; border-color:var(--primary); }
+    /* Facebook placeholder */
+    #platform-facebook { display:none; padding:60px 20px; text-align:center; }
+    .fb-placeholder { max-width:480px; margin:0 auto; }
+    .fb-placeholder h2 { font-size:24px; font-weight:700; margin-bottom:12px; }
+    .fb-placeholder p { color:var(--text2); font-size:14px; line-height:1.6; }
+    .fb-coming-badge { display:inline-block; background:#E8F0FE; color:#1A73E8; padding:4px 14px; border-radius:20px; font-size:12px; font-weight:600; margin-bottom:20px; }
+
     /* AI modal */
     .ai-modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,.55); z-index:9000; align-items:center; justify-content:center; }
     .ai-modal-overlay.open { display:flex; }
@@ -551,8 +667,18 @@
   </div>
 </header>
 
+<!-- ===================== SUPER NAV ===================== -->
+<div class="super-nav" id="superNav">
+  <button class="snav-btn active" id="snavAds" onclick="showAppSection('ads')">📢 Quảng cáo</button>
+  <button class="snav-btn" id="snavTodo" onclick="showAppSection('todo')">✅ Todo List</button>
+  <div class="plat-switch" id="platSwitch">
+    <button class="plat-btn active" id="platTiktok" onclick="showPlatform('tiktok')">🎵 TikTok</button>
+    <button class="plat-btn" id="platFacebook" onclick="showPlatform('facebook')">👍 Facebook</button>
+  </div>
+</div>
+
 <!-- ===================== TOOLBAR ===================== -->
-<div class="toolbar">
+<div class="toolbar" id="adsToolbar">
   <div style="display:flex;align-items:center;gap:4px;">
     <div class="select-wrap">
       <select id="accountSel" onchange="onAccountChange(this.value)">
@@ -638,7 +764,7 @@
 </div>
 
 <!-- ===================== FILTER BAR ===================== -->
-<div class="filter-bar">
+<div class="filter-bar" id="filterBar">
   <span class="filter-label">Cột hiển thị (tối đa 5):</span>
   <div class="chips" id="chips"></div>
   <span id="conversionNote" style="display:none;font-size:11px;color:#e07b00;margin-left:8px;" title="Lead Form: dùng onsite_form. Conversion Web: real_time_result. Nếu = 0: Pixel chưa setup hoặc TikTok không trả về data qua API này.">⚠ Conversion Web = 0: kiểm tra TikTok Pixel đã được cấu hình chưa</span>
@@ -2283,6 +2409,133 @@ while ($listener.IsListening) {
   </div>
 
 </div>
+</div>
+
+<!-- ===================== FACEBOOK PLACEHOLDER ===================== -->
+<div id="platform-facebook">
+  <div class="fb-placeholder">
+    <div style="font-size:64px;margin-bottom:16px;">👍</div>
+    <div class="fb-coming-badge">Sắp ra mắt</div>
+    <h2>Facebook Ads</h2>
+    <p>Tính năng kết nối Facebook Ads API đang được phát triển. Bạn sẽ sớm có thể quản lý toàn bộ chiến dịch Facebook & Instagram ngay tại đây.</p>
+  </div>
+</div>
+
+<!-- ===================== TODO SECTION ===================== -->
+<div id="section-todo" style="display:none;">
+  <div class="todo-wrap">
+    <!-- Header -->
+    <div style="margin-bottom:18px;">
+      <div class="todo-title">📋 Todo List</div>
+      <div class="todo-stats-line" id="todoStatsLine">0 đầu việc</div>
+    </div>
+
+    <!-- Today card -->
+    <div class="todo-today" id="todayCard">
+      <div class="todo-today-left">
+        <div class="today-label" id="todayLabel">HÔM NAY · ...</div>
+        <div class="today-pct" id="todayPct">0%</div>
+        <div class="today-pct-sub">hoàn thành</div>
+        <div class="today-bar-wrap"><div class="today-bar" id="todayBar" style="width:0%"></div></div>
+        <div class="today-overdue" id="todayOverdueLink" style="display:none;cursor:pointer;" onclick="setTodoFilter('period','all');setTodoFilter('status','pending')"></div>
+      </div>
+      <div class="todo-today-right">
+        <div class="today-stat"><div class="today-stat-num" id="todayTotal">0</div><div class="today-stat-lbl">Đầu việc</div></div>
+        <div class="today-stat"><div class="today-stat-num" id="todayDone" style="color:var(--green)">0</div><div class="today-stat-lbl">Xong</div></div>
+        <div class="today-stat"><div class="today-stat-num" id="todayLeft" style="color:var(--yellow)">0</div><div class="today-stat-lbl">Còn lại</div></div>
+      </div>
+    </div>
+
+    <!-- Period tabs -->
+    <div class="period-tabs" id="periodTabs">
+      <button class="period-tab active" data-period="all" onclick="setTodoFilter('period','all')">📋 Tất cả</button>
+      <button class="period-tab" data-period="today" onclick="setTodoFilter('period','today')">📅 Hôm nay</button>
+      <button class="period-tab" data-period="week" onclick="setTodoFilter('period','week')">📅 Tuần này</button>
+      <button class="period-tab" data-period="month" onclick="setTodoFilter('period','month')">📅 Tháng này</button>
+    </div>
+
+    <!-- Search + Add -->
+    <div class="todo-search-row">
+      <div class="todo-search-wrap">
+        <span class="todo-search-ico">🔍</span>
+        <input class="todo-search-input" id="todoSearch" placeholder="Tìm kiếm đầu việc hoặc tag..." oninput="renderTodo()" />
+      </div>
+      <button class="todo-add-btn" onclick="openTaskModal(null)">+ Thêm</button>
+    </div>
+
+    <!-- Filter -->
+    <div class="todo-filter-card">
+      <div class="todo-filter-row">
+        <span class="todo-filter-label">Trạng thái:</span>
+        <button class="fchip active" data-status="all" onclick="setTodoFilter('status','all')">Tất cả</button>
+        <button class="fchip" data-status="pending" onclick="setTodoFilter('status','pending')">Chưa xong</button>
+        <button class="fchip" data-status="done" onclick="setTodoFilter('status','done')">Hoàn thành</button>
+      </div>
+      <div class="todo-filter-row">
+        <span class="todo-filter-label">Ưu tiên:</span>
+        <button class="fchip active" data-prio="all" onclick="setTodoFilter('priority','all')">Tất cả</button>
+        <button class="fchip fchip-high" data-prio="high" onclick="setTodoFilter('priority','high')">🔴 Cao</button>
+        <button class="fchip fchip-medium" data-prio="medium" onclick="setTodoFilter('priority','medium')">🟡 Trung</button>
+        <button class="fchip fchip-low" data-prio="low" onclick="setTodoFilter('priority','low')">🔵 Thấp</button>
+      </div>
+    </div>
+
+    <!-- Tags -->
+    <div class="todo-tag-row" id="todoTagRow">
+      <span class="todo-filter-label">Tag:</span>
+      <button class="fchip active" data-tag="all" onclick="setTodoFilter('tag','all')">Tất cả</button>
+    </div>
+
+    <!-- Task list -->
+    <div id="todoList"></div>
+  </div>
+</div>
+
+<!-- Todo Add/Edit Modal -->
+<div class="todo-modal-bg" id="todoModalBg">
+  <div class="todo-modal-box">
+    <div class="tmd-head">
+      <div style="font-size:15px;font-weight:700;" id="todoModalTitle">Thêm đầu việc</div>
+      <button class="btn btn-sm btn-ghost" onclick="closeTaskModal()">✕</button>
+    </div>
+    <div class="tmd-body">
+      <input type="hidden" id="tmd_id" />
+      <div class="tmd-group">
+        <label class="tmd-label">Tiêu đề *</label>
+        <input class="tmd-input" id="tmd_title" placeholder="Nhập tên đầu việc..." />
+      </div>
+      <div style="display:flex;gap:12px;">
+        <div class="tmd-group" style="flex:1;">
+          <label class="tmd-label">Ưu tiên</label>
+          <select class="tmd-select" id="tmd_priority">
+            <option value="high">🔴 Cao</option>
+            <option value="medium" selected>🟡 Trung</option>
+            <option value="low">🔵 Thấp</option>
+          </select>
+        </div>
+        <div class="tmd-group" style="flex:1;">
+          <label class="tmd-label">Hạn chót</label>
+          <input type="date" class="tmd-input" id="tmd_due" />
+        </div>
+      </div>
+      <div class="tmd-group">
+        <label class="tmd-label">Tags (phân cách bằng dấu phẩy)</label>
+        <input class="tmd-input" id="tmd_tags" placeholder="vd: marketing, urgent, review" />
+      </div>
+      <div class="tmd-group">
+        <label class="tmd-label">Đầu việc nhỏ (subtasks)</label>
+        <div class="subtask-edit-list" id="tmd_subtask_list"></div>
+        <div style="margin-top:8px;display:flex;gap:8px;">
+          <input class="tmd-input" id="tmd_subtask_input" placeholder="Nhập subtask..." style="flex:1;" onkeydown="if(event.key==='Enter')addSubtaskField()" />
+          <button class="btn btn-sm" onclick="addSubtaskField()">+ Thêm</button>
+        </div>
+      </div>
+    </div>
+    <div class="tmd-foot">
+      <button class="btn btn-sm btn-ghost" onclick="closeTaskModal()">Hủy</button>
+      <button class="btn btn-sm btn-primary" onclick="saveTask()">💾 Lưu</button>
+    </div>
+  </div>
 </div>
 
 <!-- ===================== TOASTS ===================== -->
@@ -7221,6 +7474,358 @@ function createReset() {
   document.getElementById('cstep1').classList.remove('done');
   document.getElementById('cstep2').classList.remove('done');
 }
+
+/* ═══════════════════ APP SECTION SWITCHER ═══════════════════ */
+let _currentSection = 'ads';
+let _currentPlatform = 'tiktok';
+
+function showAppSection(section) {
+  _currentSection = section;
+  const isAds = section === 'ads';
+  document.getElementById('snavAds').classList.toggle('active', isAds);
+  document.getElementById('snavTodo').classList.toggle('active', !isAds);
+  document.getElementById('platSwitch').style.display = isAds ? '' : 'none';
+  // Ads elements
+  const adsEls = ['adsToolbar', 'levelBar', 'filterBar'];
+  adsEls.forEach(id => { const el = document.getElementById(id); if (el) el.style.display = isAds ? '' : 'none'; });
+  const mainEl = document.querySelector('.main');
+  if (mainEl) mainEl.style.display = isAds ? '' : 'none';
+  // Todo section
+  document.getElementById('section-todo').style.display = isAds ? 'none' : '';
+  if (!isAds) { renderTodo(); updateTodayCard(); }
+  else showPlatform(_currentPlatform);
+}
+
+function showPlatform(platform) {
+  _currentPlatform = platform;
+  const isTT = platform === 'tiktok';
+  document.getElementById('platTiktok').classList.toggle('active', isTT);
+  document.getElementById('platFacebook').classList.toggle('active', !isTT);
+  // Show/hide main TikTok content vs Facebook placeholder
+  const mainEl = document.querySelector('.main');
+  const fbEl = document.getElementById('platform-facebook');
+  const levelBar = document.getElementById('levelBar');
+  const toolbar = document.getElementById('adsToolbar');
+  if (mainEl) mainEl.style.display = isTT ? '' : 'none';
+  if (fbEl) fbEl.style.display = isTT ? 'none' : 'block';
+  if (levelBar) levelBar.style.display = isTT ? '' : 'none';
+  if (toolbar) toolbar.style.display = '';
+}
+
+/* ═══════════════════ TODO LIST ═══════════════════ */
+let todos = JSON.parse(localStorage.getItem('todo_tasks') || '[]');
+const todoFilter = { period: 'all', status: 'all', priority: 'all', tag: 'all' };
+const expandedTasks = new Set();
+
+function saveTodos() { localStorage.setItem('todo_tasks', JSON.stringify(todos)); }
+
+function today() { return new Date().toISOString().slice(0, 10); }
+
+function fmtDate(d) {
+  if (!d) return '';
+  const [y, m, day] = d.split('-');
+  return `${day}/${m}/${y}`;
+}
+
+function isOverdue(dueDate, done) {
+  if (!dueDate || done) return false;
+  return dueDate < today();
+}
+
+function overdueDays(dueDate) {
+  const diff = Math.floor((new Date(today()) - new Date(dueDate)) / 86400000);
+  return diff;
+}
+
+function taskProgress(task) {
+  if (!task.subtasks || !task.subtasks.length) return task.done ? 100 : 0;
+  const done = task.subtasks.filter(s => s.done).length;
+  return Math.round((done / task.subtasks.length) * 100);
+}
+
+function allTags() {
+  const tags = new Set();
+  todos.forEach(t => (t.tags || []).forEach(tg => tags.add(tg)));
+  return [...tags];
+}
+
+function setTodoFilter(key, val) {
+  todoFilter[key] = val;
+  // Update active chip UI
+  if (key === 'period') {
+    document.querySelectorAll('#periodTabs .period-tab').forEach(b => b.classList.toggle('active', b.dataset.period === val));
+  } else if (key === 'status') {
+    document.querySelectorAll('[data-status]').forEach(b => b.classList.toggle('active', b.dataset.status === val));
+  } else if (key === 'priority') {
+    document.querySelectorAll('[data-prio]').forEach(b => b.classList.toggle('active', b.dataset.prio === val));
+  } else if (key === 'tag') {
+    document.querySelectorAll('[data-tag]').forEach(b => b.classList.toggle('active', b.dataset.tag === val));
+  }
+  renderTodo();
+}
+
+function filteredTodos() {
+  const now = today();
+  const search = (document.getElementById('todoSearch')?.value || '').toLowerCase();
+  const weekStart = (() => { const d = new Date(); d.setDate(d.getDate() - d.getDay() + 1); return d.toISOString().slice(0,10); })();
+  const monthStart = now.slice(0,8) + '01';
+
+  return todos.filter(t => {
+    if (todoFilter.status === 'pending' && t.done) return false;
+    if (todoFilter.status === 'done' && !t.done) return false;
+    if (todoFilter.priority !== 'all' && t.priority !== todoFilter.priority) return false;
+    if (todoFilter.tag !== 'all' && !(t.tags || []).includes(todoFilter.tag)) return false;
+    if (todoFilter.period === 'today' && t.dueDate !== now) return false;
+    if (todoFilter.period === 'week' && (t.dueDate < weekStart || t.dueDate > now.slice(0,7) + '-31')) return false;
+    if (todoFilter.period === 'month' && (!t.dueDate || t.dueDate < monthStart)) return false;
+    if (search) {
+      const inTitle = t.title.toLowerCase().includes(search);
+      const inTags = (t.tags || []).some(tg => tg.toLowerCase().includes(search));
+      if (!inTitle && !inTags) return false;
+    }
+    return true;
+  });
+}
+
+function updateTodayCard() {
+  const now = today();
+  const todayTasks = todos.filter(t => t.dueDate === now);
+  const done = todayTasks.filter(t => t.done).length;
+  const total = todayTasks.length;
+  const left = total - done;
+  const pct = total ? Math.round(done / total * 100) : 0;
+  const overdue = todos.filter(t => isOverdue(t.dueDate, t.done)).length;
+
+  document.getElementById('todayLabel').textContent = 'HÔM NAY · ' + fmtDate(now);
+  document.getElementById('todayPct').textContent = pct + '%';
+  document.getElementById('todayBar').style.width = pct + '%';
+  document.getElementById('todayTotal').textContent = total;
+  document.getElementById('todayDone').textContent = done;
+  document.getElementById('todayLeft').textContent = left;
+
+  const overdueEl = document.getElementById('todayOverdueLink');
+  if (overdue > 0) {
+    overdueEl.style.display = '';
+    overdueEl.textContent = overdue + ' quá hạn';
+  } else {
+    overdueEl.style.display = 'none';
+  }
+
+  // Update stats line
+  const totalAll = todos.length;
+  const doneAll = todos.filter(t => t.done).length;
+  let statsHtml = `${totalAll} đầu việc · ${doneAll} hoàn thành`;
+  if (overdue > 0) statsHtml += ` · <span class="overdue-txt">${overdue} quá hạn</span>`;
+  document.getElementById('todoStatsLine').innerHTML = statsHtml;
+}
+
+function updateTagFilter() {
+  const tags = allTags();
+  const row = document.getElementById('todoTagRow');
+  row.innerHTML = '<span class="todo-filter-label">Tag:</span>';
+  const all = document.createElement('button');
+  all.className = 'fchip' + (todoFilter.tag === 'all' ? ' active' : '');
+  all.dataset.tag = 'all';
+  all.textContent = 'Tất cả';
+  all.onclick = () => setTodoFilter('tag', 'all');
+  row.appendChild(all);
+  tags.forEach(tg => {
+    const btn = document.createElement('button');
+    btn.className = 'fchip' + (todoFilter.tag === tg ? ' active' : '');
+    btn.dataset.tag = tg;
+    btn.textContent = '#' + tg;
+    btn.onclick = () => setTodoFilter('tag', tg);
+    row.appendChild(btn);
+  });
+}
+
+function renderTodo() {
+  updateTodayCard();
+  updateTagFilter();
+  const list = filteredTodos();
+  const container = document.getElementById('todoList');
+  if (!list.length) {
+    container.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text2);">Không có đầu việc nào phù hợp</div>';
+    return;
+  }
+  // Sort: overdue first, then by priority, then undone before done
+  list.sort((a, b) => {
+    if (a.done !== b.done) return a.done ? 1 : -1;
+    const aOv = isOverdue(a.dueDate, a.done);
+    const bOv = isOverdue(b.dueDate, b.done);
+    if (aOv !== bOv) return aOv ? -1 : 1;
+    const pOrder = { high: 0, medium: 1, low: 2 };
+    return (pOrder[a.priority] || 1) - (pOrder[b.priority] || 1);
+  });
+
+  container.innerHTML = list.map(t => {
+    const pct = taskProgress(t);
+    const od = isOverdue(t.dueDate, t.done);
+    const subCount = (t.subtasks || []).length;
+    const subDone = (t.subtasks || []).filter(s => s.done).length;
+    const expanded = expandedTasks.has(t.id);
+    const pLbl = { high: 'Cao', medium: 'Trung', low: 'Thấp' }[t.priority] || 'Trung';
+    const tagHtml = (t.tags || []).map(tg => `<span class="tagbadge">#${tg}</span>`).join('');
+    const dateHtml = t.dueDate ? (od
+      ? `<span class="dbadge overdue">📅 Quá hạn ${overdueDays(t.dueDate)}d</span>`
+      : `<span class="dbadge">📅 ${fmtDate(t.dueDate)}</span>`) : '';
+
+    const subtasksHtml = expanded && subCount ? `
+      <div class="task-subtasks-list">
+        ${(t.subtasks || []).map(s => `
+          <div class="subtask-row">
+            <div class="subtask-cb ${s.done ? 'checked' : ''}" onclick="toggleSubtask('${t.id}','${s.id}')"></div>
+            <span class="subtask-title ${s.done ? 'done' : ''}">${s.title}</span>
+          </div>`).join('')}
+      </div>` : '';
+
+    const progHtml = subCount ? `
+      <div class="task-prog-wrap">
+        <div class="task-prog-lbl">${subDone}/${subCount} đầu việc nhỏ · ${pct}%</div>
+        <div class="task-prog-bar-bg">
+          <div class="task-prog-bar ${pct===100?'full':'part'}" style="width:${pct}%"></div>
+        </div>
+      </div>` : (t.done ? `
+      <div class="task-prog-wrap">
+        <div class="task-prog-bar-bg"><div class="task-prog-bar full" style="width:100%"></div></div>
+      </div>` : '');
+
+    return `
+      <div class="todo-task-card ${od ? 'is-overdue' : ''}">
+        <div class="task-main-row">
+          <div class="task-cb ${t.done ? 'checked' : ''}" onclick="toggleDone('${t.id}')"></div>
+          <div class="task-body">
+            <div class="task-title-txt ${t.done ? 'done' : ''}">${t.title}</div>
+            <div class="task-meta-row">
+              <span class="pbadge ${t.priority}">${pLbl}</span>
+              ${dateHtml}${tagHtml}
+            </div>
+          </div>
+          <div class="task-actions-col">
+            ${subCount ? `<span class="task-sub-count" onclick="toggleExpand('${t.id}')">▼${subCount}</span>` : ''}
+            <button class="task-act-btn" onclick="openTaskModal('${t.id}')" title="Chỉnh sửa">✏️</button>
+            <button class="task-act-btn" onclick="deleteTask('${t.id}')" title="Xóa">🗑</button>
+          </div>
+        </div>
+        ${progHtml}
+        ${subtasksHtml}
+      </div>`;
+  }).join('');
+}
+
+function toggleDone(id) {
+  const t = todos.find(t => t.id === id);
+  if (!t) return;
+  t.done = !t.done;
+  if (t.done && t.subtasks) t.subtasks.forEach(s => s.done = true);
+  saveTodos();
+  renderTodo();
+}
+
+function toggleSubtask(taskId, subId) {
+  const t = todos.find(t => t.id === taskId);
+  if (!t) return;
+  const s = (t.subtasks || []).find(s => s.id === subId);
+  if (s) s.done = !s.done;
+  t.done = t.subtasks && t.subtasks.length > 0 && t.subtasks.every(s => s.done);
+  saveTodos();
+  renderTodo();
+}
+
+function toggleExpand(id) {
+  if (expandedTasks.has(id)) expandedTasks.delete(id);
+  else expandedTasks.add(id);
+  renderTodo();
+}
+
+function deleteTask(id) {
+  todos = todos.filter(t => t.id !== id);
+  saveTodos();
+  renderTodo();
+}
+
+// Modal
+let _tmdSubtasks = [];
+
+function openTaskModal(id) {
+  const modal = document.getElementById('todoModalBg');
+  const task = id ? todos.find(t => t.id === id) : null;
+  document.getElementById('todoModalTitle').textContent = task ? 'Chỉnh sửa đầu việc' : 'Thêm đầu việc';
+  document.getElementById('tmd_id').value = id || '';
+  document.getElementById('tmd_title').value = task?.title || '';
+  document.getElementById('tmd_priority').value = task?.priority || 'medium';
+  document.getElementById('tmd_due').value = task?.dueDate || '';
+  document.getElementById('tmd_tags').value = (task?.tags || []).join(', ');
+  _tmdSubtasks = JSON.parse(JSON.stringify(task?.subtasks || []));
+  renderSubtaskEdits();
+  modal.classList.add('open');
+  document.getElementById('tmd_title').focus();
+}
+
+function closeTaskModal() {
+  document.getElementById('todoModalBg').classList.remove('open');
+}
+
+function renderSubtaskEdits() {
+  const list = document.getElementById('tmd_subtask_list');
+  list.innerHTML = _tmdSubtasks.map((s, i) => `
+    <div class="subtask-edit-row">
+      <input value="${s.title}" oninput="_tmdSubtasks[${i}].title=this.value" placeholder="Subtask ${i+1}" />
+      <button class="btn btn-sm btn-ghost" onclick="_tmdSubtasks.splice(${i},1);renderSubtaskEdits()" style="padding:5px 8px;">✕</button>
+    </div>`).join('');
+}
+
+function addSubtaskField() {
+  const inp = document.getElementById('tmd_subtask_input');
+  const val = inp.value.trim();
+  if (!val) return;
+  _tmdSubtasks.push({ id: 'sub_' + Date.now() + Math.random().toString(36).slice(2), title: val, done: false });
+  inp.value = '';
+  renderSubtaskEdits();
+}
+
+function saveTask() {
+  const title = document.getElementById('tmd_title').value.trim();
+  if (!title) { alert('Vui lòng nhập tiêu đề'); return; }
+  const id = document.getElementById('tmd_id').value;
+  const tagsRaw = document.getElementById('tmd_tags').value;
+  const tags = tagsRaw.split(',').map(t => t.trim()).filter(Boolean);
+  const task = {
+    id: id || 'task_' + Date.now(),
+    title,
+    priority: document.getElementById('tmd_priority').value,
+    dueDate: document.getElementById('tmd_due').value || null,
+    tags,
+    subtasks: _tmdSubtasks.filter(s => s.title.trim()),
+    done: id ? (todos.find(t => t.id === id)?.done || false) : false,
+    createdAt: id ? (todos.find(t => t.id === id)?.createdAt || today()) : today(),
+  };
+  if (id) {
+    const idx = todos.findIndex(t => t.id === id);
+    if (idx >= 0) todos[idx] = task;
+  } else {
+    todos.unshift(task);
+  }
+  saveTodos();
+  closeTaskModal();
+  renderTodo();
+}
+
+// Init todo on page load
+document.addEventListener('DOMContentLoaded', () => {
+  // If no tasks, add a sample
+  if (!todos.length) {
+    const t = today();
+    todos = [
+      { id: 'sample1', title: 'Tối ưu quảng cáo TikTok', priority: 'high', dueDate: t, tags: ['marketing'], subtasks: [{id:'ss1',title:'Kiểm tra CTR',done:true},{id:'ss2',title:'Điều chỉnh bid',done:false}], done: false, createdAt: t },
+      { id: 'sample2', title: 'Báo cáo tuần cho team', priority: 'medium', dueDate: t, tags: [], subtasks: [], done: false, createdAt: t },
+      { id: 'sample3', title: 'Review landing page', priority: 'low', dueDate: null, tags: [], subtasks: [], done: true, createdAt: t },
+    ];
+    saveTodos();
+  }
+  // Set the display on platform-facebook to be proper
+  showPlatform('tiktok');
+});
 
 /* ── COLUMN HEADER TOOLTIP ── */
 (function() {
