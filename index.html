@@ -1321,6 +1321,32 @@ while ($listener.IsListening) {
       <div style="margin-top:20px;padding:10px 14px;background:#FEF9C3;border:1px solid #FDE047;border-radius:8px;font-size:11px;color:#713F12;line-height:1.7;">
         <strong>Lưu ý:</strong> Tính năng này cần Worker Cloudflare có KV Storage. Xem hướng dẫn cài đặt trong tài liệu.
       </div>
+
+      <!-- PERSONAL DATA SYNC -->
+      <div style="margin-top:24px;padding-top:20px;border-top:2px solid var(--border);">
+        <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:6px;">📋 Đồng bộ dữ liệu cá nhân</div>
+        <div style="background:#F0FDF4;border:1px solid #A7F3D0;border-radius:8px;padding:10px 14px;font-size:12px;color:#065F46;margin-bottom:14px;line-height:1.6;">
+          Lưu <strong>Todo List, Tài liệu, Ghi chú</strong> lên cloud — truy cập từ mọi trình duyệt, thiết bị.<br>
+          <span style="color:#6B7280;">⚠ Hình ảnh nhúng trong ghi chú sẽ không được đồng bộ (chỉ lưu chữ).</span>
+        </div>
+        <div class="form-group">
+          <label class="form-label">PIN cá nhân (ít nhất 4 ký tự)</label>
+          <input type="text" id="iDataPin" class="form-input" placeholder="Đặt PIN để nhận ra dữ liệu của bạn..." autocomplete="off" style="letter-spacing:1px;" />
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          <button class="btn btn-primary" onclick="savePersonalData()">☁️ Lưu dữ liệu cá nhân</button>
+          <button class="btn" onclick="loadPersonalData()">📥 Tải dữ liệu cá nhân</button>
+        </div>
+        <div id="dataPersonalStatus" style="margin-top:10px;font-size:13px;min-height:20px;"></div>
+        <div style="margin-top:14px;">
+          <div style="font-size:12px;font-weight:600;color:var(--text2);margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px;">Tải từ PIN của người khác</div>
+          <div style="display:flex;gap:8px;align-items:center;">
+            <input type="text" id="iDataPinLoad" class="form-input" placeholder="Nhập PIN..." autocomplete="off" style="flex:1;letter-spacing:1px;" onkeydown="if(event.key==='Enter')loadPersonalData(true)" />
+            <button class="btn btn-primary" onclick="loadPersonalData(true)" style="white-space:nowrap;">📥 Tải</button>
+          </div>
+          <div id="dataPersonalLoadStatus" style="margin-top:8px;font-size:13px;min-height:18px;"></div>
+        </div>
+      </div>
     </div>
 
     <!-- ════ TAB 5: Gemini AI ════ -->
@@ -4859,6 +4885,12 @@ function openSettings() {
     if (shareEl) shareEl.value = location.origin + location.pathname + '?pin=' + encodeURIComponent(savedPin);
     if (shareSection) shareSection.style.display = '';
   }
+  // pre-fill personal data PIN
+  const savedDataPin = localStorage.getItem('tt_data_pin');
+  if (savedDataPin) {
+    const dpEl = document.getElementById('iDataPin');
+    if (dpEl && !dpEl.value) dpEl.value = savedDataPin;
+  }
   document.getElementById('settingsOverlay').classList.add('open');
 }
 
@@ -5017,6 +5049,36 @@ function openCloudSync() {
   setTimeout(() => switchTab(4), 50);
 }
 
+function buildPersonalPayload() {
+  // Strip base64 images from notes (too large for cloud sync)
+  const notesForSync = (notes || []).map(n => ({
+    ...n,
+    content: n.content ? n.content.replace(/<img[^>]+src="data:[^"]*"[^>]*\/?>/gi,
+      '<em style="color:#9CA3AF">[🖼 Hình ảnh lưu riêng trên thiết bị]</em>') : n.content
+  }));
+  return {
+    todos: JSON.parse(localStorage.getItem('todo_tasks') || '[]'),
+    docs:  JSON.parse(localStorage.getItem('docs_items') || '[]'),
+    notes: notesForSync,
+  };
+}
+
+function applyPersonalPayload(personal) {
+  if (!personal) return;
+  if (Array.isArray(personal.todos)) {
+    localStorage.setItem('todo_tasks', JSON.stringify(personal.todos));
+    todos = personal.todos;
+  }
+  if (Array.isArray(personal.docs)) {
+    localStorage.setItem('docs_items', JSON.stringify(personal.docs));
+    docs = personal.docs;
+  }
+  if (Array.isArray(personal.notes)) {
+    localStorage.setItem('notes_items', JSON.stringify(personal.notes));
+    notes = personal.notes;
+  }
+}
+
 async function saveToCloud() {
   const pin = (document.getElementById('iCloudPin').value || '').trim().toLowerCase();
   const statusEl = document.getElementById('cloudSaveStatus');
@@ -5028,17 +5090,71 @@ async function saveToCloud() {
     const res = await fetch(`${workerBase}/config/save`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ pin, config: S.config }),
+      body: JSON.stringify({ pin, config: S.config, personal: buildPersonalPayload() }),
     });
     const data = await res.json();
     if (data.ok) {
-      statusEl.innerHTML = '<span style="color:#16A34A;">✅ Đã lưu thành công!</span>';
+      statusEl.innerHTML = '<span style="color:#16A34A;">✅ Đã lưu thành công (config + Todo/Tài liệu/Ghi chú)!</span>';
       const shareUrl = location.origin + location.pathname + '?pin=' + encodeURIComponent(pin);
       document.getElementById('cloudShareUrl').value = shareUrl;
       document.getElementById('cloudShareSection').style.display = '';
       localStorage.setItem('tt_cloud_pin', pin);
     } else {
       statusEl.innerHTML = '<span style="color:#DC2626;">❌ ' + (data.error || 'Lỗi không xác định') + '</span>';
+    }
+  } catch(e) {
+    statusEl.innerHTML = '<span style="color:#DC2626;">❌ ' + e.message + '</span>';
+  }
+}
+
+async function savePersonalData() {
+  const pin = (document.getElementById('iDataPin').value || '').trim().toLowerCase();
+  const statusEl = document.getElementById('dataPersonalStatus');
+  if (!pin || pin.length < 4) { statusEl.innerHTML = '<span style="color:#DC2626;">❌ PIN cần ít nhất 4 ký tự</span>'; return; }
+  statusEl.innerHTML = '<span style="color:var(--text2);">⏳ Đang lưu...</span>';
+  try {
+    const workerBase = 'https://tiktok-proxy.doichao13.workers.dev';
+    const payload = buildPersonalPayload();
+    const res = await fetch(`${workerBase}/data/save`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ pin, ...payload }),
+    });
+    const data = await res.json();
+    if (data.ok) {
+      const t = new Date().toLocaleTimeString('vi-VN');
+      statusEl.innerHTML = `<span style="color:#16A34A;">✅ Đã lưu lúc ${t} — ${payload.todos.length} todo, ${payload.docs.length} tài liệu, ${payload.notes.length} ghi chú</span>`;
+      localStorage.setItem('tt_data_pin', pin);
+    } else {
+      statusEl.innerHTML = '<span style="color:#DC2626;">❌ ' + (data.error || 'Lỗi không xác định') + '</span>';
+    }
+  } catch(e) {
+    statusEl.innerHTML = '<span style="color:#DC2626;">❌ ' + e.message + '</span>';
+  }
+}
+
+async function loadPersonalData(useOtherPin) {
+  const pinInputId = useOtherPin ? 'iDataPinLoad' : 'iDataPin';
+  const statusId   = useOtherPin ? 'dataPersonalLoadStatus' : 'dataPersonalStatus';
+  const pin = (document.getElementById(pinInputId)?.value || '').trim().toLowerCase();
+  const statusEl = document.getElementById(statusId);
+  if (!pin || pin.length < 4) { statusEl.innerHTML = '<span style="color:#DC2626;">❌ Vui lòng nhập PIN</span>'; return; }
+  statusEl.innerHTML = '<span style="color:var(--text2);">⏳ Đang tải...</span>';
+  try {
+    const workerBase = 'https://tiktok-proxy.doichao13.workers.dev';
+    const res = await fetch(`${workerBase}/data/load?pin=${encodeURIComponent(pin)}`);
+    const data = await res.json();
+    if (data.ok) {
+      applyPersonalPayload({ todos: data.todos, docs: data.docs, notes: data.notes });
+      const savedAt = data.savedAt ? ' (lưu ' + new Date(data.savedAt).toLocaleString('vi-VN') + ')' : '';
+      statusEl.innerHTML = `<span style="color:#16A34A;">✅ Đã tải${savedAt}: ${(data.todos||[]).length} todo, ${(data.docs||[]).length} tài liệu, ${(data.notes||[]).length} ghi chú</span>`;
+      // Refresh current section
+      if (_currentSection === 'todo')  { renderTodo(); updateTodayCard(); }
+      if (_currentSection === 'docs')  { renderDocs(); updateDocsChart(); }
+      if (_currentSection === 'notes') { renderNotes(); }
+      toast('success', '✅ Đã nạp dữ liệu cá nhân từ cloud!');
+    } else {
+      statusEl.innerHTML = '<span style="color:#DC2626;">❌ ' + (data.error || 'Không tìm thấy dữ liệu') + '</span>';
     }
   } catch(e) {
     statusEl.innerHTML = '<span style="color:#DC2626;">❌ ' + e.message + '</span>';
@@ -5059,6 +5175,7 @@ async function quickLoadCloud() {
       S.demo = false;
       localStorage.setItem('tt_cfg', JSON.stringify(S.config));
       localStorage.setItem('tt_demo', '0');
+      applyPersonalPayload(data.personal);
       statusEl.innerHTML = '<span style="color:#16A34A;">✅ Thành công! Đang kết nối...</span>';
       setTimeout(() => {
         showDashboard();
@@ -5091,6 +5208,7 @@ async function loadFromCloud() {
       S.demo = false;
       localStorage.setItem('tt_cfg', JSON.stringify(S.config));
       localStorage.setItem('tt_demo', '0');
+      applyPersonalPayload(data.personal);
       statusEl.innerHTML = '<span style="color:#16A34A;">✅ Đã tải! Đang kết nối...</span>';
       setTimeout(() => {
         closeSettings();
