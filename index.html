@@ -7700,6 +7700,7 @@ async function doCreateAdGroup() {
 
   if (billingEvent === 'OCPM') {
     body.bid_type = 'BID_TYPE_MAX_CONVERSION';
+    body.pacing = 'PACING_MODE_SMOOTH'; // max conversion goal does not support accelerated delivery
   } else if (bid > 0) {
     body.bid_price = bid;
   }
