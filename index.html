@@ -7699,8 +7699,12 @@ async function doCreateAdGroup() {
   };
 
   if (billingEvent === 'OCPM') {
-    body.bid_type = 'BID_TYPE_MAX_CONVERSION';
-    body.pacing = 'PACING_MODE_SMOOTH'; // max conversion goal does not support accelerated delivery
+    body.pacing = 'PACING_MODE_SMOOTH'; // OCPM does not support accelerated delivery
+    if (optimization === 'CONVERT') {
+      // Website conversions: max conversion smart bid
+      body.bid_type = 'BID_TYPE_MAX_CONVERSION';
+    }
+    // LEAD_GENERATION: TikTok uses automatic bidding — no bid_type needed
   } else if (bid > 0) {
     body.bid_price = bid;
   }
