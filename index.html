@@ -7553,7 +7553,8 @@ function onOptimizationChange(val) {
   const isOCPM = val === 'CONVERT' || val === 'LEAD_GENERATION';
   if (freqRow) freqRow.style.display = isReach ? 'flex' : 'none';
   if (bidLabel) {
-    if (isOCPM) bidLabel.textContent = 'Giá thầu CPA (VND, tuỳ chọn)';
+    if (val === 'LEAD_GENERATION') bidLabel.textContent = 'Giá thầu CPL/CPA (VND) *';
+    else if (val === 'CONVERT') bidLabel.textContent = 'Giá thầu CPA (VND, tuỳ chọn)';
     else if (isReach) bidLabel.textContent = 'Giá thầu CPM (VND) *';
     else if (val === 'CLICK') bidLabel.textContent = 'Giá thầu CPC (VND) *';
     else if (val === 'VIDEO_VIEW') bidLabel.textContent = 'Giá thầu CPV (VND) *';
@@ -7631,8 +7632,9 @@ async function doCreateAdGroup() {
   if (!name) { createShowResult('ag_result', 'error', '⚠ Vui lòng nhập tên nhóm quảng cáo.'); return; }
   if (!startDate) { createShowResult('ag_result', 'error', '⚠ Vui lòng chọn ngày bắt đầu.'); return; }
   if (!budgetVnd || budgetVnd <= 0) { createShowResult('ag_result', 'error', '⚠ Vui lòng nhập ngân sách hợp lệ.'); return; }
-  if (!isOCPM && (!bidVnd || bidVnd <= 0)) {
-    createShowResult('ag_result', 'error', '⚠ Mục tiêu này yêu cầu nhập Giá thầu (CPM/CPC/CPV).');
+  const requiresBid = !isOCPM || optimization === 'LEAD_GENERATION';
+  if (requiresBid && (!bidVnd || bidVnd <= 0)) {
+    createShowResult('ag_result', 'error', '⚠ Mục tiêu này yêu cầu nhập Giá thầu (CPM/CPC/CPV/CPL).');
     return;
   }
 
