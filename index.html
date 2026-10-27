@@ -3440,7 +3440,7 @@ async function loadAdGroups(cid) {
     // Remove loading placeholder if any
     document.getElementById('tBody').querySelectorAll(`[data-cpar="${cid}"].ag-loading-row`).forEach(r=>r.remove());
     if (S.expanded.has(cid)) renderAGRows(cid);
-    if (S.level === 'adgroup' && (S.selectedCampaignId === cid || S.selectedCampaignId === '__all__')) render();
+    if (S.level === 'adgroup' && (S.selectedCampaignId === cid || S.selectedCampaignId === '__all__' || (S.selectedCampaignId === '__selected__' && S.selectedCampaignIds.has(cid)))) render();
     updateCards();
     // Re-fetch metrics if missing (e.g. after date range change clears S.metrics but keeps S.adgroups)
     const cachedAgs = S.adgroups[cid];
@@ -3448,7 +3448,7 @@ async function loadAdGroups(cid) {
       try {
         Object.assign(S.metrics, await fetchMetrics(S.accountId, 'adgroup', cachedAgs.map(a => a.adgroup_id)));
         if (S.expanded.has(cid)) renderAGRows(cid);
-        if (S.level === 'adgroup' && (S.selectedCampaignId === cid || S.selectedCampaignId === '__all__')) render();
+        if (S.level === 'adgroup' && (S.selectedCampaignId === cid || S.selectedCampaignId === '__all__' || (S.selectedCampaignId === '__selected__' && S.selectedCampaignIds.has(cid)))) render();
         updateCards();
       } catch(e) { console.warn('[adgroup metrics refetch]', e.message); }
     }
@@ -3460,7 +3460,7 @@ async function loadAdGroups(cid) {
     // Remove loading placeholder
     document.getElementById('tBody').querySelectorAll(`[data-cpar="${cid}"].ag-loading-row`).forEach(r=>r.remove());
     if (S.expanded.has(cid)) renderAGRows(cid);
-    if (S.level === 'adgroup' && (S.selectedCampaignId === cid || S.selectedCampaignId === '__all__')) render();
+    if (S.level === 'adgroup' && (S.selectedCampaignId === cid || S.selectedCampaignId === '__all__' || (S.selectedCampaignId === '__selected__' && S.selectedCampaignIds.has(cid)))) render();
     updateCards();
     // Update campaign row subtitle (show adgroup count)
     const campRow = document.getElementById('tBody').querySelector(`[data-cid="${cid}"]`);
@@ -3478,7 +3478,7 @@ async function loadAdGroups(cid) {
       } catch(e) { toast('warn', 'Không tải được số liệu nhóm QC: ' + e.message); }
     }
     if (S.expanded.has(cid)) renderAGRows(cid);
-    if (S.level === 'adgroup' && (S.selectedCampaignId === cid || S.selectedCampaignId === '__all__')) render();
+    if (S.level === 'adgroup' && (S.selectedCampaignId === cid || S.selectedCampaignId === '__all__' || (S.selectedCampaignId === '__selected__' && S.selectedCampaignIds.has(cid)))) render();
     updateCards();
     updateSummary();
   } catch(e) {
@@ -3628,6 +3628,9 @@ function renderAdGroupLevel() {
   if (sel) {
     const srcCampaigns = S.campaigns;
     let opts = `<option value="__all__" ${S.selectedCampaignId === '__all__' ? 'selected' : ''}>— Tất cả chiến dịch (${srcCampaigns.length}) —</option>`;
+    if (S.selectedCampaignIds.size > 1) {
+      opts += `<option value="__selected__" ${S.selectedCampaignId === '__selected__' ? 'selected' : ''}>— ${S.selectedCampaignIds.size} chiến dịch đã chọn —</option>`;
+    }
     opts += srcCampaigns.map(c =>
       `<option value="${c.campaign_id}" ${c.campaign_id === S.selectedCampaignId ? 'selected' : ''}>${esc(c.campaign_name)}</option>`
     ).join('');
@@ -3637,16 +3640,17 @@ function renderAdGroupLevel() {
   const tb = document.getElementById('tBody');
   tb.innerHTML = '';
 
-  if (S.selectedCampaignId === '__all__') {
-    // Show all adgroups from ALL campaigns
-    const allIds = S.campaigns.map(c => c.campaign_id);
-    const allLoaded = allIds.every(id => S.adgroups[id]);
+  if (S.selectedCampaignId === '__all__' || S.selectedCampaignId === '__selected__') {
+    const sourceIds = S.selectedCampaignId === '__selected__'
+      ? [...S.selectedCampaignIds]
+      : S.campaigns.map(c => c.campaign_id);
+    const allLoaded = sourceIds.every(id => S.adgroups[id]);
     if (!allLoaded) {
       tb.innerHTML = `<tr><td colspan="20" style="text-align:center;padding:40px;color:var(--text2);"><div class="spinner" style="margin:auto;margin-bottom:8px;"></div>Đang tải nhóm QC...</td></tr>`;
       return;
     }
     let allAgs = [];
-    allIds.forEach(cid => { allAgs = allAgs.concat(S.adgroups[cid] || []); });
+    sourceIds.forEach(cid => { allAgs = allAgs.concat(S.adgroups[cid] || []); });
     if (S.statusFilter) allAgs = allAgs.filter(ag => ag.operation_status === S.statusFilter);
     if (!allAgs.length) {
       tb.innerHTML = `<tr><td colspan="20" style="text-align:center;padding:40px;color:var(--text2);">Không có nhóm QC nào</td></tr>`;
@@ -4447,11 +4451,16 @@ function switchLevel(level, campaignId) {
       // Explicit campaign navigation (Tab riêng button)
       S.selectedCampaignId = campaignId;
       S.activeCampaignId = campaignId;
-      const selectedIds = [...S.selectedCampaignIds];
-      if (selectedIds.length === 0) S.selectedCampaignIds.add(campaignId);
+      if (S.selectedCampaignIds.size === 0) S.selectedCampaignIds.add(campaignId);
     } else {
-      // Direct tab click — default to showing all campaigns
-      S.selectedCampaignId = '__all__';
+      // Direct tab click — use checked campaigns if any, else show all
+      if (S.selectedCampaignIds.size === 1) {
+        S.selectedCampaignId = [...S.selectedCampaignIds][0];
+      } else if (S.selectedCampaignIds.size > 1) {
+        S.selectedCampaignId = '__selected__';
+      } else {
+        S.selectedCampaignId = '__all__';
+      }
     }
   }
   if (lt1) lt1.classList.toggle('active', level === 'campaign');
@@ -4465,6 +4474,8 @@ function switchLevel(level, campaignId) {
   if (level === 'adgroup') {
     if (S.selectedCampaignId === '__all__') {
       loadAllAdGroupsBatch();
+    } else if (S.selectedCampaignId === '__selected__') {
+      [...S.selectedCampaignIds].forEach(cid => loadAdGroups(cid));
     } else if (S.selectedCampaignId) {
       loadAdGroups(S.selectedCampaignId);
     }
@@ -4474,10 +4485,12 @@ function switchLevel(level, campaignId) {
 function onAGCmpChange(cid) {
   S.selectedCampaignId = cid;
   render();
-  if (cid && cid !== '__all__') {
-    loadAdGroups(cid);
-  } else if (cid === '__all__') {
+  if (cid === '__all__') {
     loadAllAdGroupsBatch();
+  } else if (cid === '__selected__') {
+    [...S.selectedCampaignIds].forEach(id => loadAdGroups(id));
+  } else if (cid) {
+    loadAdGroups(cid);
   }
 }
 
