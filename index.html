@@ -3889,7 +3889,15 @@ function makeAGRow(ag) {
             agDaily = dist.type === 'pct' ? Math.ceil(campDailyKpi * dist.value / 100) : dist.value;
           }
         } else {
-          agDaily = campDailyKpi;
+          // Dùng KPI của từng nhóm QC làm tỉ lệ phân chia nếu có nhập
+          const agKpi = parseFloat(S.kpiAg[ag.adgroup_id]) || 0;
+          const allAgsInCamp = S.adgroups[ag.campaign_id] || [];
+          const totalAgKpi = allAgsInCamp.reduce((sum, a) => sum + (parseFloat(S.kpiAg[a.adgroup_id]) || 0), 0);
+          if (agKpi > 0 && totalAgKpi > 0) {
+            agDaily = Math.ceil(campDailyKpi * agKpi / totalAgKpi);
+          } else {
+            agDaily = campDailyKpi;
+          }
         }
         const isSp = (S.kpiAgMetric[ag.adgroup_id]||'auto') === 'spend' || (S.kpiMetric[ag.campaign_id]||'auto') === 'spend';
         const customInput = S.kpiDistMode === 'custom' ? (() => {
