@@ -3421,6 +3421,17 @@ async function loadCampaigns(aid) {
     }
   }
   await Promise.all(tasks);
+
+  // After campaign metrics loaded, re-fetch adgroup metrics if currently on adgroup tab
+  if (S.level === 'adgroup' && S.campaigns.length) {
+    if (S.selectedCampaignId === '__all__') {
+      loadAllAdGroupsBatch();
+    } else if (S.selectedCampaignId === '__selected__') {
+      [...S.selectedCampaignIds].forEach(cid => loadAdGroups(cid));
+    } else if (S.selectedCampaignId) {
+      loadAdGroups(S.selectedCampaignId);
+    }
+  }
 }
 
 async function loadAdGroupCount(aid) {
