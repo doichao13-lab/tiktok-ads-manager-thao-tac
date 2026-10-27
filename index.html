@@ -3299,9 +3299,53 @@ async function fetchAdGroups(aid, cid) {
     fields: ['adgroup_id','adgroup_name','campaign_id','operation_status','budget','budget_mode','bid_price','bid_type'],
   });
   const list = d.list || [];
-  // Client-side filter as safety net — IDs are now preserved as strings by safeParseJSON
-  // so comparison is reliable even for 19-digit TikTok IDs
   return cid ? list.filter(ag => String(ag.campaign_id) === String(cid)) : list;
+}
+
+// Batch version: fetches adgroups for multiple campaigns in chunks of 10 to avoid QPS limit
+async function fetchAdGroupsBatch(aid, cids) {
+  if (S.demo) return cids.flatMap(cid => mockAdGroups(cid));
+  const CHUNK = 10;
+  let all = [];
+  for (let i = 0; i < cids.length; i += CHUNK) {
+    const chunk = cids.slice(i, i + CHUNK).map(String);
+    const d = await apiGet('/adgroup/get/', {
+      advertiser_id: aid,
+      page_size: 200,
+      filtering: { campaign_ids: chunk },
+      fields: ['adgroup_id','adgroup_name','campaign_id','operation_status','budget','budget_mode','bid_price','bid_type'],
+    });
+    all = all.concat(d.list || []);
+  }
+  return all;
+}
+
+async function loadAllAdGroupsBatch() {
+  const cids = S.campaigns.map(c => c.campaign_id);
+  if (!cids.length) return;
+  try {
+    const ags = await fetchAdGroupsBatch(S.accountId, cids);
+    // Reset per-campaign buckets
+    cids.forEach(cid => { S.adgroups[cid] = []; });
+    ags.forEach(ag => {
+      const cid = ag.campaign_id;
+      if (!S.adgroups[cid]) S.adgroups[cid] = [];
+      S.adgroups[cid].push(ag);
+    });
+    if (S.level === 'adgroup') render();
+    updateCards();
+    // Fetch all adgroup metrics in one report call
+    if (ags.length) {
+      try {
+        Object.assign(S.metrics, await fetchMetrics(S.accountId, 'adgroup', ags.map(a => a.adgroup_id)));
+      } catch(e) { toast('warn', 'Không tải được số liệu nhóm QC: ' + e.message); }
+      if (S.level === 'adgroup') render();
+      updateCards();
+      updateSummary();
+    }
+  } catch(e) {
+    toast('error', 'Lỗi tải nhóm QC: ' + e.message);
+  }
 }
 
 async function fetchMetrics(aid, level, ids) {
@@ -4420,7 +4464,7 @@ function switchLevel(level, campaignId) {
   if (S.campaigns.length) render();
   if (level === 'adgroup') {
     if (S.selectedCampaignId === '__all__') {
-      S.campaigns.forEach(c => { loadAdGroups(c.campaign_id); });
+      loadAllAdGroupsBatch();
     } else if (S.selectedCampaignId) {
       loadAdGroups(S.selectedCampaignId);
     }
@@ -4433,7 +4477,7 @@ function onAGCmpChange(cid) {
   if (cid && cid !== '__all__') {
     loadAdGroups(cid);
   } else if (cid === '__all__') {
-    S.campaigns.forEach(c => { loadAdGroups(c.campaign_id); });
+    loadAllAdGroupsBatch();
   }
 }
 
