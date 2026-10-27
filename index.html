@@ -975,6 +975,23 @@
       <div class="select-wrap">
         <select id="agCmpSel" onchange="onAGCmpChange(this.value)"></select>
       </div>
+      <div style="margin-left:auto;display:flex;align-items:center;gap:6px;">
+        <button class="btn btn-sm btn-ghost" onclick="toggleKpiDistPanel()" title="Cài đặt phân chia KPI hằng ngày cho nhóm QC" id="kpiDistToggleBtn">⚙️ Phân chia KPI</button>
+      </div>
+    </div>
+    <!-- KPI Distribution panel -->
+    <div id="kpiDistPanel" style="display:none;background:var(--bg2);border-bottom:1px solid var(--border);padding:10px 20px;gap:16px;flex-wrap:wrap;align-items:center;">
+      <span style="font-size:12px;font-weight:600;color:var(--text2);">Phân chia KPI ngày theo:</span>
+      <label style="display:flex;align-items:center;gap:5px;font-size:12px;cursor:pointer;">
+        <input type="radio" name="kpiDistMode" value="none" onchange="setKpiDistMode('none')" /> Không phân chia (chiến dịch)
+      </label>
+      <label style="display:flex;align-items:center;gap:5px;font-size:12px;cursor:pointer;">
+        <input type="radio" name="kpiDistMode" value="budget" onchange="setKpiDistMode('budget')" /> Theo tỷ lệ ngân sách
+      </label>
+      <label style="display:flex;align-items:center;gap:5px;font-size:12px;cursor:pointer;">
+        <input type="radio" name="kpiDistMode" value="custom" onchange="setKpiDistMode('custom')" /> Tùy chỉnh (nhập % hoặc số)
+      </label>
+      <span style="font-size:11px;color:var(--text3);">Cần nhập KPI mục tiêu + Ngày KT ở tầng chiến dịch trước.</span>
     </div>
 
     <!-- Desktop table -->
@@ -2966,6 +2983,9 @@ const S = {
   kpiVidMode: JSON.parse(localStorage.getItem('tt_kpi_vid')    || '{}'), // { id: '2s'|'6s' }
   kpiMetric:  JSON.parse(localStorage.getItem('tt_kpi_mt')     || '{}'), // { id: 'auto'|'spend'|'reach'|... } campaigns
   kpiAgMetric:JSON.parse(localStorage.getItem('tt_kpi_ag_mt')  || '{}'), // { id: ... } adgroups
+  campaignDates: JSON.parse(localStorage.getItem('tt_camp_dates') || '{}'), // { cid: {start, end} }
+  kpiDistMode: localStorage.getItem('tt_kpi_dist_mode') || 'none', // 'none'|'budget'|'custom'
+  kpiAgDist: JSON.parse(localStorage.getItem('tt_kpi_ag_dist') || '{}'), // { agid: {type:'pct'|'abs', value:number} }
 };
 
 /* ═══════════════════════════ API ═══════════════════════════ */
@@ -3376,8 +3396,18 @@ async function loadAdGroups(cid) {
     // Remove loading placeholder if any
     document.getElementById('tBody').querySelectorAll(`[data-cpar="${cid}"].ag-loading-row`).forEach(r=>r.remove());
     if (S.expanded.has(cid)) renderAGRows(cid);
-    if (S.level === 'adgroup' && S.selectedCampaignId === cid) render();
+    if (S.level === 'adgroup' && (S.selectedCampaignId === cid || S.selectedCampaignId === '__all__')) render();
     updateCards();
+    // Re-fetch metrics if missing (e.g. after date range change clears S.metrics but keeps S.adgroups)
+    const cachedAgs = S.adgroups[cid];
+    if (cachedAgs.length && cachedAgs.some(ag => !S.metrics[ag.adgroup_id])) {
+      try {
+        Object.assign(S.metrics, await fetchMetrics(S.accountId, 'adgroup', cachedAgs.map(a => a.adgroup_id)));
+        if (S.expanded.has(cid)) renderAGRows(cid);
+        if (S.level === 'adgroup' && (S.selectedCampaignId === cid || S.selectedCampaignId === '__all__')) render();
+        updateCards();
+      } catch(e) { console.warn('[adgroup metrics refetch]', e.message); }
+    }
     return;
   }
   try {
@@ -3386,7 +3416,7 @@ async function loadAdGroups(cid) {
     // Remove loading placeholder
     document.getElementById('tBody').querySelectorAll(`[data-cpar="${cid}"].ag-loading-row`).forEach(r=>r.remove());
     if (S.expanded.has(cid)) renderAGRows(cid);
-    if (S.level === 'adgroup' && S.selectedCampaignId === cid) render();
+    if (S.level === 'adgroup' && (S.selectedCampaignId === cid || S.selectedCampaignId === '__all__')) render();
     updateCards();
     // Update campaign row subtitle (show adgroup count)
     const campRow = document.getElementById('tBody').querySelector(`[data-cid="${cid}"]`);
@@ -3404,7 +3434,7 @@ async function loadAdGroups(cid) {
       } catch(e) { toast('warn', 'Không tải được số liệu nhóm QC: ' + e.message); }
     }
     if (S.expanded.has(cid)) renderAGRows(cid);
-    if (S.level === 'adgroup' && S.selectedCampaignId === cid) render();
+    if (S.level === 'adgroup' && (S.selectedCampaignId === cid || S.selectedCampaignId === '__all__')) render();
     updateCards();
     updateSummary();
   } catch(e) {
@@ -3437,6 +3467,9 @@ function renderHead() {
       <th data-tt="Mục tiêu kết quả cần đạt trong kỳ (số lead, reach, purchase...). Dùng để theo dõi tiến độ chiến dịch.">🎯 KPI</th>
       <th data-tt="KPI đã chạy từ tài khoản quảng cáo khác (tùy chọn). Sẽ được cộng vào khi tính % tiến độ.">➕ Bổ sung</th>
       <th data-tt="% kết quả đã đạt so với tổng KPI (Kết quả hiện tại + Bổ sung) / KPI đặt ra.">📊 Tiến độ</th>
+      <th data-tt="Ngày bắt đầu chạy chiến dịch, dùng để tính KPI hằng ngày.">📅 Ngày BD</th>
+      <th data-tt="Ngày kết thúc chiến dịch, dùng để tính số ngày còn lại và KPI mỗi ngày.">🏁 Ngày KT</th>
+      <th data-tt="KPI cần đạt mỗi ngày = (KPI còn lại) / (Số ngày còn lại). Cần nhập KPI mục tiêu và Ngày KT.">⚡ KPI ngày</th>
       <th>Thao tác</th>
     `;
     // Set indeterminate state
@@ -3452,6 +3485,7 @@ function renderHead() {
       <th data-tt="Mục tiêu kết quả cần đạt của nhóm QC trong kỳ. Dùng để theo dõi tiến độ từng nhóm.">🎯 KPI</th>
       <th data-tt="KPI đã chạy từ tài khoản quảng cáo khác, cộng vào khi tính % tiến độ nhóm QC.">➕ Bổ sung</th>
       <th data-tt="% kết quả đã đạt so với tổng KPI của nhóm QC (Kết quả + Bổ sung) / KPI.">📊 Tiến độ</th>
+      <th data-tt="KPI cần đạt mỗi ngày của nhóm QC này, tính từ KPI chiến dịch chia theo ngân sách hoặc tùy chỉnh.">⚡ KPI ngày</th>
       <th>Thao tác</th>
     `;
   }
@@ -3548,14 +3582,8 @@ function renderAdGroupLevel() {
   // Build campaign selector
   const sel = document.getElementById('agCmpSel');
   if (sel) {
-    const selectedIds = [...S.selectedCampaignIds];
-    const srcCampaigns = selectedIds.length
-      ? S.campaigns.filter(c => selectedIds.includes(c.campaign_id))
-      : S.campaigns;
-    let opts = '';
-    if (srcCampaigns.length > 1) {
-      opts += `<option value="__all__" ${S.selectedCampaignId === '__all__' ? 'selected' : ''}>— Tất cả đã chọn (${srcCampaigns.length}) —</option>`;
-    }
+    const srcCampaigns = S.campaigns;
+    let opts = `<option value="__all__" ${S.selectedCampaignId === '__all__' ? 'selected' : ''}>— Tất cả chiến dịch (${srcCampaigns.length}) —</option>`;
     opts += srcCampaigns.map(c =>
       `<option value="${c.campaign_id}" ${c.campaign_id === S.selectedCampaignId ? 'selected' : ''}>${esc(c.campaign_name)}</option>`
     ).join('');
@@ -3566,15 +3594,15 @@ function renderAdGroupLevel() {
   tb.innerHTML = '';
 
   if (S.selectedCampaignId === '__all__') {
-    // Show all adgroups from selected campaigns
-    const selectedIds = [...S.selectedCampaignIds];
-    const allLoaded = selectedIds.every(id => S.adgroups[id]);
+    // Show all adgroups from ALL campaigns
+    const allIds = S.campaigns.map(c => c.campaign_id);
+    const allLoaded = allIds.every(id => S.adgroups[id]);
     if (!allLoaded) {
       tb.innerHTML = `<tr><td colspan="20" style="text-align:center;padding:40px;color:var(--text2);"><div class="spinner" style="margin:auto;margin-bottom:8px;"></div>Đang tải nhóm QC...</td></tr>`;
       return;
     }
     let allAgs = [];
-    selectedIds.forEach(cid => { allAgs = allAgs.concat(S.adgroups[cid] || []); });
+    allIds.forEach(cid => { allAgs = allAgs.concat(S.adgroups[cid] || []); });
     if (S.statusFilter) allAgs = allAgs.filter(ag => ag.operation_status === S.statusFilter);
     if (!allAgs.length) {
       tb.innerHTML = `<tr><td colspan="20" style="text-align:center;padding:40px;color:var(--text2);">Không có nhóm QC nào</td></tr>`;
@@ -3684,6 +3712,25 @@ function makeCampaignRow(c) {
     <td onclick="event.stopPropagation()" style="min-width:120px;">
       ${mkProgressCell(S.kpi[c.campaign_id],getKpiCurrentVal(c.campaign_id,m,c.objective_type,S.kpiMetric),S.kpiExtra[c.campaign_id]||0,(S.kpiMetric[c.campaign_id]||'auto')==='spend')}
     </td>
+    <td onclick="event.stopPropagation()" style="min-width:100px;">
+      <input type="date" value="${(S.campaignDates[c.campaign_id]||{}).start||''}"
+        style="width:96px;font-size:11px;padding:2px 4px;border:1px solid var(--border);border-radius:4px;background:var(--bg2);color:var(--text);cursor:pointer;"
+        onchange="saveCampDate('${c.campaign_id}','start',this.value)" title="Ngày bắt đầu" />
+    </td>
+    <td onclick="event.stopPropagation()" style="min-width:100px;">
+      <input type="date" value="${(S.campaignDates[c.campaign_id]||{}).end||''}"
+        style="width:96px;font-size:11px;padding:2px 4px;border:1px solid var(--border);border-radius:4px;background:var(--bg2);color:var(--text);cursor:pointer;"
+        onchange="saveCampDate('${c.campaign_id}','end',this.value)" title="Ngày kết thúc" />
+    </td>
+    <td style="min-width:90px;text-align:right;font-size:12px;padding-right:10px;">
+      ${(()=>{
+        const daily = getDailyKpi(c.campaign_id, m, c.objective_type);
+        if (daily === null) return '<span style="color:var(--text3);">—</span>';
+        const isSp = (S.kpiMetric[c.campaign_id]||'auto') === 'spend';
+        const label = isSp ? fmtCur(daily) : daily.toLocaleString('vi-VN');
+        return `<span style="font-weight:600;color:var(--primary);">${label}</span><span style="font-size:10px;color:var(--text3);display:block;">/ngày</span>`;
+      })()}
+    </td>
     <td onclick="event.stopPropagation()">
       <button class="btn btn-sm btn-ghost" onclick="switchLevel('adgroup','${c.campaign_id}')">
         👥 Tab riêng
@@ -3749,11 +3796,11 @@ function makeAGRow(ag) {
       ${(()=>{
         const parentCampAg=S.campaigns.find(c=>String(c.campaign_id)===String(ag.campaign_id))||{};
         const agObjType=parentCampAg.objective_type||'';
-        return `<input type="number" min="0" placeholder="—"
+        return `<input type="number" min="0" placeholder="Nhập KPI"
           value="${S.kpiAg[ag.adgroup_id]||''}"
-          style="width:82px;padding:3px 6px;border:1px solid var(--border);border-radius:6px;background:var(--bg2);color:var(--text);font-size:12px;text-align:right;"
+          style="width:82px;padding:3px 6px;border:1.5px solid var(--primary);border-radius:6px;background:#F0F4FF;color:var(--text);font-size:12px;text-align:right;cursor:text;"
           onchange="saveKpiAg('${ag.adgroup_id}',this.value)"
-          title="KPI mục tiêu nhóm QC này" />
+          title="KPI mục tiêu nhóm QC này — click để nhập số" />
         <select onchange="saveKpiMetric('${ag.adgroup_id}',this.value,true)" onclick="event.stopPropagation()"
           style="width:84px;margin-top:3px;padding:2px 3px;font-size:10px;border:1px solid var(--border);border-radius:4px;background:var(--bg3);color:var(--text2);cursor:pointer;">
           ${KPI_METRIC_OPTIONS.map(o=>`<option value="${o.value}"${(S.kpiAgMetric[ag.adgroup_id]||'auto')===o.value?' selected':''}>${o.label}</option>`).join('')}
@@ -3773,6 +3820,46 @@ function makeAGRow(ag) {
         const parentCamp2=S.campaigns.find(c=>String(c.campaign_id)===String(ag.campaign_id))||{};
         const cur2=getKpiCurrentVal(ag.adgroup_id,m,parentCamp2.objective_type,S.kpiAgMetric);
         return mkProgressCell(S.kpiAg[ag.adgroup_id],cur2,S.kpiAgEx[ag.adgroup_id]||0,(S.kpiAgMetric[ag.adgroup_id]||'auto')==='spend');
+      })()}
+    </td>
+    <td style="min-width:90px;text-align:right;font-size:12px;padding-right:10px;">
+      ${(()=>{
+        const parentCampD = S.campaigns.find(c=>String(c.campaign_id)===String(ag.campaign_id))||{};
+        const campKpi = parseFloat(S.kpi[ag.campaign_id]) || 0;
+        if (!campKpi || !S.campaignDates[ag.campaign_id]?.end) return '<span style="color:var(--text3);">—</span>';
+        const campMetrics = S.metrics[ag.campaign_id] || {};
+        const campDailyKpi = getDailyKpi(ag.campaign_id, campMetrics, parentCampD.objective_type);
+        if (campDailyKpi === null) return '<span style="color:var(--text3);">—</span>';
+        let agDaily = null;
+        if (S.kpiDistMode === 'budget') {
+          const totalBudget = (S.adgroups[ag.campaign_id]||[]).reduce((s,a) => s + (parseFloat(a.budget)||0), 0);
+          const agBudgetShare = totalBudget > 0 ? (parseFloat(ag.budget)||0) / totalBudget : 0;
+          agDaily = Math.ceil(campDailyKpi * agBudgetShare);
+        } else if (S.kpiDistMode === 'custom') {
+          const dist = S.kpiAgDist[ag.adgroup_id];
+          if (dist) {
+            agDaily = dist.type === 'pct' ? Math.ceil(campDailyKpi * dist.value / 100) : dist.value;
+          }
+        } else {
+          agDaily = campDailyKpi;
+        }
+        const isSp = (S.kpiAgMetric[ag.adgroup_id]||'auto') === 'spend' || (S.kpiMetric[ag.campaign_id]||'auto') === 'spend';
+        const customInput = S.kpiDistMode === 'custom' ? (() => {
+          const dist = S.kpiAgDist[ag.adgroup_id] || {};
+          const isPct = (dist.type || 'pct') === 'pct';
+          return `<div style="display:flex;align-items:center;gap:3px;margin-top:4px;">
+            <input type="number" min="0" max="${isPct?100:999999}" step="${isPct?1:100}"
+              value="${dist.value||''}" placeholder="${isPct?'%':'số'}"
+              style="width:48px;padding:2px 4px;font-size:10px;border:1px solid var(--border);border-radius:4px;text-align:right;"
+              onchange="saveKpiAgDist('${ag.adgroup_id}','${isPct?'pct':'abs'}',this.value)"
+              title="Nhập ${isPct?'% KPI':'KPI tuyệt đối'} cho nhóm này" />
+            <button class="btn btn-sm btn-ghost" style="padding:1px 4px;font-size:10px;min-width:24px;"
+              onclick="saveKpiAgDist('${ag.adgroup_id}','${isPct?'abs':'pct'}','')" title="Đổi %/số">${isPct?'%':'#'}</button>
+          </div>`;
+        })() : '';
+        if (agDaily === null) return `<span style="color:var(--text3);">—</span>${customInput}`;
+        const label = isSp ? fmtCur(agDaily) : agDaily.toLocaleString('vi-VN');
+        return `<span style="font-weight:600;color:var(--primary);">${label}</span><span style="font-size:10px;color:var(--text3);display:block;">/ngày</span>${customInput}`;
       })()}
     </td>
     <td>
@@ -4312,19 +4399,15 @@ function switchLevel(level, campaignId) {
   if (vm) vm.style.display = S.view === 'mobile' ? '' : 'none';
 
   if (level === 'adgroup') {
-    const selectedIds = [...S.selectedCampaignIds];
     if (campaignId) {
+      // Explicit campaign navigation (Tab riêng button)
       S.selectedCampaignId = campaignId;
       S.activeCampaignId = campaignId;
+      const selectedIds = [...S.selectedCampaignIds];
       if (selectedIds.length === 0) S.selectedCampaignIds.add(campaignId);
-    } else if (S.activeCampaignId) {
-      S.selectedCampaignId = S.activeCampaignId;
-    } else if (selectedIds.length === 1) {
-      S.selectedCampaignId = selectedIds[0];
-    } else if (selectedIds.length > 1) {
+    } else {
+      // Direct tab click — default to showing all campaigns
       S.selectedCampaignId = '__all__';
-    } else if (S.campaigns.length) {
-      S.selectedCampaignId = S.campaigns[0].campaign_id;
     }
   }
   if (lt1) lt1.classList.toggle('active', level === 'campaign');
@@ -4337,8 +4420,8 @@ function switchLevel(level, campaignId) {
   if (S.campaigns.length) render();
   if (level === 'adgroup') {
     if (S.selectedCampaignId === '__all__') {
-      [...S.selectedCampaignIds].forEach(id => { if (!S.adgroups[id]) loadAdGroups(id); });
-    } else if (S.selectedCampaignId && !S.adgroups[S.selectedCampaignId]) {
+      S.campaigns.forEach(c => { loadAdGroups(c.campaign_id); });
+    } else if (S.selectedCampaignId) {
       loadAdGroups(S.selectedCampaignId);
     }
   }
@@ -4347,9 +4430,10 @@ function switchLevel(level, campaignId) {
 function onAGCmpChange(cid) {
   S.selectedCampaignId = cid;
   render();
-  if (cid && cid !== '__all__' && !S.adgroups[cid]) loadAdGroups(cid);
-  if (cid === '__all__') {
-    [...S.selectedCampaignIds].forEach(id => { if (!S.adgroups[id]) loadAdGroups(id); });
+  if (cid && cid !== '__all__') {
+    loadAdGroups(cid);
+  } else if (cid === '__all__') {
+    S.campaigns.forEach(c => { loadAdGroups(c.campaign_id); });
   }
 }
 
@@ -4402,6 +4486,49 @@ function saveKpiAgEx(agid, val) {
   if (v > 0) S.kpiAgEx[agid] = v; else delete S.kpiAgEx[agid];
   localStorage.setItem('tt_kpi_ag_ex', JSON.stringify(S.kpiAgEx));
   render();
+}
+function saveCampDate(cid, field, val) {
+  if (!S.campaignDates[cid]) S.campaignDates[cid] = {};
+  if (val) S.campaignDates[cid][field] = val;
+  else delete S.campaignDates[cid][field];
+  if (!S.campaignDates[cid].start && !S.campaignDates[cid].end) delete S.campaignDates[cid];
+  localStorage.setItem('tt_camp_dates', JSON.stringify(S.campaignDates));
+  render();
+}
+function getDailyKpi(cid, m, objType) {
+  const kpi = parseFloat(S.kpi[cid]) || 0;
+  if (!kpi) return null;
+  const dates = S.campaignDates[cid] || {};
+  if (!dates.end) return null;
+  const today = new Date(); today.setHours(0,0,0,0);
+  const endDate = new Date(dates.end); endDate.setHours(0,0,0,0);
+  const daysLeft = Math.max(1, Math.round((endDate - today) / 86400000) + 1);
+  const achieved = getKpiCurrentVal(cid, m, objType, S.kpiMetric);
+  const extra = parseFloat(S.kpiExtra[cid]) || 0;
+  const remaining = Math.max(0, kpi - (achieved + extra));
+  return Math.ceil(remaining / daysLeft);
+}
+function saveKpiAgDist(agid, type, val) {
+  const v = parseFloat(val) || 0;
+  if (v > 0) S.kpiAgDist[agid] = { type, value: v };
+  else delete S.kpiAgDist[agid];
+  localStorage.setItem('tt_kpi_ag_dist', JSON.stringify(S.kpiAgDist));
+  render();
+}
+function setKpiDistMode(mode) {
+  S.kpiDistMode = mode;
+  localStorage.setItem('tt_kpi_dist_mode', mode);
+  render();
+}
+function toggleKpiDistPanel() {
+  const panel = document.getElementById('kpiDistPanel');
+  if (!panel) return;
+  const visible = panel.style.display !== 'none';
+  panel.style.display = visible ? 'none' : 'flex';
+  if (!visible) {
+    // Sync radio buttons to current mode
+    document.querySelectorAll('input[name="kpiDistMode"]').forEach(r => { r.checked = r.value === S.kpiDistMode; });
+  }
 }
 function getKpiVidVal(id, m) {
   const mode = S.kpiVidMode[id] || '2s';
